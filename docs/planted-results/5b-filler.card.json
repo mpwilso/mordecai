@@ -1,0 +1,78 @@
+{
+  "card": 1,
+  "hashes": {
+    "cases": "sha256:b2da9e22d0223ca12855a8f3ab79c152e44a785d499a137372707f643e2defd7",
+    "result": "sha256:9fb31a0c6bdc86d3eb95d7882ac04dfbf6ec062e09d23f7782d5c74fbd7697a1",
+    "skill": "sha256:292ff8124f2e45f0576249ae1702fb24e1edf8677830dab36a754564e61e8d33"
+  },
+  "mordecai": "0.1.0",
+  "numbers": {
+    "casesCompared": 9,
+    "change": 0.0,
+    "costPerRunWith": 0.01932371111111111,
+    "costPerRunWithout": 0.024077085185185185,
+    "fired": [
+      27,
+      27
+    ],
+    "flat": 9,
+    "improved": 0,
+    "interval": [
+      0.0,
+      0.0
+    ],
+    "misfired": [
+      0,
+      9
+    ],
+    "turnsPerRunWith": 3.0,
+    "turnsPerRunWithout": 2.2962962962962963,
+    "withScore": 0.0,
+    "withoutScore": 0.0,
+    "worse": 0
+  },
+  "paths": {
+    "caseDirs": [
+      "evals/branch-1042",
+      "evals/branch-2310",
+      "evals/branch-51",
+      "evals/branch-6020",
+      "evals/branch-877",
+      "evals/delete-branch",
+      "evals/fahrenheit",
+      "evals/pr-1777",
+      "evals/pr-2210",
+      "evals/pr-4402",
+      "evals/pr-913",
+      "evals/undo-commit"
+    ],
+    "casesRoot": "evals/planted/5b-filler",
+    "skill": "evals/planted/5b-filler"
+  },
+  "reason": "The 90% interval (+0 to +0 points) stays inside plus or minus 10 points.",
+  "rules": {
+    "ceiling": 0.9,
+    "confidence": 0.9,
+    "min_cases": 5,
+    "min_effect": 0.1,
+    "resamples": 2000,
+    "seed": 0
+  },
+  "subject": {
+    "plugin": "planted-filler",
+    "skills": [
+      "ferry-helper"
+    ],
+    "version": "1.0.0"
+  },
+  "tested": {
+    "claudeVersion": "2.1.289",
+    "judgeModel": "claude-haiku-4-5-20251001",
+    "model": "claude-haiku-4-5-20251001",
+    "startedAt": "2026-10-05T22:21:55.720Z"
+  },
+  "verdict": "no-effect",
+  "warnings": [
+    "2 of 72 runs ended with an error. They were graded on what they produced."
+  ]
+}
