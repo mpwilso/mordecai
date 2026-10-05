@@ -79,3 +79,13 @@ The same skill and the same cases (skill hash `sha256:f35f631cd4d5`, cases hash 
 **The verdict didn't move, by any amount.** That's the expected result for this skill: the convention is made up, so no model can know it without the skill. Suite 1 was the wrong suite to show drift. A skill restating something a stronger model might already do, like suite 2's Conventional Commits, is where a model change could move a verdict. [Sonnet card](planted-results/1-convention-sonnet.card.json).
 
 **The demo did expose a gap.** After the Sonnet run, `mordecai check` on the Haiku card still printed "Current: ... matches the skill and cases it was measured on". The card records the model, but `check` compares only the skill and case hashes, so a model change never marks a card stale. The README lists this under known limits. The demo confirms it matters in practice.
+
+## How noisy the real runs were
+
+For each case, each side ran 3 times. Across the six Haiku suites, all 3 runs agreed in 136 of 144 case-and-side cells (94%): every cell in suites 1, 5a, 5b and 4, 19 of 24 in suite 2 and 21 of 24 in suite 3. The simulation in [simulation.md](simulation.md) draws each run as a coin flip with probability 0.2, 0.4 or 0.6, so 3 runs agree only about 36% of the time. These graders on this model were much closer to deterministic than the simulation assumed. What decided each verdict was how many cases changed, not run-to-run noise.
+
+## Overall
+
+Scored against the criterion in planted-skills.md: **4 of 6 suites matched** (1, 5a, 5b, 4) **and 2 missed** (2, 3), so **the check as a whole fails.** For 5a, the hard requirement passed (no Helps or Hurts), but it landed on Already handled rather than No effect or Inconclusive, as flagged before the run. No placebo was called Helps or Hurts. No card was Invalid or partial, and no run hit its cost cap.
+
+Of the two misses, suite 2 is a prediction miss: the rules read the numbers correctly, and the model doesn't behave the way the plant assumed. Suite 3 is partly a case design problem (the skill rarely fired) and partly a rule problem (Already handled doesn't check for a loss). The rules are unchanged. Proposed changes are in [review-queue.md](review-queue.md).
