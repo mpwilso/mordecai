@@ -16,6 +16,7 @@ The ceiling for this check is $35. Before each run, the spend so far plus that r
 | 4 | 2-commits | claude-haiku-4-5-20251001 | $3 | $1.32 | $5.49 |
 | 5 | 3-outdated | claude-haiku-4-5-20251001 | $5 | $1.58 | $7.07 |
 | 6 | 4-vague | claude-haiku-4-5-20251001 | $3 | $1.99 | $9.06 |
+| 7 | 1-convention (drift demo) | claude-sonnet-5-5 | $6 | $1.77 | $10.83 |
 
 Not counted above: the one-case run on 2026-10-05 that captured the result format ($0.07, before this check).
 
@@ -60,3 +61,21 @@ Diagnosis: **two causes, a case design problem and a verdict rule problem, plus 
 - **Run noise:** repo-one-file is the one "better" case. Both arms split between `pytest tests/test_tally.py` and `uv run pytest tests/test_tally.py`, and the skill never fired there. With 2 of 3 against 1 of 3, it counts as better by chance.
 
 **4-vague: Never fired, a match.** With the description "General notes.", the skill wasn't opened in any of the 27 runs that needed it, or in any of the 9 quiet runs. Both arms answered with ordinary version tags, such as `v1.0.0` in every run of tag-first-release, and scored 0. Two baseline runs (tag-second-release and tag-summer) hit the 4-turn cap and scored 0, as every baseline run of those cases did. This suite took 8.5 minutes and cost more per run than the others ($0.027 with, $0.029 without), though its runs averaged fewer turns. [Card](planted-results/4-vague.card.json).
+
+## Drift demo: suite 1 on Haiku and on Sonnet
+
+The same skill and the same cases (skill hash `sha256:f35f631cd4d5`, cases hash `sha256:417d28c8319e` on both cards), run once on `claude-haiku-4-5-20251001` and once on `claude-sonnet-5-5`. The Sonnet ID comes from the Claude API ID row of the models overview in the platform docs, which says dateless IDs are pinned snapshots.
+
+| | Haiku 4.5 | Sonnet 5.5 |
+|---|---|---|
+| Verdict | Helps | Helps |
+| With / without | 100% / 0% | 100% / 0% |
+| Change (interval) | +100 (+100 to +100) | +100 (+100 to +100) |
+| Better / same / worse | 9 / 0 / 0 | 9 / 0 / 0 |
+| Fired | 27 of 27; 0 of 9 quiet | 27 of 27; 0 of 9 quiet |
+| Cost per run, with / without | $0.0182 / $0.0226 | $0.0246 / $0.0246 |
+| Suite cost | $1.47 | $1.77 |
+
+**The verdict didn't move, by any amount.** That's the expected result for this skill: the convention is made up, so no model can know it without the skill. Suite 1 was the wrong suite to show drift. A skill restating something a stronger model might already do, like suite 2's Conventional Commits, is where a model change could move a verdict. [Sonnet card](planted-results/1-convention-sonnet.card.json).
+
+**The demo did expose a gap.** After the Sonnet run, `mordecai check` on the Haiku card still printed "Current: ... matches the skill and cases it was measured on". The card records the model, but `check` compares only the skill and case hashes, so a model change never marks a card stale. The README lists this under known limits. The demo confirms it matters in practice.
