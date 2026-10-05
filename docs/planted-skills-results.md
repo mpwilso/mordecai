@@ -19,6 +19,7 @@ The ceiling for this check is $35. Before each run, the spend so far plus that r
 | 7 | 1-convention (drift demo) | claude-sonnet-5-5 | $6 | $1.77 | $10.83 |
 | 8 | V2 pilot (no skill, 1 run per case, `--ablation none`) | claude-haiku-4-5-20251001 | $0.30 | $0.25 | $11.08 |
 | 9 | V1 v1-outdated | claude-haiku-4-5-20251001 | $3 | $1.54 | $12.62 |
+| 10 | V2 v2-noisy-placebo | claude-haiku-4-5-20251001 | $3 | $1.23 | $13.85 |
 
 Not counted above: the one-case run on 2026-10-05 that captured the result format ($0.07, before this check).
 
@@ -117,6 +118,7 @@ Predictions: [validation-skills.md](validation-skills.md) for V1 and V2 (committ
 | Suite | Predicted | Actual | Match | Better / same / worse | With / without | Fired | Run agreement | Cost | Run (UTC) |
 |---|---|---|---|---|---|---|---|---|---|
 | V1 v1-outdated | Hurts | Inconclusive | Miss | 0 / 7 / 2 | 85% / 96% | 1 of 27; 0 of 9 quiet | 22 of 24 cells | $1.54 | 2026-10-05 23:37 |
+| V2 v2-noisy-placebo | Not Helps, not Hurts | **Hurts** | **Miss: false-positive test failed** | 0 / 3 / 6 | 0% / 37% | 27 of 27; 0 of 9 quiet | 19 of 24 cells | $1.23 | 2026-10-05 23:42 |
 
 **V1 v1-outdated: Inconclusive, a miss.** The card reads: "The model scored 96% without the skill, but the 90% interval (-26 to +0 points) doesn't rule out a loss of 10 points." [Card](planted-results/v1-outdated.card.json).
 
@@ -127,3 +129,16 @@ Diagnosis: **case design problem (the trigger), plus run noise. Not a rule probl
 - **The 0.2.0 rule did what it was changed to do.** Under the 0.1.0 rules this card would have read Already handled: a 96% baseline, and an interval top of +0, under +10. Under 0.2.0 it reads Inconclusive, because the interval reaches -26. Hurts was not called, because the interval reaches exactly +0, and Hurts needs the whole interval below zero.
 
 No case file has a defect that justifies a second attempt, so V1 is not rerun.
+
+**V2 v2-noisy-placebo: Hurts, so the false-positive test failed. This is a stop condition, and the check stopped here.** The card reads: "The skill lowered the score: 90% interval -59 to -15 points", with 0% with the skill against 37% without, 6 cases worse and none better. [Card](planted-results/v2-noisy-placebo.card.json).
+
+Diagnosis: **case design problem: the placebo wasn't inert. The rules read a real effect correctly. This is not a verdict rule problem.**
+
+- **The skill wasn't filler for this grader.** Its body says: "Write commit messages that a teammate can understand later. Say what changed in plain words, and keep the message short." The grader checks for a Conventional Commits type prefix. The model followed the skill: with it, 27 of 27 runs gave a plain message with no prefix. Without it, 10 of 27 runs used one.
+- **The change was consistent, not noise.** bump-pytest, with the skill: "Upgrade pytest from 7.4 to 8.2" in all three runs. Without it: "chore: upgrade pytest from 7.4 to 8.2" and "chore(deps): upgrade pytest from 7.4 to 8.2" passed, and "Upgrade pytest dev dependency from 7.4 to 8.2" didn't. ci-workflow, with the skill: "Add GitHub Actions workflow to run tests on (every) push", three times. Without it, all three runs passed, two of them with `ci: add GitHub Actions workflow to run tests on push`. commit-4, with the skill: "Update README with new install steps", three times. Without it, two of three were `docs: Update README with new install steps`.
+- **The rules weren't fooled by noise.** The skill fired in all 27 runs that needed it, every with-skill run agreed (all 0), and the without-skill side varied (10 of 27). A consistent drop of 37 points across 6 of 9 cases is what Hurts is for. The mistake was calling this skill a placebo: "plain words" is an instruction about the very thing graded.
+- **The pilot was a weak screen.** ci-workflow failed its one pilot run because it hit the 4-turn cap, but passed all 3 baseline runs here.
+
+So V2 doesn't show that the rules make false calls on noise. It shows that a "placebo" has to be inert with respect to the grader, which this one wasn't. A placebo whose text says nothing about style or format is still untested. Run agreement was 19 of 24 cells, the noisiest suite so far.
+
+**Not run, because of the stop:** the two sealed holdouts, the suite 2 drift demo on Sonnet, `check --model` and the README rewrite. See [review-queue.md](review-queue.md).
