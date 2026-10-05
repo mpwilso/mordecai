@@ -1,0 +1,76 @@
+{
+  "card": 1,
+  "hashes": {
+    "cases": "sha256:014a8349862f0ad7f4e0281c614762ff5e0699f64fe93546777b8870b2c4a059",
+    "result": "sha256:2e9a8af74e86988cd281776d37e7fad2a6c45e3e68d0ab6c974f1af3f00896bf",
+    "skill": "sha256:45c98bc9dd064ce8eb9e4feeca16e6a8213be93530077e9ab09f94a583cb9f92"
+  },
+  "mordecai": "0.1.0",
+  "numbers": {
+    "casesCompared": 9,
+    "change": 0.0,
+    "costPerRunWith": 0.019868444444444446,
+    "costPerRunWithout": 0.016275588888888887,
+    "fired": [
+      15,
+      27
+    ],
+    "flat": 9,
+    "improved": 0,
+    "interval": [
+      0.0,
+      0.0
+    ],
+    "misfired": [
+      0,
+      9
+    ],
+    "turnsPerRunWith": 2.111111111111111,
+    "turnsPerRunWithout": 1.0,
+    "withScore": 1.0,
+    "withoutScore": 1.0,
+    "worse": 0
+  },
+  "paths": {
+    "caseDirs": [
+      "evals/branch-1042",
+      "evals/branch-2310",
+      "evals/branch-51",
+      "evals/branch-6020",
+      "evals/branch-877",
+      "evals/delete-branch",
+      "evals/fahrenheit",
+      "evals/pr-1777",
+      "evals/pr-2210",
+      "evals/pr-4402",
+      "evals/pr-913",
+      "evals/undo-commit"
+    ],
+    "casesRoot": "evals/planted/5a-twin",
+    "skill": "evals/planted/5a-twin"
+  },
+  "reason": "The model scored 100% without the skill, and the 90% interval (+0 to +0 points) rules out a gain of 10 points.",
+  "rules": {
+    "ceiling": 0.9,
+    "confidence": 0.9,
+    "min_cases": 5,
+    "min_effect": 0.1,
+    "resamples": 2000,
+    "seed": 0
+  },
+  "subject": {
+    "plugin": "planted-twin",
+    "skills": [
+      "ferry-workflow-twin"
+    ],
+    "version": "1.0.0"
+  },
+  "tested": {
+    "claudeVersion": "2.1.289",
+    "judgeModel": "claude-haiku-4-5-20251001",
+    "model": "claude-haiku-4-5-20251001",
+    "startedAt": "2026-10-05T22:18:14.262Z"
+  },
+  "verdict": "already-handled",
+  "warnings": []
+}
