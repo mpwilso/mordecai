@@ -89,3 +89,21 @@ For each case, each side ran 3 times. Across the six Haiku suites, all 3 runs ag
 Scored against the criterion in planted-skills.md: **4 of 6 suites matched** (1, 5a, 5b, 4) **and 2 missed** (2, 3), so **the check as a whole fails.** For 5a, the hard requirement passed (no Helps or Hurts), but it landed on Already handled rather than No effect or Inconclusive, as flagged before the run. No placebo was called Helps or Hurts. No card was Invalid or partial, and no run hit its cost cap.
 
 Of the two misses, suite 2 is a prediction miss: the rules read the numbers correctly, and the model doesn't behave the way the plant assumed. Suite 3 is partly a case design problem (the skill rarely fired) and partly a rule problem (Already handled doesn't check for a loss). The rules are unchanged. Proposed changes are in [review-queue.md](review-queue.md).
+
+## Post-hoc: the seven cards under the 0.2.0 rules
+
+**This section was written after the results above, and the rule change it applies was designed after seeing them.** The recorded cards above are unchanged. They are what the frozen rules (6c37ff9) said.
+
+In 0.2.0, Already handled also requires the interval to rule out a 10-point loss; otherwise the verdict is Inconclusive. Each verdict below comes from rerunning `mordecai identify` on the same raw result with the new rules.
+
+| Card | Recorded (0.1.0 rules) | 0.2.0 rules |
+|---|---|---|
+| 1-convention (Haiku) | Helps | Helps |
+| 5a-twin | Already handled | Already handled |
+| 5b-filler | No effect | No effect |
+| 2-commits | Helps | Helps |
+| 3-outdated | Already handled | **Inconclusive** |
+| 4-vague | Never fired | Never fired |
+| 1-convention (Sonnet) | Helps | Helps |
+
+Only suite 3 moves. Its new reason: "The model scored 93% without the skill, but the 90% interval (-41 to +7 points) doesn't rule out a loss of 10 points." The new rules still don't call it Hurts, since the interval reaches +7. Because the change was fitted to this result, suite 3 can't count as evidence for it. The validation suites below are the test.

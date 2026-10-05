@@ -9,9 +9,15 @@ The order is fixed, and the first rule that applies wins:
 4. Hurts: the whole interval for the change is below zero.
 5. Helps: the whole interval is above zero, and the change is at least the minimum effect.
 6. Already handled: the model scores at least the ceiling without the skill, and the interval
-   rules out a gain as big as the minimum effect.
-7. No effect: the interval sits inside plus or minus the minimum effect.
-8. Inconclusive: anything else. The interval is too wide to call.
+   rules out both a gain and a loss as big as the minimum effect.
+7. Inconclusive: the model scores at least the ceiling without the skill, but the interval
+   doesn't rule out a loss as big as the minimum effect.
+8. No effect: the interval sits inside plus or minus the minimum effect.
+9. Inconclusive: anything else. The interval is too wide to call.
+
+Rules 6 and 7 changed in 0.2.0. Before, Already handled checked only for a gain, and in the
+planted skills check it gave a skill that did harm whenever it fired a calm label
+(docs/planted-skills-results.md, suite 3). The change was designed after seeing that result.
 
 Cases that check the skill does *not* fire (a Skill grader with max: 0) are left out of the
 change and reported as misfires instead, since the run without the skill passes them by
@@ -242,11 +248,18 @@ def read(
     if lo > 0 and change >= rules.min_effect:
         return verdict("helps", f"The skill raised the score: {conf} interval {span}.", iv)
     if base["without_score"] >= rules.ceiling and hi < rules.min_effect:
+        scored = f"The model scored {round(base['without_score'] * 100)}% without the skill"
+        if lo > -rules.min_effect:
+            return verdict(
+                "already-handled",
+                f"{scored}, and the {conf} interval ({span}) rules out a gain or a loss of "
+                f"{round(rules.min_effect * 100)} points.",
+                iv,
+            )
         return verdict(
-            "already-handled",
-            f"The model scored {round(base['without_score'] * 100)}% without the skill, and "
-            f"the {conf} interval ({span}) rules out a gain of {round(rules.min_effect * 100)} "
-            "points.",
+            "inconclusive",
+            f"{scored}, but the {conf} interval ({span}) doesn't rule out a loss of "
+            f"{round(rules.min_effect * 100)} points.",
             iv,
         )
     if lo > -rules.min_effect and hi < rules.min_effect:

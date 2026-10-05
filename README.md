@@ -61,7 +61,8 @@ Code decides, not a model. The rules run in this order, and the first one that a
 | Inconclusive | Fewer than 5 cases were compared |
 | Hurts | The whole 90% interval for the change is below zero |
 | Helps | The whole interval is above zero, and the change is at least 10 points |
-| Already handled | The model scores at least 90% without the skill, and the interval rules out a 10-point gain |
+| Already handled | The model scores at least 90% without the skill, and the interval rules out both a 10-point gain and a 10-point loss |
+| Inconclusive | The model scores at least 90% without the skill, but the interval doesn't rule out a 10-point loss |
 | No effect | The interval stays inside plus or minus 10 points |
 | Inconclusive | Anything else: the interval is too wide to call |
 

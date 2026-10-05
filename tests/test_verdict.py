@@ -151,3 +151,30 @@ def test_the_real_result():
     assert r.fired == (2, 2)
     assert (r.with_score, r.without_score) == (1.0, 0.0)
     assert round(r.cost_with, 4) == 0.0186 and round(r.cost_without, 4) == 0.0152
+
+
+def test_already_handled_must_rule_out_a_loss_too():
+    """0.2.0: a high baseline with an interval that reaches a 10-point loss is Inconclusive,
+    not Already handled."""
+    cases = same(6, [1, 1, 1], [1, 1, 1], fired=[True] * 3)
+    cases[0] = {**cases[0], "with": [0, 0, 0]}
+    cases[1] = {**cases[1], "with": [0, 0, 1]}
+    r = verdict_of(cases)
+    assert r.without_score == 1.0
+    assert r.interval[0] <= -0.10 < r.interval[1]
+    assert r.verdict == "inconclusive"
+    assert "doesn't rule out a loss of 10 points" in r.reason
+
+
+def test_suite_3_from_the_planted_check():
+    """The real result that motivated the change: an outdated skill that gave the wrong answer
+    in 5 of the 6 runs where it fired. The original rules called it Already handled."""
+    suite = parse(json.loads((FIXTURES / "suite3-result.json").read_text()))
+    r = read(suite, ["python-project-commands"])
+    assert r.verdict == "inconclusive"
+    assert r.interval == (-0.4074, 0.0741)
+    assert (r.improved, r.flat, r.worse) == (1, 6, 2)
+    assert r.reason == (
+        "The model scored 93% without the skill, but the 90% interval (-41 to +7 points) "
+        "doesn't rule out a loss of 10 points."
+    )
