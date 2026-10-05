@@ -13,6 +13,7 @@ The ceiling for this check is $35. Before each run, the spend so far plus that r
 | 1 | 1-convention (pilot) | claude-haiku-4-5-20251001 | $3 | $1.47 | $1.47 |
 | 2 | 5a-twin | claude-haiku-4-5-20251001 | $3 | $1.26 | $2.72 |
 | 3 | 5b-filler | claude-haiku-4-5-20251001 | $3 | $1.45 | $4.17 |
+| 4 | 2-commits | claude-haiku-4-5-20251001 | $3 | $1.32 | $5.49 |
 
 Not counted above: the one-case run on 2026-10-05 that captured the result format ($0.07, before this check).
 
@@ -23,6 +24,7 @@ Not counted above: the one-case run on 2026-10-05 that captured the result forma
 | 1-convention | Helps | Helps | Match | 9 / 0 / 0 | 100% / 0% | 27 of 27; 0 of 9 quiet | $1.47 | 2026-10-05 22:13 |
 | 5a-twin | Not Helps, not Hurts (acceptable: No effect, Inconclusive) | Already handled | False-positive test: pass. Acceptable set: miss | 0 / 9 / 0 | 100% / 100% | 15 of 27; 0 of 9 quiet | $1.26 | 2026-10-05 22:18 |
 | 5b-filler | Not Helps, not Hurts (acceptable: No effect, Inconclusive) | No effect | Match | 0 / 9 / 0 | 0% / 0% | 27 of 27; 0 of 9 quiet | $1.45 | 2026-10-05 22:21 |
+| 2-commits | Already handled | Helps | Miss | 9 / 0 / 0 | 96% / 19% | 27 of 27; 0 of 9 quiet | $1.32 | 2026-10-05 22:26 |
 
 ## Pilot sanity checks (suite 1)
 
@@ -39,3 +41,7 @@ All three held, so the main set continued.
 **5a-twin: Already handled. Passes the false-positive test, misses the acceptable set.** This is the outcome flagged in planted-skills.md before the run. With skill 1's text in the system prompt, every run passed on both sides, so the change was exactly 0 and the baseline was 100%, which the rules call Already handled. That reading is correct for the numbers. The twin fired in only 15 of 27 runs, since the model often used the rule already in its prompt. As a placebo this was a weak test: with no run-to-run variation at all, there was no noise for the rules to mistake for an effect. [Card](planted-results/5a-twin.card.json).
 
 **5b-filler: No effect, a match.** The filler skill fired in all 27 runs that needed it, and every run failed on both sides, so the change was exactly 0 at a 0% baseline. Like the twin, it gave the rules no noise to misread. Two baseline runs (pr-1777 and pr-913, without the skill) hit the 4-turn cap. They scored 0, as every baseline run of those cases did, and the card lists the errors as a warning. [Card](planted-results/5b-filler.card.json).
+
+**2-commits: Helps, a miss.** Predicted Already handled. The card says the skill raised the score by 78 points (interval +59 to +96), with every case better. [Card](planted-results/2-commits.card.json).
+
+Diagnosis: **case design problem**, specifically a wrong premise about the model, not run noise and not a rule problem. The skill was planted as "something the model already does", but Haiku 4.5 doesn't default to Conventional Commits. Without the skill it wrote a clean imperative summary and no type prefix in 22 of 27 runs, for example "Rename getUser to fetchUser" (commit-1, all three runs), "Remove unused legacy_auth module" (commit-7, all three) and "Fix typo in login failure error message" (commit-9, all three). Only 5 of 27 baseline runs used a type prefix (commit-2, commit-4 twice, commit-5, commit-6). The rules read those numbers correctly: a 19% baseline is nowhere near the 90% ceiling, and every case improved. The prediction in planted-skills.md named this risk. One with-skill failure was the grader being strict rather than the model being wrong: commit-6 run 3 wrote `test(date parsing): ...`, with a space in the scope, which the scope pattern `[\w./-]+` doesn't allow. That cost one run out of 27 and doesn't change the verdict.

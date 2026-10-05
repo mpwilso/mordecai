@@ -1,0 +1,76 @@
+{
+  "card": 1,
+  "hashes": {
+    "cases": "sha256:d9c55d6374ba1b2504907f0f3153fec7d30b4ecd108f52b3711b89c6106209f1",
+    "result": "sha256:20ee48715e76fdaafc5f8f1a9ce80cdda591b4b7d927e7f8daae7f1abd010c86",
+    "skill": "sha256:0c7e32a006922dc871025727bef3f16fd8c11ad12f2e4b51bc49a3a8fd7101e7"
+  },
+  "mordecai": "0.1.0",
+  "numbers": {
+    "casesCompared": 9,
+    "change": 0.7777777777777778,
+    "costPerRunWith": 0.01916671851851852,
+    "costPerRunWithout": 0.019748764814814815,
+    "fired": [
+      27,
+      27
+    ],
+    "flat": 0,
+    "improved": 9,
+    "interval": [
+      0.5926,
+      0.963
+    ],
+    "misfired": [
+      0,
+      9
+    ],
+    "turnsPerRunWith": 3.0,
+    "turnsPerRunWithout": 1.4444444444444444,
+    "withScore": 0.9629629629629629,
+    "withoutScore": 0.18518518518518517,
+    "worse": 0
+  },
+  "paths": {
+    "caseDirs": [
+      "evals/commit-1",
+      "evals/commit-2",
+      "evals/commit-3",
+      "evals/commit-4",
+      "evals/commit-5",
+      "evals/commit-6",
+      "evals/commit-7",
+      "evals/commit-8",
+      "evals/commit-9",
+      "evals/log-oneline",
+      "evals/percent",
+      "evals/rebase"
+    ],
+    "casesRoot": "evals/planted/2-commits",
+    "skill": "evals/planted/2-commits"
+  },
+  "reason": "The skill raised the score: 90% interval +59 to +96 points.",
+  "rules": {
+    "ceiling": 0.9,
+    "confidence": 0.9,
+    "min_cases": 5,
+    "min_effect": 0.1,
+    "resamples": 2000,
+    "seed": 0
+  },
+  "subject": {
+    "plugin": "planted-commits",
+    "skills": [
+      "commit-messages"
+    ],
+    "version": "1.0.0"
+  },
+  "tested": {
+    "claudeVersion": "2.1.289",
+    "judgeModel": "claude-haiku-4-5-20251001",
+    "model": "claude-haiku-4-5-20251001",
+    "startedAt": "2026-10-05T22:26:18.727Z"
+  },
+  "verdict": "helps",
+  "warnings": []
+}
