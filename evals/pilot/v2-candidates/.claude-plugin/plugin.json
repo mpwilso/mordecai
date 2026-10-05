@@ -1,0 +1,8 @@
+{
+  "name": "v2-pilot",
+  "version": "1.0.0",
+  "description": "No skills: a baseline pilot for the V2 placebo's cases.",
+  "author": {
+    "name": "Matt Wilson"
+  }
+}

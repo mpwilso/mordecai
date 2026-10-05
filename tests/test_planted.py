@@ -19,7 +19,7 @@ def test_files_match_the_script():
 
 
 def test_every_suite_is_lint_clean_with_12_cases():
-    assert len(SUITES) == 8
+    assert len(SUITES) >= 8
     for suite in SUITES:
         files, warnings = lint(suite)
         assert warnings == [], suite
@@ -41,3 +41,11 @@ def test_the_twin_is_an_exact_copy_measured_against_itself():
 
 def test_holdouts_are_kept_apart():
     assert {s.parent.name for s in SUITES if "holdout" in str(s)} == {"holdout"}
+
+
+def test_patterns_survive_yaml_single_quotes():
+    """Grader patterns are written inside YAML single quotes, so none may contain one."""
+    for path, text in planted.outputs().items():
+        if path.name == "outcome.md":
+            pattern = text.split("pattern: '", 1)[1].rsplit("'\n", 1)[0]
+            assert "'" not in pattern, path

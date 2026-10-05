@@ -6,7 +6,7 @@ Every run: `claude plugin eval <suite> --model <pinned ID> --judge-model <same I
 
 ## Spend
 
-The ceiling for this check is $35. Before each run, the spend so far plus that run's cap must stay under it.
+The ceiling for this check is $35. Before each run, the spend so far plus that run's cap must stay under it. The second stage (runs 8 onward) has its own ceiling of $12 on top of the first stage's $10.83, so the running total must stay under $22.83.
 
 | Run | Suite | Model | Cap | Cost | Spent so far |
 |---|---|---|---|---|---|
@@ -17,6 +17,7 @@ The ceiling for this check is $35. Before each run, the spend so far plus that r
 | 5 | 3-outdated | claude-haiku-4-5-20251001 | $5 | $1.58 | $7.07 |
 | 6 | 4-vague | claude-haiku-4-5-20251001 | $3 | $1.99 | $9.06 |
 | 7 | 1-convention (drift demo) | claude-sonnet-5-5 | $6 | $1.77 | $10.83 |
+| 8 | V2 pilot (no skill, 1 run per case, `--ablation none`) | claude-haiku-4-5-20251001 | $0.30 | $0.25 | $11.08 |
 
 Not counted above: the one-case run on 2026-10-05 that captured the result format ($0.07, before this check).
 

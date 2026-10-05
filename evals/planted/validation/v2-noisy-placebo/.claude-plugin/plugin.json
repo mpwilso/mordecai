@@ -1,0 +1,8 @@
+{
+  "name": "validation-noisy-placebo",
+  "version": "1.0.0",
+  "description": "Planted skill: commit-helper.",
+  "author": {
+    "name": "Matt Wilson"
+  }
+}

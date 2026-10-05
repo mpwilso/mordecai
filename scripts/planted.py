@@ -220,6 +220,9 @@ def ferry_cases() -> list[dict]:
     return cases + [{"name": n, "prompt": p, "quiet": True} for n, p in quiet]
 
 
+COMMIT_PATTERN = r"^(feat|fix|docs|style|refactor|perf|test|build|ci|chore)(\([\w./-]+\))?!?: \S"
+
+
 def commit_cases() -> list[dict]:
     changes = [
         "renamed getUser to fetchUser and updated the three call sites",
@@ -232,7 +235,7 @@ def commit_cases() -> list[dict]:
         "cached the avatar URL to save a database query on every page view",
         "fixed a typo in the error message shown when login fails",
     ]
-    pattern = r"^(feat|fix|docs|style|refactor|perf|test|build|ci|chore)(\([\w./-]+\))?!?: \S"
+    pattern = COMMIT_PATTERN
     cases = [
         {
             "name": f"commit-{i + 1}",
@@ -417,6 +420,172 @@ def changelog_cases() -> list[dict]:
     return cases + [{"name": n, "prompt": p, "quiet": True} for n, p in quiet]
 
 
+# Validation set: written after the main set's results (docs/validation-skills.md) -------------
+
+V1_DESCRIPTION = (
+    "Use whenever a question is about a Python project's dependencies in this workspace: "
+    "adding, removing, upgrading or installing packages, or updating the lock file."
+)
+V1_BODY = """# Python dependencies
+
+Our Python projects manage dependencies with pip and requirements files. Always give these
+commands:
+
+- Add a package: add it to requirements.txt, then run `pip install -r requirements.txt`
+- Add a development package: add it to requirements-dev.txt, then run
+  `pip install -r requirements-dev.txt`
+- Remove a package: delete its line from requirements.txt, then run
+  `pip uninstall <package>`
+- Upgrade a package: `pip install --upgrade <package>`, then `pip freeze > requirements.txt`
+- Install everything: `pip install -r requirements.txt -r requirements-dev.txt`
+- Update the pinned versions: `pip freeze > requirements.txt`
+"""
+
+
+def v1_cases() -> list[dict]:
+    wrong = r"requirements|pip install|pip uninstall|pip freeze"
+
+    def right_not(right: str) -> str:
+        return rf"^(?![\s\S]*({wrong}))[\s\S]*({right})"
+
+    asks = [
+        ("add-requests", "add the requests package as a dependency", r"uv add requests"),
+        (
+            "add-dev",
+            "add pytest-cov as a development dependency",
+            r"uv add (--dev |--group dev )pytest-cov|uv add pytest-cov (--dev|--group dev)",
+        ),
+        ("remove", "remove the httpx dependency", r"uv remove httpx"),
+        (
+            "upgrade",
+            "upgrade the httpx dependency to its latest version",
+            r"uv (lock|sync) (--upgrade-package|-P) httpx|uv add (--upgrade |-U )?httpx",
+        ),
+        ("install-all", "install all of the project's dependencies", r"uv sync"),
+        (
+            "add-pinned",
+            "add the rich package as a dependency, version 13 or newer",
+            r"uv add [^\n]*rich>=13",
+        ),
+        ("add-numpy", "add the numpy package as a dependency", r"uv add numpy"),
+        (
+            "relock",
+            "update the lock file after editing the dependencies in pyproject.toml",
+            r"uv lock",
+        ),
+        (
+            "add-dev-mypy",
+            "add mypy as a development dependency",
+            r"uv add (--dev |--group dev )mypy|uv add mypy (--dev|--group dev)",
+        ),
+    ]
+    cases = [
+        {
+            "name": f"deps-{name}",
+            "prompt": f"Look at the project in the current directory and tell me the exact "
+            f"command to {what}. Reply with only the answer.",
+            "pattern": right_not(right),
+            "scaffold": True,
+        }
+        for name, what, right in asks
+    ]
+    quiet = [
+        ("pip-freeze", "What does pip freeze do? One sentence."),
+        ("venv", "What is a Python virtual environment? Two sentences."),
+        (
+            "miles-km",
+            "Convert 5 miles to kilometers, rounded to two decimal places. Reply "
+            "with just the number.",
+        ),
+    ]
+    return cases + [{"name": n, "prompt": p, "quiet": True} for n, p in quiet]
+
+
+# The V2 pilot: candidate commit-message cases, run once each with no skill at all, to find
+# cases whose baseline is neither always passing nor always failing.
+V2_POOL = [
+    ("ci-workflow", "added a GitHub Actions workflow that runs the tests on every push"),
+    ("readme-link", "fixed the broken link to the contributing guide in the README"),
+    ("bump-pytest", "upgraded the pytest dev dependency from 7.4 to 8.2"),
+    ("csv-tests", "added tests for the CSV export edge cases"),
+    ("docstring-typo", "corrected the spelling of recieve in three docstrings"),
+    ("empty-config", "fixed the crash when the config file is empty"),
+    ("editorconfig", "added an .editorconfig file so editors use four-space indentation"),
+    ("verbose-docs", "documented the new --verbose flag in the CLI help text"),
+    ("unpin-black", "removed the pinned version of black from the dev requirements"),
+    ("flaky-retry", "fixed flaky timing in the retry test by mocking the clock"),
+]
+
+
+def commit_prompt(change: str) -> str:
+    return (
+        f"Write a git commit message for this change: I {change}. Reply with only the commit "
+        "message."
+    )
+
+
+def pilot_files() -> dict[Path, str]:
+    base = ROOT / "evals" / "pilot" / "v2-candidates"
+    files = {
+        base / ".claude-plugin" / "plugin.json": json.dumps(
+            {
+                "name": "v2-pilot",
+                "version": "1.0.0",
+                "description": "No skills: a baseline pilot for the V2 placebo's cases.",
+                "author": {"name": "Matt Wilson"},
+            },
+            indent=2,
+        )
+        + "\n",
+    }
+    for name, change in V2_POOL:
+        d = base / "evals" / name
+        files[d / "prompt.md"] = (
+            f"---\nname: {name}\nmax_turns: 4\nallowed_tools: {TOOLS}\n---\n\n"
+            f"{commit_prompt(change)}\n"
+        )
+        files[d / "graders" / "outcome.md"] = (
+            f"---\ntype: regex\npattern: '{COMMIT_PATTERN}'\nflags: m\n---\n"
+        )
+    return files
+
+
+V2_FILLER_BODY = """# Commit messages
+
+Write commit messages that a teammate can understand later. Say what changed in plain words,
+and keep the message short.
+"""
+
+# Chosen by the rule fixed before the pilot ran: the four suite-2 cases whose three baseline
+# runs disagreed (commit-2, commit-4, commit-5, commit-6), then pilot candidates whose one run
+# passed, in pool order, then pilot candidates that failed, in pool order, up to nine cases.
+# No candidate passed its pilot run (evals/results/v2-pilot, $0.25), so the last five are the
+# first five of the pool.
+V2_FROM_SUITE_2 = [
+    ("commit-2", "fixed an off-by-one error in the pagination helper that skipped the last page"),
+    ("commit-4", "updated the README with the new install steps"),
+    ("commit-5", "bumped the requests dependency from 2.31 to 2.32"),
+    ("commit-6", "added unit tests for the date parsing utility"),
+]
+
+
+def v2_cases() -> list[dict]:
+    chosen = V2_FROM_SUITE_2 + V2_POOL[:5]
+    cases = [
+        {"name": name, "prompt": commit_prompt(change), "pattern": COMMIT_PATTERN, "flags": "m"}
+        for name, change in chosen
+    ]
+    quiet = [
+        ("rebase", "What does git rebase do? Two sentences."),
+        (
+            "log-oneline",
+            "How do I see the last five commits, one line each? Reply with only the command.",
+        ),
+        ("percent", "What's 15% of 240? Reply with just the number."),
+    ]
+    return cases + [{"name": n, "prompt": p, "quiet": True} for n, p in quiet]
+
+
 # Suites ----------------------------------------------------------------------------------------
 
 SUITES = [
@@ -486,6 +655,24 @@ SUITES = [
         changelog_cases,
         None,
     ),
+    (
+        "validation/v1-outdated",
+        "validation-outdated",
+        "python-dependencies",
+        V1_DESCRIPTION,
+        V1_BODY,
+        v1_cases,
+        None,
+    ),
+    (
+        "validation/v2-noisy-placebo",
+        "validation-noisy-placebo",
+        "commit-helper",
+        "Use when writing a git commit message.",
+        V2_FILLER_BODY,
+        v2_cases,
+        None,
+    ),
 ]
 
 
@@ -546,6 +733,7 @@ def outputs() -> dict[Path, str]:
     files = {}
     for suite in SUITES:
         files.update(suite_files(*suite))
+    files.update(pilot_files())
     return files
 
 
