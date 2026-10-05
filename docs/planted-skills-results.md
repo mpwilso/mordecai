@@ -14,6 +14,7 @@ The ceiling for this check is $35. Before each run, the spend so far plus that r
 | 2 | 5a-twin | claude-haiku-4-5-20251001 | $3 | $1.26 | $2.72 |
 | 3 | 5b-filler | claude-haiku-4-5-20251001 | $3 | $1.45 | $4.17 |
 | 4 | 2-commits | claude-haiku-4-5-20251001 | $3 | $1.32 | $5.49 |
+| 5 | 3-outdated | claude-haiku-4-5-20251001 | $5 | $1.58 | $7.07 |
 
 Not counted above: the one-case run on 2026-10-05 that captured the result format ($0.07, before this check).
 
@@ -25,6 +26,7 @@ Not counted above: the one-case run on 2026-10-05 that captured the result forma
 | 5a-twin | Not Helps, not Hurts (acceptable: No effect, Inconclusive) | Already handled | False-positive test: pass. Acceptable set: miss | 0 / 9 / 0 | 100% / 100% | 15 of 27; 0 of 9 quiet | $1.26 | 2026-10-05 22:18 |
 | 5b-filler | Not Helps, not Hurts (acceptable: No effect, Inconclusive) | No effect | Match | 0 / 9 / 0 | 0% / 0% | 27 of 27; 0 of 9 quiet | $1.45 | 2026-10-05 22:21 |
 | 2-commits | Already handled | Helps | Miss | 9 / 0 / 0 | 96% / 19% | 27 of 27; 0 of 9 quiet | $1.32 | 2026-10-05 22:26 |
+| 3-outdated | Hurts | Already handled | Miss | 1 / 6 / 2 | 78% / 93% | 6 of 27; 0 of 9 quiet | $1.58 | 2026-10-05 22:31 |
 
 ## Pilot sanity checks (suite 1)
 
@@ -45,3 +47,12 @@ All three held, so the main set continued.
 **2-commits: Helps, a miss.** Predicted Already handled. The card says the skill raised the score by 78 points (interval +59 to +96), with every case better. [Card](planted-results/2-commits.card.json).
 
 Diagnosis: **case design problem**, specifically a wrong premise about the model, not run noise and not a rule problem. The skill was planted as "something the model already does", but Haiku 4.5 doesn't default to Conventional Commits. Without the skill it wrote a clean imperative summary and no type prefix in 22 of 27 runs, for example "Rename getUser to fetchUser" (commit-1, all three runs), "Remove unused legacy_auth module" (commit-7, all three) and "Fix typo in login failure error message" (commit-9, all three). Only 5 of 27 baseline runs used a type prefix (commit-2, commit-4 twice, commit-5, commit-6). The rules read those numbers correctly: a 19% baseline is nowhere near the 90% ceiling, and every case improved. The prediction in planted-skills.md named this risk. One with-skill failure was the grader being strict rather than the model being wrong: commit-6 run 3 wrote `test(date parsing): ...`, with a space in the scope, which the scope pattern `[\w./-]+` doesn't allow. That cost one run out of 27 and doesn't change the verdict.
+
+**3-outdated: Already handled, a miss.** Predicted Hurts. The card says the model scored 93% without the skill and 78% with it, a change of -15 points with an interval of -41 to +7. [Card](planted-results/3-outdated.card.json).
+
+Diagnosis: **two causes, a case design problem and a verdict rule problem, plus a little run noise.**
+
+- **Case design: the skill rarely fired.** It fired in 6 of 27 runs that needed it, all on the three dependency cases: repo-add-dep 3 of 3, repo-add-dev-dep 2 of 3, repo-install 1 of 3. On the other six cases (tests, lint, format, autofix, one-file, python) it never fired. The model read the README, Makefile and pyproject.toml and answered from them. The prompts start "Look at the project in the current directory", which points the model at the files rather than at the skill.
+- **When it fired, it did harm.** In 5 of the 6 runs where it fired, the model gave the outdated answer. repo-add-dep, all three with-skill runs: "Add `requests` to requirements.txt, then run `pip install -r requirements.txt`". All three baseline runs: `uv add requests`. repo-add-dev-dep, the two runs where it fired: "Add `pytest-cov` to `requirements-dev.txt`, then run `pip install -r requirements-dev.txt`". The third with-skill run didn't fire, and answered `uv add --group dev pytest-cov`. The one fired run that passed was repo-install run 2, which answered `uv sync`, trusting the repo over the skill. So: 1 of 6 fired runs passed, against 25 of 27 baseline runs on the same nine cases.
+- **Verdict rule problem.** The Already handled rule checks only that the interval rules out a gain of 10 points (+7 < +10). It doesn't check that the interval rules out a loss. Here the interval runs down to -41, two of nine cases went from always right to mostly wrong, and the card still uses a calm label. Its advice ("Remove it, or add cases where the model fails without it") happens to be right, but the label hides the harm. Hurts was correctly not called: the interval reaches +7, so the whole interval isn't below zero. A proposed change is in the review queue, to be tested only on the holdouts.
+- **Run noise:** repo-one-file is the one "better" case. Both arms split between `pytest tests/test_tally.py` and `uv run pytest tests/test_tally.py`, and the skill never fired there. With 2 of 3 against 1 of 3, it counts as better by chance.

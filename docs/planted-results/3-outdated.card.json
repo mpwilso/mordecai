@@ -1,0 +1,76 @@
+{
+  "card": 1,
+  "hashes": {
+    "cases": "sha256:297e50881ea60ebcfd6af5fb91c3077de10ef56c08a745dda8709f126a05c80b",
+    "result": "sha256:9ce219e12de52e42c7b6717ea8ac7b0caf9761010c82ccf801bf95caa75671b5",
+    "skill": "sha256:9bf162cf9ff8414c8904634fb999b74fb2b3c0d181dad1564eb72d140157d02c"
+  },
+  "mordecai": "0.1.0",
+  "numbers": {
+    "casesCompared": 9,
+    "change": -0.14814814814814817,
+    "costPerRunWith": 0.02345052222222222,
+    "costPerRunWithout": 0.024980422222222225,
+    "fired": [
+      6,
+      27
+    ],
+    "flat": 6,
+    "improved": 1,
+    "interval": [
+      -0.4074,
+      0.0741
+    ],
+    "misfired": [
+      0,
+      9
+    ],
+    "turnsPerRunWith": 4.555555555555555,
+    "turnsPerRunWithout": 5.222222222222222,
+    "withScore": 0.7777777777777778,
+    "withoutScore": 0.925925925925926,
+    "worse": 2
+  },
+  "paths": {
+    "caseDirs": [
+      "evals/init-py",
+      "evals/km-miles",
+      "evals/repo-add-dep",
+      "evals/repo-add-dev-dep",
+      "evals/repo-autofix",
+      "evals/repo-format",
+      "evals/repo-install",
+      "evals/repo-lint",
+      "evals/repo-one-file",
+      "evals/repo-python",
+      "evals/repo-tests",
+      "evals/stash"
+    ],
+    "casesRoot": "evals/planted/3-outdated",
+    "skill": "evals/planted/3-outdated"
+  },
+  "reason": "The model scored 93% without the skill, and the 90% interval (-41 to +7 points) rules out a gain of 10 points.",
+  "rules": {
+    "ceiling": 0.9,
+    "confidence": 0.9,
+    "min_cases": 5,
+    "min_effect": 0.1,
+    "resamples": 2000,
+    "seed": 0
+  },
+  "subject": {
+    "plugin": "planted-outdated",
+    "skills": [
+      "python-project-commands"
+    ],
+    "version": "1.0.0"
+  },
+  "tested": {
+    "claudeVersion": "2.1.289",
+    "judgeModel": "claude-haiku-4-5-20251001",
+    "model": "claude-haiku-4-5-20251001",
+    "startedAt": "2026-10-05T22:31:22.906Z"
+  },
+  "verdict": "already-handled",
+  "warnings": []
+}
