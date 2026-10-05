@@ -1,0 +1,7 @@
+---
+name: repo-add-dep
+max_turns: 8
+allowed_tools: [Read, Glob, Grep, Skill]
+---
+
+Look at the project in the current directory and tell me the exact command to add the requests library as a dependency. Reply with only the answer.

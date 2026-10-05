@@ -1,0 +1,8 @@
+{
+  "name": "planted-commits",
+  "version": "1.0.0",
+  "description": "Planted skill: commit-messages.",
+  "author": {
+    "name": "Matt Wilson"
+  }
+}

@@ -126,30 +126,19 @@ def _problems(suite: Suite) -> list[str]:
     return problems
 
 
-def _warnings(suite: Suite, effect: list[Case], skill_names: list[str], rules: Rules):
+def case_warnings(
+    cases: list[Case], effect: list[Case], run_counts: list[int], skill_names: list[str]
+) -> list[str]:
+    """Warnings about the cases themselves, which `mordecai lint` also runs on case files
+    before an eval. run_counts holds the runs per side for each effect case."""
     warnings = []
-    model = suite.model or ""
-    if not model.startswith("claude-"):
-        shown = model or "Claude Code's default"
-        warnings.append(
-            f"The model was {shown}, not a pinned model ID, so a later model can change "
-            "this result without anything in the card changing. Pass --model with a full ID."
-        )
-    runs = [r for c in suite.cases for r in c.with_runs + c.without_runs]
-    errored = sum(1 for r in runs if r.error and not LIMIT_ERROR.search(r.error))
-    if errored:
-        warnings.append(
-            f"{errored} of {len(runs)} runs ended with an error. They were graded on what "
-            "they produced."
-        )
-    # Counted from the runs themselves: --runs overrides the case's own runs setting.
-    few = sorted({n for c in effect if (n := min(len(c.with_runs), len(c.without_runs))) < 3})
+    few = sorted({n for n in run_counts if n < 3})
     if few:
         warnings.append(
             f"Some cases ran {few[0]} time(s) per side. The interval leans on repeat runs; "
             "use at least 3."
         )
-    if not any(c.trigger == "should-not-fire" for c in suite.cases):
+    if not any(c.trigger == "should-not-fire" for c in cases):
         warnings.append(
             "No case checks that the skill stays quiet when it isn't needed. Add one with a "
             "tool_used Skill grader, min: 0, max: 0 and arm: both."
@@ -171,6 +160,28 @@ def _warnings(suite: Suite, effect: list[Case], skill_names: list[str], rules: R
             f"{len(named)} case prompt(s) name the skill ({', '.join(named[:3])}). That tests "
             "whether the model follows an instruction, not whether it finds the skill."
         )
+    return warnings
+
+
+def _warnings(suite: Suite, effect: list[Case], skill_names: list[str], rules: Rules):
+    warnings = []
+    model = suite.model or ""
+    if not model.startswith("claude-"):
+        shown = model or "Claude Code's default"
+        warnings.append(
+            f"The model was {shown}, not a pinned model ID, so a later model can change "
+            "this result without anything in the card changing. Pass --model with a full ID."
+        )
+    runs = [r for c in suite.cases for r in c.with_runs + c.without_runs]
+    errored = sum(1 for r in runs if r.error and not LIMIT_ERROR.search(r.error))
+    if errored:
+        warnings.append(
+            f"{errored} of {len(runs)} runs ended with an error. They were graded on what "
+            "they produced."
+        )
+    # Counted from the runs themselves: --runs overrides the case's own runs setting.
+    counts = [min(len(c.with_runs), len(c.without_runs)) for c in effect]
+    warnings += case_warnings(suite.cases, effect, counts, skill_names)
     return warnings
 
 

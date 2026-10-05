@@ -11,6 +11,7 @@ from pathlib import Path
 
 from mordecai import __version__
 from mordecai.card import CardError, build, check, to_json
+from mordecai.lint import lint
 from mordecai.render import crawl, markdown, plain
 from mordecai.result import ResultError, load
 from mordecai.verdict import VERDICTS
@@ -48,6 +49,8 @@ def _parser() -> argparse.ArgumentParser:
     c.add_argument("card", type=Path)
     c.add_argument("--skill", type=Path, help="the plugin directory, if it has moved")
     c.add_argument("--cases-root", type=Path, help="the directory holding the cases, if moved")
+    lt = sub.add_parser("lint", help="run the case-quality warnings on a plugin's eval cases")
+    lt.add_argument("plugin", type=Path, nargs="+", help="plugin directories")
     return p
 
 
@@ -106,9 +109,25 @@ def check_card(args, out) -> int:
     return 1
 
 
+def lint_plugins(args, out) -> int:
+    worst = 0
+    for plugin in args.plugin:
+        files, warnings = lint(plugin)
+        quiet = sum(1 for f in files if f.case.trigger == "should-not-fire")
+        out.write(
+            f"{plugin}: {len(files)} cases ({len(files) - quiet} compared, {quiet} quiet), "
+            f"{len(warnings)} warning(s)\n"
+        )
+        out.write("".join(f"  - {w}\n" for w in warnings))
+        worst = max(worst, 1 if warnings else 0)
+    return worst
+
+
 def main(argv: list[str] | None = None, out=None) -> int:
     args = _parser().parse_args(argv)
     out = out or sys.stdout
     if args.command == "identify":
         return identify(args, out)
+    if args.command == "lint":
+        return lint_plugins(args, out)
     return check_card(args, out)

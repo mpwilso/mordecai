@@ -67,7 +67,7 @@ class Suite:
     cases: tuple[Case, ...]
 
 
-def _skill_graders(case: dict) -> tuple[set[str], set[str]]:
+def skill_graders(case: dict) -> tuple[set[str], set[str]]:
     """Names of the case's tool_used graders on the Skill tool: those that expect it to fire,
     and those that expect it not to (max: 0)."""
     fire, silent = set(), set()
@@ -107,7 +107,7 @@ def _run(raw: dict, fire: set[str], silent: set[str], arm: str) -> Run:
 def _case(raw: dict) -> Case:
     if not raw.get("name"):
         raise ResultError("a case has no name")
-    fire, silent = _skill_graders(raw)
+    fire, silent = skill_graders(raw)
     trigger = "should-not-fire" if silent else "should-fire" if fire else "unmeasured"
     arms = raw.get("arms") or {}
     return Case(
