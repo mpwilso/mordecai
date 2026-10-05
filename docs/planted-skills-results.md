@@ -118,7 +118,7 @@ Predictions: [validation-skills.md](validation-skills.md) for V1 and V2 (committ
 | Suite | Predicted | Actual | Match | Better / same / worse | With / without | Fired | Run agreement | Cost | Run (UTC) |
 |---|---|---|---|---|---|---|---|---|---|
 | V1 v1-outdated | Hurts | Inconclusive | Miss | 0 / 7 / 2 | 85% / 96% | 1 of 27; 0 of 9 quiet | 22 of 24 cells | $1.54 | 2026-10-05 23:37 |
-| V2 v2-noisy-placebo | Not Helps, not Hurts | **Hurts** | **Miss: false-positive test failed** | 0 / 3 / 6 | 0% / 37% | 27 of 27; 0 of 9 quiet | 19 of 24 cells | $1.23 | 2026-10-05 23:42 |
+| V2 v2-noisy-placebo | Not Helps, not Hurts | **Hurts** | **Design defect: not an inert placebo** (first recorded as "Miss: false-positive test failed") | 0 / 3 / 6 | 0% / 37% | 27 of 27; 0 of 9 quiet | 19 of 24 cells | $1.23 | 2026-10-05 23:42 |
 
 **V1 v1-outdated: Inconclusive, a miss.** The card reads: "The model scored 96% without the skill, but the 90% interval (-26 to +0 points) doesn't rule out a loss of 10 points." [Card](planted-results/v1-outdated.card.json).
 
@@ -129,6 +129,8 @@ Diagnosis: **case design problem (the trigger), plus run noise. Not a rule probl
 - **The 0.2.0 rule did what it was changed to do.** Under the 0.1.0 rules this card would have read Already handled: a 96% baseline, and an interval top of +0, under +10. Under 0.2.0 it reads Inconclusive, because the interval reaches -26. Hurts was not called, because the interval reaches exactly +0, and Hurts needs the whole interval below zero.
 
 No case file has a defect that justifies a second attempt, so V1 is not rerun.
+
+**Relabeled after review: V2 is a design defect, not a placebo result.** Its text ("Say what changed in plain words") is an instruction that changes behavior, not inert filler. The result, 10 of 27 runs with a Conventional Commits prefix without the skill and 0 of 27 with it, is a real effect, and the rules read it correctly. **V2 therefore did not test whether an inert placebo stays out of Helps and Hurts on noisy runs.** V3 does that. The original result, card and wording follow unchanged.
 
 **V2 v2-noisy-placebo: Hurts, so the false-positive test failed. This is a stop condition, and the check stopped here.** The card reads: "The skill lowered the score: 90% interval -59 to -15 points", with 0% with the skill against 37% without, 6 cases worse and none better. [Card](planted-results/v2-noisy-placebo.card.json).
 

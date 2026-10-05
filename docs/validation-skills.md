@@ -25,6 +25,8 @@ The verdict rules are the 0.2.0 rules, frozen at commit 03d2619. That commit cha
 
 ## V2: a filler placebo on a noisy task (`v2-noisy-placebo`, skill `commit-helper`)
 
+> **Relabeled after the run: a design defect.** The body below says "Say what changed in plain words", which is a behavior-changing instruction, not inert filler. Without the skill, 10 of 27 runs used a Conventional Commits prefix. With it, 0 of 27 did. That is a real effect, and the rules read it correctly as Hurts. V2 did not test whether an inert placebo stays out of Helps and Hurts on noisy runs. V3, below, is that test. The text of this section is otherwise as it was committed before the run.
+
 **Prediction: not Helps, not Hurts.** No effect or Inconclusive are both acceptable, and so is Already handled.
 
 **The setup.** The skill fires on commit messages, as suite 2's skill did 27 of 27 times. Its body is generic advice with nothing about format. The grader is suite 2's Conventional Commits pattern, which Haiku 4.5 met in only 5 of 27 runs without a skill, and not consistently within a case.
