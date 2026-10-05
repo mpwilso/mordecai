@@ -586,6 +586,16 @@ def v2_cases() -> list[dict]:
     return cases + [{"name": n, "prompt": p, "quiet": True} for n, p in quiet]
 
 
+# V3: an inert placebo on V2's cases. Facts only, unrelated to commits or to anything the
+# graders check. tests/test_planted.py enforces the inertness criterion in
+# docs/validation-skills.md.
+V3_BODY = """# Background
+
+The team behind this repository was formed in 2019 and has six people. Its weekly planning
+meeting is on Tuesdays at 10:00. The office is on the fourth floor, next to the kitchen.
+"""
+
+
 # Suites ----------------------------------------------------------------------------------------
 
 SUITES = [
@@ -670,6 +680,15 @@ SUITES = [
         "commit-helper",
         "Use when writing a git commit message.",
         V2_FILLER_BODY,
+        v2_cases,
+        None,
+    ),
+    (
+        "validation/v3-inert-placebo",
+        "validation-inert-placebo",
+        "team-background",
+        "Use when writing a git commit message.",
+        V3_BODY,
         v2_cases,
         None,
     ),

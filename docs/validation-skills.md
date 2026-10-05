@@ -50,3 +50,23 @@ All 10 candidates failed their single run, so the last 5 are the first 5 of the 
 ## The sealed holdouts
 
 After V1 and V2, the two original holdout suites run exactly once each. Both were written and committed in 6c37ff9, before any result existed: `holdout/6-convention`, predicted Helps, and `holdout/7-filler`, predicted not Helps and not Hurts. Their predictions are in [planted-skills.md](planted-skills.md) and are not changed here. They run under the 0.2.0 rules. The rule change can't alter either prediction: one expects a large gain, and the other a placebo with a failing baseline.
+
+## V3: an inert placebo on V2's cases (`v3-inert-placebo`, skill `team-background`)
+
+Written after V2's result, to run the test V2 was meant to be.
+
+**The setup.** These are V2's 12 cases with the same prompts and the same outcome graders, reused without a new pilot. Only the skill differs. Its description, "Use when writing a git commit message.", is the same as V2's and suite 2's, so it should fire as theirs did, 27 of 27. Its body is three facts that have nothing to do with commits: the team formed in 2019 and has six people, it plans on Tuesdays at 10:00, and the office is on the fourth floor next to the kitchen.
+
+**Inertness criterion**, enforced by `test_v3_is_inert` in tests/test_planted.py:
+- Every sentence in the body is a statement of fact, not an instruction.
+- The body uses none of these words: commit, message, git, write, format, style, tone, short, long, length, prefix, type, word, plain, brief, clear, concise, summary, describe, should, must, always, never, use, keep, say, avoid, prefer, conventional, feat, fix, chore, docs.
+- The facts are unrelated to anything the graders check.
+
+The folder-layout example was passed over because folder names such as `api/` could suggest a commit scope.
+
+**Prediction: not Helps, not Hurts.** If the skill changes nothing, both sides should look like V2's baseline: about 10 of 27 runs with a prefix, varying within cases. That leaves the interval too wide to call, or near zero. Inconclusive and No effect are the likely verdicts. Already handled is acceptable but unlikely, given a baseline around 37%.
+
+**Pass criterion.**
+- **V3 must not be called Helps or Hurts.** If it is, that is a real false positive. It will be recorded prominently, the rules will not change, and the remaining steps will continue.
+- **The fire rate is reported with the result.** If the skill fires in fewer than half the runs that needed it, the test is weak and is reported that way.
+- **Merely opening a skill could shift the output.** In V2, runs with the skill took about 3 turns against 1.2 without, so firing changes the conversation even when the body says nothing. If V3 moves anyway, that effect is a finding about firing, not about the skill's text.

@@ -49,3 +49,56 @@ def test_patterns_survive_yaml_single_quotes():
         if path.name == "outcome.md":
             pattern = text.split("pattern: '", 1)[1].rsplit("'\n", 1)[0]
             assert "'" not in pattern, path
+
+
+# The inertness criterion for V3 (docs/validation-skills.md): no instruction of any kind, and
+# none of these words, which name or steer what a commit message looks like.
+STEERING = {
+    "commit",
+    "commits",
+    "message",
+    "messages",
+    "git",
+    "write",
+    "writing",
+    "format",
+    "style",
+    "tone",
+    "short",
+    "long",
+    "length",
+    "prefix",
+    "type",
+    "word",
+    "words",
+    "plain",
+    "brief",
+    "clear",
+    "concise",
+    "summary",
+    "describe",
+    "should",
+    "must",
+    "always",
+    "never",
+    "use",
+    "keep",
+    "say",
+    "avoid",
+    "prefer",
+    "conventional",
+    "feat",
+    "fix",
+    "chore",
+    "docs",
+}
+
+
+def test_v3_is_inert():
+    import re
+
+    body = planted.V3_BODY.lower()
+    words = set(re.findall(r"[a-z]+", body))
+    assert words & STEERING == set()
+    for sentence in re.split(r"(?<=\.)\s+", planted.V3_BODY.split("\n", 2)[2].strip()):
+        assert sentence.split()[0] in {"The", "Its"}, sentence
