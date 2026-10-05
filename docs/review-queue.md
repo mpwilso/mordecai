@@ -1,121 +1,69 @@
-# Review queue: the planted skills check
+# Review queue: the planted skills check, stage 2
 
-Written 2026-10-05, after the main set and the drift demo. The holdouts have not run. Details for every suite: [planted-skills-results.md](planted-skills-results.md). The predictions, committed before any run: [planted-skills.md](planted-skills.md) (6c37ff9).
+Written 2026-10-05. **Stopped on a listed stop condition:** the V2 placebo was called Hurts. Everything below is committed and nothing is pushed. Details: [planted-skills-results.md](planted-skills-results.md). Predictions for V1 and V2: [validation-skills.md](validation-skills.md).
 
-## 1. Scorecard
+## Where things stand
 
-All on `claude-haiku-4-5-20251001`, 9 compared cases and 3 quiet cases per suite, 3 runs per side.
+| Step | Status |
+|---|---|
+| 1. Relative paths in cards | Done (4943c2f). Only `paths` changed in the seven cards. No absolute local path, token or key in any tracked file. |
+| 2. Rule change, 0.2.0 | Done (03d2619). Only suite 3 moves, from Already handled to Inconclusive, shown in a post-hoc section. |
+| 3. Simulation recalibration | Done (d7dafe8). Real runs matched the 94% agreement setting. The +20 point finding survives. |
+| 4. Validation suites | V1 and V2 written, predicted (f848767) and run. **Stopped after V2.** The sealed holdouts did not run. |
+| 5. Suite 2 on Sonnet | Not run. |
+| 6. `check --model` | Not started. |
+| 7. README rewrite | Not started. |
 
-| Skill | Predicted | Actual | | Better / same / worse | With / without |
-|---|---|---|---|---|---|
-| 1. Made-up convention | Helps | Helps | Match | 9 / 0 / 0 | 100% / 0% |
-| 2. Conventional Commits | Already handled | Helps (+78, interval +59 to +96) | **Miss** | 9 / 0 / 0 | 96% / 19% |
-| 3. Outdated rule | Hurts | Already handled (-15, interval -41 to +7) | **Miss** | 1 / 6 / 2 | 78% / 93% |
-| 4. Vague description | Never fired | Never fired (0 of 27) | Match | 0 / 9 / 0 | 0% / 0% |
-| 5a. Twin placebo | Not Helps or Hurts | Already handled | Match on the hard rule; outside your acceptable set | 0 / 9 / 0 | 100% / 100% |
-| 5b. Filler placebo | Not Helps or Hurts | No effect | Match | 0 / 9 / 0 | 0% / 0% |
+## Scorecard for the new suites (Haiku 4.5, 0.2.0 rules)
 
-**3 of the 5 skills matched, and 2 missed. By the criterion written in advance, the check fails.**
+| Suite | Predicted | Actual | | Better / same / worse | With / without | Fired |
+|---|---|---|---|---|---|---|
+| V1 outdated rule that fires | Hurts | Inconclusive (-11, interval -26 to +0) | Miss | 0 / 7 / 2 | 85% / 96% | 1 of 27 |
+| V2 noisy placebo | Not Helps or Hurts | **Hurts** (-37, interval -59 to -15) | **Miss, stop** | 0 / 3 / 6 | 0% / 37% | 27 of 27 |
 
-- **Miss 2 is a prediction miss, not a rule miss.** Without the skill, Haiku writes "Rename getUser to fetchUser", not "refactor: ...". It used a type prefix in only 5 of 27 baseline runs. Helps is the correct reading.
-- **Miss 3 is two things.**
-  - *Case design:* the skill fired in only 6 of 27 runs, because the prompts sent the model to the repo's files.
-  - *Rule weakness:* when the skill did fire, 5 of 6 runs gave the outdated answer, for example `pip install -r requirements.txt` instead of `uv add requests`. Already handled only checks that the interval rules out a gain, not a loss, so the card used a calm label for a −15 estimate whose interval reaches −41.
+**V1 didn't test what it was built to test.** The skill fired in only 1 of 27 runs, even though its description names every dependency task. Haiku answered from pyproject.toml and uv.lock without opening the skill. The 2 worse cases came from runs where the skill never fired. The new rule did its job: under 0.1.0 this card would have said Already handled, and under 0.2.0 it says Inconclusive.
 
-## 2. False positives on the placebos
+**V2 was not a placebo, and that's my design error.** Its body says "Say what changed in plain words". The grader looks for a Conventional Commits prefix. With the skill, all 27 runs wrote plain messages such as "Upgrade pytest from 7.4 to 8.2". Without it, 10 of 27 used a prefix such as "chore: upgrade pytest from 7.4 to 8.2". That is a real, consistent effect, and Hurts reads it correctly.
 
-Neither placebo was called Helps or Hurts. But both were weak tests:
+## The false-positive picture
 
-- **Twin (5a):** every run passed on both sides.
-- **Filler (5b):** every run failed on both sides.
+- **No placebo has yet produced a false call from noise.** 5a and 5b had no noise at all. V2 had noise on the baseline side (19 of 24 cells agreed), but its Hurts came from a real effect.
+- **So the open question is the same as before:** does a truly inert skill on a noisy task stay out of Helps and Hurts? It still hasn't been tested on real runs.
+- The simulation says it should, but only because real runs mostly agree: no false calls at 94% agreement, against up to 4% with independent coin flips.
 
-So the change was exactly 0 with no variation at all, and there was no noise for the rules to mistake for an effect. **What we know:** the rules don't invent an effect from nothing. **What we don't know yet:** whether they hold steady on a placebo whose runs disagree.
+## Spend
 
-The twin landed on Already handled, which I flagged before it ran: its baseline had the convention in the system prompt.
+| | Cost |
+|---|---|
+| Stage 1 (seven runs) | $10.83 |
+| Stage 2: V2 pilot | $0.25 |
+| Stage 2: V1 | $1.54 |
+| Stage 2: V2 | $1.23 |
+| **Total** | **$13.85**, against the $22.83 ceiling ($3.02 of the stage's $12) |
 
-## 3. Spend
+**Haiku vs Sonnet:** only suite 1 has run on both, and its verdict didn't move (Helps, +100 on both). Suite 2 on Sonnet, the comparison that could show drift, has not run.
 
-$10.83 of the $35 ceiling. No run hit its cap, and no card was partial or Invalid.
+## Decisions for you
 
-| Suite | Model | Cap | Cost |
-|---|---|---|---|
-| 1-convention | Haiku 4.5 | $3 | $1.47 |
-| 5a-twin | Haiku 4.5 | $3 | $1.26 |
-| 5b-filler | Haiku 4.5 | $3 | $1.45 |
-| 2-commits | Haiku 4.5 | $3 | $1.32 |
-| 3-outdated | Haiku 4.5 | $5 | $1.58 |
-| 4-vague | Haiku 4.5 | $3 | $1.99 |
-| 1-convention, drift demo | Sonnet 5.5 (`claude-sonnet-5-5`) | $6 | $1.77 |
+1. **How to treat V2. Recommendation: accept it as a placebo design error, not a rule failure, and run a truly inert placebo (V3).** V3 would use the same commit cases with a body that says nothing about style or format, for example a short note about the team's history. That would also show whether merely firing a skill shifts behavior. Predictions would be committed first. About $1.30 (cap $3).
+2. **Holdouts. Recommendation: run both now, once each, under the frozen 0.2.0 rules.** Nothing in V1 or V2 touches them. Holdout 7's filler also says to "describe what changed in plain language", but its grader checks a made-up format (`ZK-318 | web | ...`) that no run passes without the real skill, so that advice can't move its score. About $2.80 (caps $6).
+3. **V1's trigger problem. Recommendation: don't chase Hurts with another outdated-rule-in-a-repo skill.** It's a finding that Haiku rarely consults a skill when the repo already answers the question. If you want a Hurts check, plant a wrong rule on a task the model answers from memory, for example a unit-conversion skill with a wrong factor, so the skill is the only source it uses. About $1.30 (cap $3), with predictions committed first.
+4. **Suite 2 on Sonnet** (the drift demo): still worth running. The prediction would be committed first. About $1.80 (cap $3).
+5. **`check --model` and the README** (both free): do them after 1–4, so the README can report the final numbers.
+6. **Old absolute paths in git history. Recommendation: leave them.**
+   - They are 7 lines, the `casesRoot` field in the cards committed in ea8021a through 2c991f4, showing an absolute local path.
+   - They reveal the local username and folder layout, nothing secret. Your name is already in LICENSE.
+   - Rewriting before the first push is possible, since nothing is pushed. But it changes every commit hash from ea8021a on, and the docs cite those hashes (6c37ff9, 03d2619, f848767) as proof that predictions came before results.
+   - The options:
+     - **Leave them.** Free.
+     - **Rewrite and update every cited hash.** About an hour, and the commit order becomes your word rather than the hashes'.
+     - **Squash to one commit.** Loses the evidence entirely.
 
-**Haiku vs Sonnet on suite 1:** the verdict didn't move at all. Both cards say Helps, 100% vs 0%, +100, 9 better, fired 27 of 27. That's expected for a made-up convention no model can know, so suite 1 was the wrong suite for a drift demo.
+Doing 1 through 4 would cost about $7.20, leaving about $1.80 of the stage ceiling.
 
-The demo did show a real gap: `mordecai check` still called the Haiku card "Current" after the Sonnet run, because it compares only file hashes, never the model.
+## Ready to push?
 
-## 4. The simulation's +20 point finding
-
-**No, it didn't show up. This check didn't test it.**
-
-- No planted skill had an effect anywhere near +20. The effects were +100, +78, 0, 0, 0 and −15.
-- Real runs were far less noisy than the simulation assumes. All 3 runs agreed in 94% of case-and-side cells (136 of 144), against about 36% for the simulation's coin flips.
-- Verdicts were decided by how many cases changed, not by run-to-run noise. In 4 of the 6 cards with an interval, the interval collapsed to a single point.
-- The one moderate effect, −15 on suite 3, was not confirmed. Its interval of −41 to +7 was wide because 2 cases flipped completely while 6 didn't move, not because runs disagreed.
-
-So the simulation's warning about moderate effects probably still holds, but for a different reason than it models: spread between cases, not coin-flip noise. It needs a planted skill with a real moderate effect to check.
-
-## 5. Decisions for you
-
-1. **Run the holdouts now? I'd recommend not yet.**
-   - They are the two kinds the rules already got right with zero noise: a made-up convention and a filler placebo.
-   - None of the proposed changes would alter their verdicts, so they can't test change 2.
-   - Better: write and commit two more holdouts first. One is an outdated-rule skill whose description reliably fires; the other is a placebo on a noisy task (item 5). Then run all four holdouts once.
-   - Cost: about $6 projected on Haiku, caps totaling $12–14.
-   - Running the current two as they are would cost about $2.70 (caps $6), and it's a one-time run.
-2. **Rule change: Already handled must also rule out a loss** (lower bound above −10). Otherwise the verdict falls through to Inconclusive.
-   - Motivated by suite 3.
-   - I checked it against all seven cards with a throwaway script; the frozen rules weren't changed. It changes only suite 3, from Already handled to Inconclusive. It still wouldn't call suite 3 Hurts.
-   - Code and tests, $0. Needs a new holdout to test it (item 1).
-3. **Card addition, not a verdict rule.**
-   - A line for score when the skill fired against when it didn't. Suite 3: fired runs passed 1 of 6, unfired runs 20 of 21.
-   - A warning when the skill fired in fewer than half the runs that needed it.
-   - Diagnostic only, because the skill fires on particular cases, which confounds the comparison. $0.
-4. **`mordecai check --model`:** mark a card stale when the model differs from the one it was measured on. Motivated by the drift demo. $0.
-5. **Case design defects. I'd recommend no reruns.**
-   - Suite 3's prompts steer the model away from the skill. Rerunning with new prompts to chase Hurts would be fitting the case to the prediction, so put that into a new holdout instead.
-   - Suite 2 has no file defect; its premise was wrong for Haiku. Keep the result.
-   - Minor: one commit run failed only because of a space in the scope (`test(date parsing):`).
-   - Minor: 4 baseline runs hit the 4-turn cap; they would have scored 0 anyway. Use `max_turns: 6` in new suites.
-   - New: a **noisy placebo**, the filler skill on suite 2's commit cases, where the baseline is 19% and runs disagree. About $1.30 (cap $3).
-6. **More models: I'd recommend suite 2 on Sonnet 5.5** as the real drift demo. A stronger model might default to Conventional Commits, which would move the verdict toward Already handled. About $1.80 (cap $6). Opus isn't needed yet.
-
-Doing all of 1, 5 (noisy placebo) and 6 would cost about $9.50 projected, with about $24 of the ceiling left.
-
-## 6. README changes, drafted, not applied
-
-**Replace the line under the tagline** with:
-
-> v0.1: the verdict rules have been checked on six planted skills with real eval runs. Four got the predicted verdict; the two misses are written up.
-
-**Replace the Status paragraph's last two sentences** with:
-
-> It reads real eval results and writes a card. Its rules have been checked on simulated skills and on six planted skills run for real on Claude Haiku 4.5: four matched their predicted verdict and two missed. The misses, and what they say about the rules, are in [docs/planted-skills-results.md](docs/planted-skills-results.md).
-
-**Add to "How it was tested":**
-
-> - **Six planted skills, run for real**, with the predictions committed before any run ([docs/planted-skills.md](docs/planted-skills.md)). A made-up convention was called Helps, a skill with a vague description Never fired, and neither placebo was called Helps or Hurts. Two missed. A Conventional Commits skill was predicted Already handled and came out Helps, because Haiku 4.5 rarely uses the format unprompted (5 of 27 runs). An outdated-rule skill was predicted Hurts and came out Already handled: it gave the outdated answer in 5 of the 6 runs where it fired, but it fired in only 6 of 27. Total cost: $10.83.
-
-**Replace "That last row is the main thing the simulation taught me..."** with:
-
-> The simulation treats every run as a coin flip. Real runs weren't like that: in the planted check, all three runs agreed in 94% of cases. Verdicts turned on how many cases changed, not on noise between runs, and most intervals collapsed to a single point.
-
-**In "Known limits", replace the first bullet** ("Not yet checked against real runs...") with:
-
-> - **Already handled can hide harm.** It checks that a skill can't be adding 10 points, not that it isn't costing them. In the planted check, a skill that gave the wrong answer whenever it fired got Already handled, with an interval of -41 to +7.
-> - **Checked on one small model, with regex graders only.** The planted check ran on Claude Haiku 4.5, plus one suite on Sonnet 5.5. Judge-graded suites haven't been tried.
-> - **The placebos so far had no noise.** Every run agreed, so the rules haven't yet been tested on a placebo whose runs disagree.
-
-**Strengthen the staleness bullet** with: "A rerun on Sonnet 5.5 left the Haiku card marked current."
-
-**Stop claiming:**
-- "and not yet on planted skills with real runs" (Status).
-- What's next, item 2, "The planted skills check, run for real" (done). Replace it with "Run the holdout skills once, after any rule change is decided."
-- "An Inconclusive card usually means 'measure more'." It comes from the simulation, and no real card was Inconclusive. Keep it only as the simulation's finding.
+**No.**
+- The README still says "v0.1: the verdict rules have not yet been checked against real eval runs", while the code is 0.2.0 and two rounds of real runs exist. Step 7 fixes that.
+- The stop condition is still open, and needs your call on decision 1.
+- Decision 6 needs your call before the first push. After a push, rewriting history is much more disruptive.
