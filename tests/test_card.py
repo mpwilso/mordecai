@@ -123,3 +123,36 @@ def test_plain_mode_has_no_flavor():
         text = plain(card)
         for word in ("ACHIEVEMENT", "Mordecai:", "ENCHANTED", "CURSED", "dungeon"):
             assert word not in text
+
+
+def test_card_paths_are_relative_and_survive_a_move(tmp_path):
+    """A card stores no absolute paths: the skill is relative to the card's directory and the
+    cases' root to the skill. Moving the whole tree keeps the card checkable."""
+    tree = tmp_path / "repo"
+    skill = tree / "skills-under-test" / "probe"
+    shutil.copytree(FIXTURES / "probe", skill)
+    cards = tree / "docs" / "cards"
+    cards.mkdir(parents=True)
+    suite, data = load(FIXTURES / "probe-result.json")
+    text = to_json(build(suite, data, skill), cards)
+    doc = json.loads(text)
+    assert str(tmp_path) not in text
+    assert doc["paths"]["skill"] == "../../skills-under-test/probe"
+    assert doc["paths"]["casesRoot"] == "."
+    assert check(doc, cards) == []
+    moved = tmp_path / "elsewhere"
+    shutil.move(str(tree), str(moved))
+    assert check(doc, moved / "docs" / "cards") == []
+    (moved / "skills-under-test" / "probe" / "skills" / "team-signoff" / "SKILL.md").write_text("x")
+    assert check(doc, moved / "docs" / "cards") == [
+        "The skill's files changed since the card was written."
+    ]
+
+
+def test_an_old_card_with_absolute_paths_still_checks(tmp_path):
+    d = probe_copy(tmp_path)
+    suite, data = load(FIXTURES / "probe-result.json")
+    doc = json.loads(to_json(build(suite, data, d)))
+    doc["paths"]["skill"] = str(d)
+    doc["paths"]["casesRoot"] = str(d)
+    assert check(doc, tmp_path / "anywhere") == []

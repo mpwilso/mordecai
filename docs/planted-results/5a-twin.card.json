@@ -46,8 +46,12 @@
       "evals/pr-913",
       "evals/undo-commit"
     ],
-    "casesRoot": "evals/planted/5a-twin",
-    "skill": "evals/planted/5a-twin"
+    "casesRoot": ".",
+    "relativeTo": {
+      "casesRoot": "the skill directory",
+      "skill": "the card's directory"
+    },
+    "skill": "../../evals/planted/5a-twin"
   },
   "reason": "The model scored 100% without the skill, and the 90% interval (+0 to +0 points) rules out a gain of 10 points.",
   "rules": {

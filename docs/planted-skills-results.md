@@ -1,6 +1,6 @@
 # The planted skills check: results
 
-The predictions, the pass criterion and the frozen rules are in [planted-skills.md](planted-skills.md), committed in 6c37ff9 before any suite ran. Each card below is what `mordecai identify` wrote, unedited, and is saved in [planted-results/](planted-results/). Raw eval results stay in `evals/results/`, which git ignores.
+The predictions, the pass criterion and the frozen rules are in [planted-skills.md](planted-skills.md), committed in 6c37ff9 before any suite ran. Each card below is what `mordecai identify` wrote, unedited, and is saved in [planted-results/](planted-results/). On 2026-10-05, after the drift demo, all seven cards were rewritten by `mordecai identify` from the same raw results so that they store relative paths instead of absolute local ones. Only the `paths` field changed. Every verdict, count, interval and hash is byte-for-byte the same. Raw eval results stay in `evals/results/`, which git ignores.
 
 Every run: `claude plugin eval <suite> --model <pinned ID> --judge-model <same ID> --no-publish --max-cost-usd <cap> --scaffold -j 2 --threshold 0`, 3 runs per side, temporary files kept inside the repo so the traces could be checked. Costs are Claude Code's list-price estimates (`costUsd` in the result).
 

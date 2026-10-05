@@ -43,8 +43,12 @@
       "evals/tag-third",
       "evals/weekday"
     ],
-    "casesRoot": "evals/planted/4-vague",
-    "skill": "evals/planted/4-vague"
+    "casesRoot": ".",
+    "relativeTo": {
+      "casesRoot": "the skill directory",
+      "skill": "the card's directory"
+    },
+    "skill": "../../evals/planted/4-vague"
   },
   "reason": "The skill didn't fire in any of the 27 runs where it should have.",
   "rules": {

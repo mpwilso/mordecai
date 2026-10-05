@@ -46,8 +46,12 @@
       "evals/percent",
       "evals/rebase"
     ],
-    "casesRoot": "evals/planted/2-commits",
-    "skill": "evals/planted/2-commits"
+    "casesRoot": ".",
+    "relativeTo": {
+      "casesRoot": "the skill directory",
+      "skill": "the card's directory"
+    },
+    "skill": "../../evals/planted/2-commits"
   },
   "reason": "The skill raised the score: 90% interval +59 to +96 points.",
   "rules": {

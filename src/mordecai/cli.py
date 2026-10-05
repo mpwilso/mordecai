@@ -82,7 +82,7 @@ def identify(args, out) -> int:
         return 2
     card = build(suite, data, args.skill)
     if args.card:
-        args.card.write_text(to_json(card), encoding="utf-8", newline="\n")
+        args.card.write_text(to_json(card, args.card.parent), encoding="utf-8", newline="\n")
     if args.markdown:
         args.markdown.write_text(markdown(card), encoding="utf-8", newline="\n")
     if args.crawl:
@@ -98,7 +98,7 @@ def identify(args, out) -> int:
 def check_card(args, out) -> int:
     try:
         doc = json.loads(args.card.read_text(encoding="utf-8"))
-        changes = check(doc, args.skill, args.cases_root)
+        changes = check(doc, args.card.parent, args.skill, args.cases_root)
     except (OSError, json.JSONDecodeError, CardError) as e:
         print(f"mordecai: can't read {args.card}: {e}", file=sys.stderr)
         return 2

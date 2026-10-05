@@ -46,8 +46,12 @@
       "evals/repo-tests",
       "evals/stash"
     ],
-    "casesRoot": "evals/planted/3-outdated",
-    "skill": "evals/planted/3-outdated"
+    "casesRoot": ".",
+    "relativeTo": {
+      "casesRoot": "the skill directory",
+      "skill": "the card's directory"
+    },
+    "skill": "../../evals/planted/3-outdated"
   },
   "reason": "The model scored 93% without the skill, and the 90% interval (-41 to +7 points) rules out a gain of 10 points.",
   "rules": {

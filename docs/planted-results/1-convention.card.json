@@ -46,8 +46,12 @@
       "evals/pr-913",
       "evals/undo-commit"
     ],
-    "casesRoot": "evals/planted/1-convention",
-    "skill": "evals/planted/1-convention"
+    "casesRoot": ".",
+    "relativeTo": {
+      "casesRoot": "the skill directory",
+      "skill": "the card's directory"
+    },
+    "skill": "../../evals/planted/1-convention"
   },
   "reason": "The skill raised the score: 90% interval +100 to +100 points.",
   "rules": {

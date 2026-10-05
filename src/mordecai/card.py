@@ -1,9 +1,13 @@
 """The card: a verdict, the numbers behind it, and the hashes that say what it was measured on.
 
 A card is written as JSON with sorted keys, so the same result always writes the same bytes.
+Its paths are relative, so a card holds no local directory names and still checks after the
+repository is cloned somewhere else: the skill directory is relative to the directory the card
+is written in, and the cases' root is relative to the skill directory.
 """
 
 import json
+import os
 from dataclasses import asdict, dataclass, replace
 from pathlib import Path
 
@@ -46,8 +50,11 @@ def build(
         skill_dir = Path(plugin.path)
     case_dirs = [c.dir for c in suite.cases if c.dir]
     found = skill_dir is not None and skill_dir.is_dir()
+    if found:
+        skill_dir = skill_dir.resolve()
     names = skill_names(skill_dir) if found else []
-    cases_root = Path(suite.root) if suite.root and Path(suite.root).is_dir() else skill_dir
+    root = Path(suite.root) if suite.root else None
+    cases_root = root.resolve() if root and root.is_dir() else skill_dir
     reading = read(suite, names + ([plugin.name] if plugin else []), rules)
     cases_hash = hash_cases(cases_root, case_dirs) if cases_root and case_dirs else None
     missing = []
@@ -84,7 +91,14 @@ def _with_warning(reading: Reading, text: str) -> Reading:
     return replace(reading, warnings=(*reading.warnings, text))
 
 
-def to_json(card: Card) -> str:
+def _rel(path: str | None, base: Path) -> str | None:
+    return None if path is None else Path(os.path.relpath(path, base)).as_posix()
+
+
+def to_json(card: Card, base: Path | None = None) -> str:
+    """The card as JSON. base is the directory the card file will be written in; paths are
+    stored relative to it. It defaults to the current directory."""
+    base = (base or Path.cwd()).resolve()
     r = card.reading
     doc = {
         "card": CARD_VERSION,
@@ -117,9 +131,10 @@ def to_json(card: Card) -> str:
         },
         "hashes": {"skill": card.skill_hash, "cases": card.cases_hash, "result": card.result_hash},
         "paths": {
-            "skill": card.skill_dir,
-            "casesRoot": card.cases_root,
+            "skill": _rel(card.skill_dir, base),
+            "casesRoot": _rel(card.cases_root, Path(card.skill_dir)) if card.skill_dir else None,
             "caseDirs": list(card.case_dirs),
+            "relativeTo": {"skill": "the card's directory", "casesRoot": "the skill directory"},
         },
         "rules": asdict(card.rules),
     }
@@ -130,21 +145,30 @@ class CardError(Exception):
     pass
 
 
-def check(doc: dict, skill_dir: Path | None = None, cases_root: Path | None = None) -> list[str]:
-    """What has changed since the card was written. An empty list means it's current."""
+def check(
+    doc: dict,
+    card_dir: Path = Path("."),
+    skill_dir: Path | None = None,
+    cases_root: Path | None = None,
+) -> list[str]:
+    """What has changed since the card was written. An empty list means it's current.
+    card_dir is the directory the card file is in; the card's paths are relative to it.
+    Older cards with absolute paths still check, since joining an absolute path keeps it."""
     if not isinstance(doc, dict) or doc.get("card") != CARD_VERSION:
         raise CardError(f"not a Mordecai card, version {CARD_VERSION}")
     hashes, paths = doc.get("hashes") or {}, doc.get("paths") or {}
     case_dirs = paths.get("caseDirs") or []
     changes = []
-    skill = skill_dir or (Path(paths["skill"]) if paths.get("skill") else None)
+    skill = skill_dir or (card_dir / paths["skill"] if paths.get("skill") else None)
     if not hashes.get("skill") or skill is None:
         changes.append("The card has no skill hash, so it can't be checked.")
     elif not skill.is_dir():
-        changes.append(f"The skill directory {skill} is missing.")
+        changes.append(f"The skill directory {paths.get('skill')} is missing.")
     elif hash_skill(skill, case_dirs) != hashes["skill"]:
         changes.append("The skill's files changed since the card was written.")
-    root = cases_root or (Path(paths["casesRoot"]) if paths.get("casesRoot") else None)
+    root = cases_root
+    if root is None and paths.get("casesRoot") and skill is not None:
+        root = skill / paths["casesRoot"]
     if not hashes.get("cases") or root is None:
         changes.append("The card has no cases hash, so it can't be checked.")
     elif hash_cases(root, case_dirs) != hashes["cases"]:

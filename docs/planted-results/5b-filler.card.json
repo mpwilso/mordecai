@@ -46,8 +46,12 @@
       "evals/pr-913",
       "evals/undo-commit"
     ],
-    "casesRoot": "evals/planted/5b-filler",
-    "skill": "evals/planted/5b-filler"
+    "casesRoot": ".",
+    "relativeTo": {
+      "casesRoot": "the skill directory",
+      "skill": "the card's directory"
+    },
+    "skill": "../../evals/planted/5b-filler"
   },
   "reason": "The 90% interval (+0 to +0 points) stays inside plus or minus 10 points.",
   "rules": {
