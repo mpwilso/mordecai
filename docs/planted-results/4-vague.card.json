@@ -1,0 +1,75 @@
+{
+  "card": 1,
+  "hashes": {
+    "cases": "sha256:7bfb1a82b6cfa5f326da6f3b1aaa4a16cc2ccb0a9c0895b9b691da38d932057d",
+    "result": "sha256:b778b4776a2515414ae36c6dfb4ab03ea98923b2321f257e584de76194a3502b",
+    "skill": "sha256:a19e01561f92d14a83c0f5c06e6188837bef0ab20938e1aec9f499916b3dbf76"
+  },
+  "mordecai": "0.1.0",
+  "numbers": {
+    "casesCompared": 9,
+    "change": 0.0,
+    "costPerRunWith": 0.029847366666666666,
+    "costPerRunWithout": 0.03271305555555556,
+    "fired": [
+      0,
+      27
+    ],
+    "flat": 9,
+    "improved": 0,
+    "interval": null,
+    "misfired": [
+      0,
+      9
+    ],
+    "turnsPerRunWith": 1.5925925925925926,
+    "turnsPerRunWithout": 1.8888888888888888,
+    "withScore": 0.0,
+    "withoutScore": 0.0,
+    "worse": 0
+  },
+  "paths": {
+    "caseDirs": [
+      "evals/list-tags",
+      "evals/semver",
+      "evals/tag-first-release",
+      "evals/tag-hotfix",
+      "evals/tag-hotfix-second",
+      "evals/tag-january",
+      "evals/tag-leap",
+      "evals/tag-march",
+      "evals/tag-second-release",
+      "evals/tag-summer",
+      "evals/tag-third",
+      "evals/weekday"
+    ],
+    "casesRoot": "evals/planted/4-vague",
+    "skill": "evals/planted/4-vague"
+  },
+  "reason": "The skill didn't fire in any of the 27 runs where it should have.",
+  "rules": {
+    "ceiling": 0.9,
+    "confidence": 0.9,
+    "min_cases": 5,
+    "min_effect": 0.1,
+    "resamples": 2000,
+    "seed": 0
+  },
+  "subject": {
+    "plugin": "planted-vague",
+    "skills": [
+      "notes"
+    ],
+    "version": "1.0.0"
+  },
+  "tested": {
+    "claudeVersion": "2.1.289",
+    "judgeModel": "claude-haiku-4-5-20251001",
+    "model": "claude-haiku-4-5-20251001",
+    "startedAt": "2026-10-05T22:36:56.128Z"
+  },
+  "verdict": "never-fired",
+  "warnings": [
+    "2 of 72 runs ended with an error. They were graded on what they produced."
+  ]
+}

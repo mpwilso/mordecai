@@ -15,6 +15,7 @@ The ceiling for this check is $35. Before each run, the spend so far plus that r
 | 3 | 5b-filler | claude-haiku-4-5-20251001 | $3 | $1.45 | $4.17 |
 | 4 | 2-commits | claude-haiku-4-5-20251001 | $3 | $1.32 | $5.49 |
 | 5 | 3-outdated | claude-haiku-4-5-20251001 | $5 | $1.58 | $7.07 |
+| 6 | 4-vague | claude-haiku-4-5-20251001 | $3 | $1.99 | $9.06 |
 
 Not counted above: the one-case run on 2026-10-05 that captured the result format ($0.07, before this check).
 
@@ -27,6 +28,7 @@ Not counted above: the one-case run on 2026-10-05 that captured the result forma
 | 5b-filler | Not Helps, not Hurts (acceptable: No effect, Inconclusive) | No effect | Match | 0 / 9 / 0 | 0% / 0% | 27 of 27; 0 of 9 quiet | $1.45 | 2026-10-05 22:21 |
 | 2-commits | Already handled | Helps | Miss | 9 / 0 / 0 | 96% / 19% | 27 of 27; 0 of 9 quiet | $1.32 | 2026-10-05 22:26 |
 | 3-outdated | Hurts | Already handled | Miss | 1 / 6 / 2 | 78% / 93% | 6 of 27; 0 of 9 quiet | $1.58 | 2026-10-05 22:31 |
+| 4-vague | Never fired | Never fired | Match | 0 / 9 / 0 | 0% / 0% | 0 of 27; 0 of 9 quiet | $1.99 | 2026-10-05 22:36 |
 
 ## Pilot sanity checks (suite 1)
 
@@ -56,3 +58,5 @@ Diagnosis: **two causes, a case design problem and a verdict rule problem, plus 
 - **When it fired, it did harm.** In 5 of the 6 runs where it fired, the model gave the outdated answer. repo-add-dep, all three with-skill runs: "Add `requests` to requirements.txt, then run `pip install -r requirements.txt`". All three baseline runs: `uv add requests`. repo-add-dev-dep, the two runs where it fired: "Add `pytest-cov` to `requirements-dev.txt`, then run `pip install -r requirements-dev.txt`". The third with-skill run didn't fire, and answered `uv add --group dev pytest-cov`. The one fired run that passed was repo-install run 2, which answered `uv sync`, trusting the repo over the skill. So: 1 of 6 fired runs passed, against 25 of 27 baseline runs on the same nine cases.
 - **Verdict rule problem.** The Already handled rule checks only that the interval rules out a gain of 10 points (+7 < +10). It doesn't check that the interval rules out a loss. Here the interval runs down to -41, two of nine cases went from always right to mostly wrong, and the card still uses a calm label. Its advice ("Remove it, or add cases where the model fails without it") happens to be right, but the label hides the harm. Hurts was correctly not called: the interval reaches +7, so the whole interval isn't below zero. A proposed change is in the review queue, to be tested only on the holdouts.
 - **Run noise:** repo-one-file is the one "better" case. Both arms split between `pytest tests/test_tally.py` and `uv run pytest tests/test_tally.py`, and the skill never fired there. With 2 of 3 against 1 of 3, it counts as better by chance.
+
+**4-vague: Never fired, a match.** With the description "General notes.", the skill wasn't opened in any of the 27 runs that needed it, or in any of the 9 quiet runs. Both arms answered with ordinary version tags, such as `v1.0.0` in every run of tag-first-release, and scored 0. Two baseline runs (tag-second-release and tag-summer) hit the 4-turn cap and scored 0, as every baseline run of those cases did. This suite took 8.5 minutes and cost more per run than the others ($0.027 with, $0.029 without), though its runs averaged fewer turns. [Card](planted-results/4-vague.card.json).
