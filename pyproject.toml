@@ -1,0 +1,58 @@
+[project]
+name = "mordecai-skills"
+version = "0.1.0"
+description = "Reads a skill's eval results and says what the skill can honestly claim: helps, hurts, already handled, or can't tell yet."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Matt Wilson", email = "198815669+mpwilso@users.noreply.github.com" }]
+requires-python = ">=3.11"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Quality Assurance",
+]
+# Standard library only.
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/mpwilso/mordecai"
+Source = "https://github.com/mpwilso/mordecai"
+Issues = "https://github.com/mpwilso/mordecai/issues"
+
+[project.scripts]
+mordecai = "mordecai.cli:main"
+
+[dependency-groups]
+dev = [
+    "pytest==9.1.1",
+    "ruff==0.16.10",
+]
+
+[build-system]
+requires = ["uv_build==0.12.19"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "mordecai"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests keep each exact expected message on one line.
+"tests/*" = ["E501"]

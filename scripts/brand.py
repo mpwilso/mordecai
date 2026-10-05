@@ -1,0 +1,302 @@
+"""Draws Mordecai's logo lockups and the crawl mode card, light and dark.
+
+    uv run python scripts/brand.py          write the files
+    uv run python scripts/brand.py --check  exit 1 if a file differs from what this would write
+
+Standard library only, plus Mordecai itself: the crawl card's text is printed by the same code
+as `mordecai identify --crawl`, from a demo result built here, so the picture can't say
+something the tool wouldn't. tests/test_brand.py runs the check. docs/brand/README.md says
+what the mark means.
+"""
+
+import math
+import re
+import sys
+import tempfile
+from html import escape
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT / "tests"))
+sys.path.insert(0, str(ROOT / "src"))
+
+from builder import make_result  # noqa: E402
+
+from mordecai.card import build  # noqa: E402
+from mordecai.render import crawl  # noqa: E402
+from mordecai.result import parse  # noqa: E402
+
+# One hue for Mordecai, a potion red, as each sibling project has its own.
+PALETTE = {
+    "light": {
+        "ink": "#1c1c1a",  # the wordmark, as in the family's lockups
+        "tint": "#FFF1F2",  # the badge's face
+        "glass": "#9F1239",  # the flask
+        "potion": "#E11D48",  # what's in it: the score with the skill
+        "line": "#4C0519",  # the dashed line: the score without it
+        "shine": "#FFFFFF",
+        "ring": "#881337",  # the badge's rim
+    },
+    "dark": {
+        "ink": "#EDEDEA",
+        "tint": "#2A0A12",
+        "glass": "#FB7185",
+        "potion": "#F43F5E",
+        "line": "#FFE4E6",
+        "shine": "#FFE4E6",
+        "ring": "#FB7185",
+    },
+}
+
+SANS = 'ui-sans-serif,system-ui,"Segoe UI",Helvetica,Arial,sans-serif'
+MONO = "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace"
+BASELINE_Y = 60  # the dashed line, through the bulb's middle
+LEVEL_Y = 46  # the potion's surface, above the line
+LOCKUP_ALT = "Mordecai: a potion flask on a round badge, filled above a dashed line across the bulb"
+
+
+def ascii_xml(text: str) -> str:
+    """Escapes text for SVG, with anything outside ASCII as a character reference."""
+    return "".join(c if ord(c) < 128 else f"&#{ord(c)};" for c in escape(text, quote=True))
+
+
+def lockup(theme: str) -> str:
+    c = PALETTE[theme]
+    style = (
+        # The rect's place in the file is the finished mark, for renderers without CSS
+        # animation. The animation starts it low and fills the flask once.
+        ".fill{animation:fill 1.8s cubic-bezier(.2,.7,.3,1)}"
+        "@keyframes fill{from{transform:translateY(34px)}to{transform:translateY(0)}}"
+        "@media (prefers-reduced-motion: reduce){*{animation:none!important}}"
+        f".word{{font-family:{SANS};font-weight:800;letter-spacing:3px}}"
+    )
+    flask = "M44 25 V39.88 A21 21 0 1 0 56 39.88 V25"
+    return (
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 410 100" width="410" height="100" '
+        f'role="img" aria-label="{LOCKUP_ALT}"><title>{LOCKUP_ALT}</title><style>{style}</style>'
+        '<defs><clipPath id="bulb"><circle cx="50" cy="60" r="18.5"/></clipPath></defs>'
+        f'<circle cx="50" cy="50" r="44" fill="{c["tint"]}"/>'
+        f'<g clip-path="url(#bulb)"><rect class="fill" x="28" y="{LEVEL_Y}" width="44" '
+        f'height="40" fill="{c["potion"]}"/></g>'
+        f'<path d="M32 {BASELINE_Y} H68" stroke="{c["line"]}" stroke-width="2" '
+        'stroke-dasharray="3.5 3"/>'
+        f'<path d="M36.5 55 A14 14 0 0 1 42 47.5" fill="none" stroke="{c["shine"]}" '
+        'stroke-width="2.5" stroke-linecap="round" opacity=".7"/>'
+        f'<path d="{flask}" fill="none" stroke="{c["glass"]}" stroke-width="4" '
+        'stroke-linejoin="round"/>'
+        f'<rect x="40" y="19" width="20" height="6" rx="2" fill="{c["glass"]}"/>'
+        f'<circle cx="50" cy="50" r="44" fill="none" stroke="{c["ring"]}" stroke-width="5"/>'
+        f'<text class="word" x="112" y="67" font-size="46" textLength="280" '
+        f'lengthAdjust="spacing" fill="{c["ink"]}">MORDECAI</text></svg>\n'
+    )
+
+
+# The crawl card ----------------------------------------------------------------------------
+
+CARD_ALT = (
+    "Crawl mode: a pixel treasure chest shakes, opens and lifts out a red potion, beside the "
+    "card mordecai identify --crawl prints for a demo skill that helps"
+)
+CARD = {
+    "bg": "#15111C",
+    "edge": "#3B2A4A",
+    "text": "#D9D3E0",
+    "dim": "#9A90A8",
+    "gold": "#FBBF24",
+    "rose": "#FB7185",
+}
+# Pixel art, one character per pixel. O outline, W wood, G gold band, L lock, K keyhole,
+# C cork, S glass, R potion, Y ray.
+LID = (
+    "..OOOOOOOOOOOO..",
+    ".OWWWWWWWWWWWWO.",
+    "OWWWWWWWWWWWWWWO",
+    "OGGGGGGGGGGGGGGO",
+    "OWWWWWWWWWWWWWWO",
+    "OGGGGGGLLGGGGGGO",
+)
+BODY = (
+    "OWWWWWWLLWWWWWWO",
+    "OWWWWWWKKWWWWWWO",
+    "OWWWWWWWWWWWWWWO",
+    "OGGGGGGGGGGGGGGO",
+    "OWWWWWWWWWWWWWWO",
+    "OWWWWWWWWWWWWWWO",
+    "OGGGGGGGGGGGGGGO",
+    "OOOOOOOOOOOOOOOO",
+)
+POTION = (
+    "...OO...",
+    "...CC...",
+    "..OSSO..",
+    ".OSSSSO.",
+    "OSRRRRSO",
+    "ORRRRRRO",
+    "ORRRRRRO",
+    ".ORRRRO.",
+    "..OOOO..",
+)
+RAYS = (
+    "Y......Y......Y.",
+    ".Y.....Y.....Y..",
+    "..Y....Y....Y...",
+)
+PIXEL = {
+    "O": "#1A0B07",
+    "W": "#9A3412",
+    "G": "#F59E0B",
+    "L": "#FDE68A",
+    "K": "#1A0B07",
+    "C": "#A16207",
+    "S": "#FECDD3",
+    "R": "#E11D48",
+    "Y": "#FDE68A",
+}
+PX = 6  # screen pixels per art pixel
+
+
+def pixels(grid, x0: int, y0: int) -> str:
+    """Rects for a grid, one per horizontal run of a color."""
+    out = []
+    for row, line in enumerate(grid):
+        col = 0
+        while col < len(line):
+            ch = line[col]
+            end = col
+            while end < len(line) and line[end] == ch:
+                end += 1
+            if ch != ".":
+                out.append(
+                    f'<rect x="{x0 + col * PX}" y="{y0 + row * PX}" width="{(end - col) * PX}" '
+                    f'height="{PX}" fill="{PIXEL[ch]}"/>'
+                )
+            col = end
+    return "".join(out)
+
+
+def demo_text() -> str:
+    """The crawl card for a demo skill that helps, printed by Mordecai's own renderer."""
+    pattern = [([1, 1, 1], [0, 0, 1]), ([1, 1, 0], [0, 0, 0]), ([1, 1, 1], [1, 0, 0])]
+    cases = [
+        {"name": f"case-{i}", "with": w, "without": b, "fired": [True, True, True]}
+        for i, (w, b) in enumerate(pattern * 4)
+    ]
+    cases.append({"name": "quiet", "with": [1, 1, 1], "without": [1, 1, 1], "quiet": True})
+    with tempfile.TemporaryDirectory() as tmp:
+        plugin = Path(tmp)
+        skill = plugin / "skills" / "release-notes"
+        skill.mkdir(parents=True)
+        (skill / "SKILL.md").write_text("Demo skill for the brand card.\n")
+        for case in cases:
+            (plugin / "evals" / case["name"]).mkdir(parents=True)
+            (plugin / "evals" / case["name"] / "prompt.md").write_text(case["name"] + "\n")
+        doc = make_result(cases, plugin_path=str(plugin))
+        doc["suite"]["plugins"][0].update(name="release-notes", version="1.4.0")
+        card = build(parse(doc), b"demo", plugin)
+    return crawl(card, width=60)
+
+
+def crawl_card() -> str:
+    lines = demo_text().rstrip("\n").split("\n")
+    line_h, top, text_x = 19, 34, 180
+    height = top + line_h * len(lines) + 10
+    width = text_x + math.ceil(max(len(line) for line in lines) * 7.6) + 28
+    chest_x, chest_y = 34, height - 34 - len(BODY) * PX
+    lid_y = chest_y - len(LID) * PX
+    open_css = (
+        f"translate(-8px,-16px) translate({chest_x}px,{chest_y}px) rotate(-10deg) "
+        f"translate({-chest_x}px,{-chest_y}px)"
+    )
+    style = (
+        f".t{{font-family:{MONO};font-size:12.5px;fill:{CARD['text']};white-space:pre}}"
+        f".d{{fill:{CARD['dim']}}}.g{{fill:{CARD['gold']};font-weight:700}}"
+        f".r{{fill:{CARD['rose']}}}"
+        # Text arrives once, line by line, and stays.
+        ".t{animation:in .45s ease-out both}"
+        "@keyframes in{from{opacity:0;transform:translateX(-6px)}to{opacity:1}}"
+        # The chest loops: still, shake, open, potion up, potion bobs, close.
+        ".chest{animation:shake 6s steps(1) infinite}"
+        "@keyframes shake{0%,12%{transform:none}14%{transform:translateX(-4px)}"
+        "16%{transform:translateX(4px)}18%{transform:translateX(-4px)}"
+        "20%{transform:translateX(4px)}22%,100%{transform:none}}"
+        # The lid turns about its back hinge. The pivot is written into the transform rather
+        # than set with transform-origin, which would also move the still frame's transform.
+        ".lid{animation:lid 6s steps(1) infinite}"
+        f"@keyframes lid{{0%,24%{{transform:none}}26%,84%{{transform:{open_css}}}"
+        "86%,100%{transform:none}}"
+        ".potion{animation:rise 6s steps(1) infinite}"
+        "@keyframes rise{0%,26%{opacity:0;transform:translateY(42px)}"
+        "28%{opacity:1;transform:translateY(30px)}30%{transform:translateY(18px)}"
+        "32%{transform:translateY(6px)}34%,46%,58%,70%{transform:translateY(0)}"
+        "40%,52%,64%,76%{transform:translateY(-6px)}82%{opacity:1;transform:translateY(0)}"
+        "84%,100%{opacity:0;transform:translateY(42px)}}"
+        ".rays{animation:rays 6s steps(1) infinite}"
+        "@keyframes rays{0%,26%{opacity:0}28%,36%,44%,52%,60%,68%,76%{opacity:1}"
+        "32%,40%,48%,56%,64%,72%{opacity:.35}82%,100%{opacity:0}}"
+        ".loot{animation:shine 2.4s ease-in-out infinite}"
+        f"@keyframes shine{{0%,100%{{fill:{CARD['gold']}}}50%{{fill:#FFF7D6}}}}"
+        "@media (prefers-reduced-motion: reduce){*{animation:none!important}}"
+    )
+    texts = []
+    for i, line in enumerate(lines):
+        y = top + i * line_h
+        delay = f' style="animation-delay:{0.3 + i * 0.12:.2f}s"'
+        if i == 0:
+            cls = "t g"
+        elif line.startswith("Mordecai:"):
+            cls = "t r"
+        elif line.startswith("  release-notes"):
+            head, loot = re.match(r"^(.*\.{3,}) (.+)$", line).groups()
+            texts.append(
+                f'<text class="t" x="{text_x}" y="{y}"{delay}>{ascii_xml(head)} '
+                f'<tspan class="g loot">{ascii_xml(loot)}</tspan></text>'
+            )
+            continue
+        elif line.startswith("  "):
+            cls = "t d"
+        else:
+            cls = "t"
+        texts.append(f'<text class="{cls}" x="{text_x}" y="{y}"{delay}>{ascii_xml(line)}</text>')
+    potion_x = chest_x + (16 - 8) // 2 * PX
+    potion_y = chest_y - len(POTION) * PX - 4
+    # The finished picture, for renderers without CSS animation, is the chest open with the
+    # potion out: the lid's open transform and the potion's place are in the file itself.
+    art = (
+        f'<g class="rays">{pixels(RAYS, chest_x, lid_y - 3 * PX - 22)}</g>'
+        f'<g class="chest"><g class="lid" transform="translate(-8 -16) '
+        f'rotate(-10 {chest_x} {chest_y})">{pixels(LID, chest_x, lid_y)}</g>'
+        f"{pixels(BODY, chest_x, chest_y)}</g>"
+        f'<g class="potion">{pixels(POTION, potion_x, potion_y)}</g>'
+    )
+    return (
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" '
+        f'height="{height}" shape-rendering="crispEdges" role="img" aria-label="{CARD_ALT}">'
+        f"<title>{CARD_ALT}</title><style>{style}</style>"
+        f'<rect x="1" y="1" width="{width - 2}" height="{height - 2}" rx="10" fill="{CARD["bg"]}" '
+        f'stroke="{CARD["edge"]}" stroke-width="2"/>' + art + "".join(texts) + "</svg>\n"
+    )
+
+
+def outputs() -> dict[Path, str]:
+    files = {ROOT / "docs" / "brand" / "crawl-card.svg": crawl_card()}
+    for theme in ("light", "dark"):
+        files[ROOT / "docs" / "brand" / f"lockup-{theme}.svg"] = lockup(theme)
+    return files
+
+
+def main(argv: list[str]) -> int:
+    stale = []
+    for path, text in outputs().items():
+        if "--check" in argv:
+            if not path.exists() or path.read_text(encoding="utf-8") != text:
+                stale.append(path.relative_to(ROOT).as_posix())
+        else:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(text, encoding="utf-8", newline="\n")
+    for name in stale:
+        print(f"brand: {name} differs from scripts/brand.py; run it")
+    return 1 if stale else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

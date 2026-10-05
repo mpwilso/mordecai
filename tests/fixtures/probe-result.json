@@ -1,0 +1,180 @@
+{
+  "schemaVersion": 1,
+  "claudeVersion": "2.1.289",
+  "startedAt": "2026-10-05T21:42:41.424Z",
+  "durationSeconds": 15,
+  "costUsd": 0.0675023,
+  "partial": false,
+  "suite": {
+    "root": "/work/schema-probe",
+    "ablation": "with-without",
+    "modelOverride": "haiku",
+    "judgeModel": "haiku",
+    "threshold": 0,
+    "concurrency": 1,
+    "plugins": [
+      {
+        "name": "schema-probe",
+        "version": "0.0.1",
+        "path": "/work/schema-probe"
+      }
+    ]
+  },
+  "cases": [
+    {
+      "name": "goodbye",
+      "dir": "evals/goodbye",
+      "source": "prose",
+      "promptMarkdown": "Write a one-line goodbye message I can post in our team channel before I log off for the weekend. Reply with only the message.",
+      "runsPerCase": 1,
+      "timeoutSeconds": 300,
+      "maxTurns": 4,
+      "graders": [
+        {
+          "name": "fired",
+          "type": "tool_used",
+          "weight": 1,
+          "config": {
+            "tool": "Skill",
+            "input_match": "\"skill\"\\s*:\\s*\"(?:[\\w-]+:)?team-signoff\""
+          }
+        },
+        {
+          "name": "signoff",
+          "type": "regex",
+          "weight": 1,
+          "config": {
+            "target": "last_message",
+            "pattern": "Stay frosty, crawler",
+            "flags": "",
+            "match": "contains"
+          }
+        }
+      ],
+      "arms": {
+        "with": [
+          {
+            "score": 1,
+            "passed": true,
+            "turns": 3,
+            "costUsd": 0.0189527,
+            "judgeCostUsd": 0,
+            "durationSeconds": 6,
+            "startedAt": "2026-10-05T21:42:41.442Z",
+            "error": null,
+            "tracePath": "/tmp/claude-eval-XXXXXX/out/trace.jsonl",
+            "skippedPaidGraders": false,
+            "graders": [
+              {
+                "name": "fired",
+                "passed": true,
+                "weight": 1,
+                "explanation": "Skill called 1x (expected 1..\u221e)",
+                "withOnly": true,
+                "scored": false
+              },
+              {
+                "name": "signoff",
+                "passed": true,
+                "weight": 1,
+                "explanation": "matched Stay frosty, crawler",
+                "withOnly": false,
+                "scored": true
+              }
+            ]
+          },
+          {
+            "score": 1,
+            "passed": true,
+            "turns": 3,
+            "costUsd": 0.0182304,
+            "judgeCostUsd": 0,
+            "durationSeconds": 5,
+            "startedAt": "2026-10-05T21:42:47.253Z",
+            "error": null,
+            "tracePath": "/tmp/claude-eval-XXXXXX/out/trace.jsonl",
+            "skippedPaidGraders": false,
+            "graders": [
+              {
+                "name": "fired",
+                "passed": true,
+                "weight": 1,
+                "explanation": "Skill called 1x (expected 1..\u221e)",
+                "withOnly": true,
+                "scored": false
+              },
+              {
+                "name": "signoff",
+                "passed": true,
+                "weight": 1,
+                "explanation": "matched Stay frosty, crawler",
+                "withOnly": false,
+                "scored": true
+              }
+            ]
+          }
+        ],
+        "without": [
+          {
+            "score": 0,
+            "passed": false,
+            "turns": 1,
+            "costUsd": 0.0152996,
+            "judgeCostUsd": 0,
+            "durationSeconds": 2,
+            "startedAt": "2026-10-05T21:42:51.899Z",
+            "error": null,
+            "tracePath": "/tmp/claude-eval-XXXXXX/out/trace.jsonl",
+            "skippedPaidGraders": false,
+            "graders": [
+              {
+                "name": "signoff",
+                "passed": false,
+                "weight": 1,
+                "explanation": "pattern not found in last_message",
+                "withOnly": false,
+                "scored": true
+              }
+            ]
+          },
+          {
+            "score": 0,
+            "passed": false,
+            "turns": 1,
+            "costUsd": 0.015019600000000001,
+            "judgeCostUsd": 0,
+            "durationSeconds": 2,
+            "startedAt": "2026-10-05T21:42:54.302Z",
+            "error": null,
+            "tracePath": "/tmp/claude-eval-XXXXXX/out/trace.jsonl",
+            "skippedPaidGraders": false,
+            "graders": [
+              {
+                "name": "signoff",
+                "passed": false,
+                "weight": 1,
+                "explanation": "pattern not found in last_message",
+                "withOnly": false,
+                "scored": true
+              }
+            ]
+          }
+        ]
+      },
+      "aggregates": {
+        "score": 1,
+        "passRate": 1,
+        "scoreWithout": 0,
+        "passRateWithout": 0,
+        "delta": 1
+      }
+    }
+  ],
+  "aggregates": {
+    "casesTotal": 1,
+    "casesPassed": 1,
+    "overallScore": 1,
+    "overallPassRate": 1,
+    "meanDelta": 1
+  }
+}
