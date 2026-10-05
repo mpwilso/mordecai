@@ -18,6 +18,7 @@ The ceiling for this check is $35. Before each run, the spend so far plus that r
 | 6 | 4-vague | claude-haiku-4-5-20251001 | $3 | $1.99 | $9.06 |
 | 7 | 1-convention (drift demo) | claude-sonnet-5-5 | $6 | $1.77 | $10.83 |
 | 8 | V2 pilot (no skill, 1 run per case, `--ablation none`) | claude-haiku-4-5-20251001 | $0.30 | $0.25 | $11.08 |
+| 9 | V1 v1-outdated | claude-haiku-4-5-20251001 | $3 | $1.54 | $12.62 |
 
 Not counted above: the one-case run on 2026-10-05 that captured the result format ($0.07, before this check).
 
@@ -108,3 +109,21 @@ In 0.2.0, Already handled also requires the interval to rule out a 10-point loss
 | 1-convention (Sonnet) | Helps | Helps |
 
 Only suite 3 moves. Its new reason: "The model scored 93% without the skill, but the 90% interval (-41 to +7 points) doesn't rule out a loss of 10 points." The new rules still don't call it Hurts, since the interval reaches +7. Because the change was fitted to this result, suite 3 can't count as evidence for it. The validation suites below are the test.
+
+## Validation set and sealed holdouts (0.2.0 rules, frozen at 03d2619)
+
+Predictions: [validation-skills.md](validation-skills.md) for V1 and V2 (committed in f848767, written after the first results, so not blind), and [planted-skills.md](planted-skills.md) for the holdouts (committed in 6c37ff9, before any result).
+
+| Suite | Predicted | Actual | Match | Better / same / worse | With / without | Fired | Run agreement | Cost | Run (UTC) |
+|---|---|---|---|---|---|---|---|---|---|
+| V1 v1-outdated | Hurts | Inconclusive | Miss | 0 / 7 / 2 | 85% / 96% | 1 of 27; 0 of 9 quiet | 22 of 24 cells | $1.54 | 2026-10-05 23:37 |
+
+**V1 v1-outdated: Inconclusive, a miss.** The card reads: "The model scored 96% without the skill, but the 90% interval (-26 to +0 points) doesn't rule out a loss of 10 points." [Card](planted-results/v1-outdated.card.json).
+
+Diagnosis: **case design problem (the trigger), plus run noise. Not a rule problem.**
+
+- **The skill fired in 1 of 27 runs**, even though its description names every dependency task. The one run where it fired (deps-relock run 2) still answered `uv lock`, the repo's way, and passed. In suite 3, three dependency cases fired 6 times. Here, nine dependency cases fired once. The model read pyproject.toml, uv.lock and the README, and answered from them without opening the skill. Writing a description that makes Haiku reliably reach for a skill is harder than the validation design assumed.
+- **Both worse cases are noise in runs where the skill never fired.** deps-upgrade, with the skill: `uv pip install --upgrade httpx` twice and `pip install --upgrade httpx` once, all failing. Without it: `uv lock --upgrade-package httpx` and `uv sync --upgrade-package httpx` passed, and the third run also said `uv pip install --upgrade httpx`. deps-add-requests, with the skill, run 3: `pip install requests`, also unfired. The grader counts `uv pip install` as wrong, because the pattern rejects any `pip install`. That is a strict call rather than a defect: `uv pip install` doesn't update pyproject.toml or the lock file.
+- **The 0.2.0 rule did what it was changed to do.** Under the 0.1.0 rules this card would have read Already handled: a 96% baseline, and an interval top of +0, under +10. Under 0.2.0 it reads Inconclusive, because the interval reaches -26. Hurts was not called, because the interval reaches exactly +0, and Hurts needs the whole interval below zero.
+
+No case file has a defect that justifies a second attempt, so V1 is not rerun.

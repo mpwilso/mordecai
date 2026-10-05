@@ -1,0 +1,80 @@
+{
+  "card": 1,
+  "hashes": {
+    "cases": "sha256:6e087ae8ba799bc1956584b7566157d963b02385713618ac6268e3df53e26556",
+    "result": "sha256:59670c4b47156848b44d4a719e98d1bdc21a183efacfaa963745e0631a5f810d",
+    "skill": "sha256:45f9252bd94aa97cc8fa648e8891fcc5100588cc973710a2c3f58d8d66c898b3"
+  },
+  "mordecai": "0.2.0",
+  "numbers": {
+    "casesCompared": 9,
+    "change": -0.1111111111111111,
+    "costPerRunWith": 0.023679574074074075,
+    "costPerRunWithout": 0.023060203703703704,
+    "fired": [
+      1,
+      27
+    ],
+    "flat": 7,
+    "improved": 0,
+    "interval": [
+      -0.2593,
+      0.0
+    ],
+    "misfired": [
+      0,
+      9
+    ],
+    "turnsPerRunWith": 4.111111111111111,
+    "turnsPerRunWithout": 4.037037037037037,
+    "withScore": 0.8518518518518519,
+    "withoutScore": 0.9629629629629629,
+    "worse": 2
+  },
+  "paths": {
+    "caseDirs": [
+      "evals/deps-add-dev",
+      "evals/deps-add-dev-mypy",
+      "evals/deps-add-numpy",
+      "evals/deps-add-pinned",
+      "evals/deps-add-requests",
+      "evals/deps-install-all",
+      "evals/deps-relock",
+      "evals/deps-remove",
+      "evals/deps-upgrade",
+      "evals/miles-km",
+      "evals/pip-freeze",
+      "evals/venv"
+    ],
+    "casesRoot": ".",
+    "relativeTo": {
+      "casesRoot": "the skill directory",
+      "skill": "the card's directory"
+    },
+    "skill": "../../evals/planted/validation/v1-outdated"
+  },
+  "reason": "The model scored 96% without the skill, but the 90% interval (-26 to +0 points) doesn't rule out a loss of 10 points.",
+  "rules": {
+    "ceiling": 0.9,
+    "confidence": 0.9,
+    "min_cases": 5,
+    "min_effect": 0.1,
+    "resamples": 2000,
+    "seed": 0
+  },
+  "subject": {
+    "plugin": "validation-outdated",
+    "skills": [
+      "python-dependencies"
+    ],
+    "version": "1.0.0"
+  },
+  "tested": {
+    "claudeVersion": "2.1.289",
+    "judgeModel": "claude-haiku-4-5-20251001",
+    "model": "claude-haiku-4-5-20251001",
+    "startedAt": "2026-10-05T23:37:35.973Z"
+  },
+  "verdict": "inconclusive",
+  "warnings": []
+}
