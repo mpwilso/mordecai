@@ -66,3 +66,9 @@ In simulation at the observed 94% run agreement, a skill worth +20 points is cal
 Two suites were rerun on Claude Sonnet 5.5, and neither verdict moved. All other results are for Claude Haiku 4.5.
 
 **The tradeoff.** Another model would show whether verdicts move across models, which neither rerun did. A judge-graded suite would test something the check hasn't touched at all: every grader so far was a regex or a tool-use check, so judge disagreement was never in play. Of the two, a judge-graded suite would add more new information per dollar.
+
+## Open question 4: runs a mock aborted
+
+`claude plugin eval` marks a run `aborted` when a [mock](https://code.claude.com/docs/en/plugin-evals)'s `expect:` or `abort_when` stops it. The run scores 0 and its `error` stays null, so Mordecai reads it as an ordinary failed run. That is the same trap as a rate limit: a run that says nothing about the skill can still move the change. No recorded result has an aborted run, since none of the planted suites uses mocks.
+
+**The tradeoff.** Treating aborted runs like rate-limited ones, as Invalid, would be a rule change, so it isn't made here. It would only matter for suites with mocks, and it could hide a skill that makes the agent call a tool the wrong way, which is a real effect. Counting aborted runs in a warning would be a smaller first step.
