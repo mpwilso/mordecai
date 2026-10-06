@@ -11,6 +11,7 @@ import tempfile
 from pathlib import Path
 
 from mordecai.library import LibraryError
+from mordecai.library.paths import relative
 from mordecai.result import ResultError, read_json
 
 LOCK_NAME = "mordecai-lock.json"
@@ -54,6 +55,12 @@ class Lock:
                 not isinstance(entry.get(f), kind) for f, kind in FIELDS.items()
             ):
                 raise LibraryError(f"{self.path}: the entry for {key!r} is malformed")
+            try:
+                parts = relative(key, "the installed folder").parts
+            except LibraryError as e:
+                raise LibraryError(f"{self.path}: {e}") from e
+            if len(parts) < 2 or parts[-1] != entry["skill"]:
+                raise LibraryError(f"{self.path}: {key!r} should be <target>/{entry['skill']}")
         self.entries = installed
 
     def save(self) -> None:

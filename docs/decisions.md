@@ -106,3 +106,16 @@ Reversible decisions made during the library build, each with the options consid
 - **Options:** keep publishing the seeded skills (D8); publish nothing at the root.
 - **Why:** the seeded skills are demo content, made-up conventions that would do harm in a real project, and one is deliberately harmful. Publishing nothing makes npx skills search the whole repository, which reaches the planted suites' deliberately harmful skills. One harmless real skill stops that search. Exports reach tools that don't run the gate, so their refusals can't be loosened.
 - **Reverse:** remove `[export]` from `mordecai-library.toml` and rerun the export; the default refusals are `DEFAULT_REFUSE` in `export.py`.
+
+## D16. Lockfile entries are checked before update or uninstall acts on them
+
+- **Decision:** an entry must be `<target>/<skill>` inside the project, reached without links, and, if the folder exists, hold a SKILL.md naming that skill. Otherwise update and uninstall refuse it, even with `--force`.
+- **Options:** trust the lockfile, as before, and check only the folder's hash.
+- **Why:** a lockfile is committed with a project and may come from someone else. A crafted entry naming `src` as an install of a skill called `src`, with `src/`'s hash, made `uninstall` delete it. The hash check alone can't stop that, since anyone can compute the hash.
+- **Reverse:** `check_installed()` in `install.py`.
+
+## D17. Paths from sources and inputs pass shared checks in `paths.py`
+
+- **Decision:** targets refuse backslashes, drives and control characters; materializing a source never writes through a link and never replaces a file; evidence reached through a link is broken and never read; a skill folder can't hold two names that differ only by case or Unicode form; fetches allow only HTTPS, no submodules and no hooks.
+- **Why:** each was reproduced first (tests/test_library_security.py says which). They matter most on macOS and Windows, where a case-insensitive or backslash-separated file system turns a harmless Linux name into an escape.
+- **Reverse:** per check, in `paths.py`, `gitio.py`, `evidence.py` and `skillmd.py`.

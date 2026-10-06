@@ -12,6 +12,7 @@ measured. Reading one over MCP is the fallback for a client without native skill
 
 import argparse
 import functools
+import tempfile
 from pathlib import Path
 
 from mcp.server.mcpserver import MCPServer
@@ -37,23 +38,46 @@ WRITE = ToolAnnotations(
 )
 
 
-def _errors(fn):
-    """Report the library's refusals to the client as tool errors with their message, rather
-    than as crashes the SDK would hide."""
+MAX_TEXT = 200  # the longest query or version a tool takes
 
-    @functools.wraps(fn)
-    def wrapper(*args, **kwargs):
-        try:
-            return fn(*args, **kwargs)
-        except (LibraryError, OSError) as e:
-            raise ToolError(str(e)) from e
 
-    return wrapper
+def _scrub(text: str, project_dir: Path) -> str:
+    """text with this machine's folders replaced, so an error names no local path."""
+    for path, label in (
+        (str(project_dir), "<project>"),
+        (tempfile.gettempdir(), "<tmp>"),
+        (str(Path.home()), "~"),
+    ):
+        if path and path != "/":
+            text = text.replace(path, label)
+    return text
+
+
+def _errors(project_dir: Path):
+    """Report the library's refusals to the client as tool errors carrying their message, with
+    local folders removed, rather than as crashes the SDK would hide. Anything else is the
+    SDK's generic error, which names only the tool."""
+
+    def wrap(fn):
+        @functools.wraps(fn)
+        def wrapper(*args, **kwargs):
+            for value in (*args, *kwargs.values()):
+                if isinstance(value, str) and len(value) > MAX_TEXT:
+                    raise ToolError(f"an argument is over {MAX_TEXT} characters")
+            try:
+                return fn(*args, **kwargs)
+            except (LibraryError, OSError) as e:
+                raise ToolError(_scrub(str(e), project_dir)) from None
+
+        return wrapper
+
+    return wrap
 
 
 def build(config: Path | None = None, project_dir: Path | None = None) -> MCPServer:
     project_dir = (project_dir or Path.cwd()).resolve()
     server = MCPServer(name="mordecai", version=__version__, instructions=INSTRUCTIONS)
+    _guarded = _errors(project_dir)
 
     def library() -> Library:
         return Library(load_config(config, project_dir))
@@ -75,7 +99,7 @@ def build(config: Path | None = None, project_dir: Path | None = None) -> MCPSer
         description="Every skill in the library: its base and variants, "
         "the version install would pick, its verdict, its source and its lineage.",
     )
-    @_errors
+    @_guarded
     def list_skills() -> dict:
         with library() as lib:
             return {"skills": catalog.listing(lib), "problems": lib.problems}
@@ -85,7 +109,7 @@ def build(config: Path | None = None, project_dir: Path | None = None) -> MCPSer
         description="Skills whose name, variant or description "
         "contains every word of the query. Plain text matching, no model.",
     )
-    @_errors
+    @_guarded
     def search_skills(query: str) -> dict:
         with library() as lib:
             return {"matches": catalog.search(lib, query)}
@@ -96,7 +120,7 @@ def build(config: Path | None = None, project_dir: Path | None = None) -> MCPSer
         "version, lineage and verdict. Leave variant empty for the base, and version "
         "empty for the newest release.",
     )
-    @_errors
+    @_guarded
     def get_skill(skill: str, variant: str | None = None, version: str | None = None) -> dict:
         with library() as lib:
             return catalog.show(lib, skill, variant, version)
@@ -106,7 +130,7 @@ def build(config: Path | None = None, project_dir: Path | None = None) -> MCPSer
         description="One skill copy's releases, newest first, with "
         "each one's date, tag, changelog notes, lineage and verdict.",
     )
-    @_errors
+    @_guarded
     def skill_history(skill: str, variant: str | None = None) -> dict:
         with library() as lib:
             return catalog.history(lib, skill, variant)
@@ -117,7 +141,7 @@ def build(config: Path | None = None, project_dir: Path | None = None) -> MCPSer
         "newer release, with its verdict, and installs that changed on disk. Changes "
         "nothing.",
     )
-    @_errors
+    @_guarded
     def check_updates() -> dict:
         proj = project()
         lock = Lock(proj.lock_path)
@@ -152,7 +176,7 @@ def build(config: Path | None = None, project_dir: Path | None = None) -> MCPSer
         "an installed copy it changes nothing and returns the diff; call again with "
         "confirm_replace true after the user has seen it. Ask the user before calling.",
     )
-    @_errors
+    @_guarded
     def install_skill(
         skill: str,
         variant: str | None = None,
@@ -203,7 +227,7 @@ def build(config: Path | None = None, project_dir: Path | None = None) -> MCPSer
         "lockfile entry. Refuses a folder that changed since it was installed. Ask the "
         "user before calling.",
     )
-    @_errors
+    @_guarded
     def uninstall_skill(skill: str, target: str | None = None) -> dict:
         proj = project()
         lock = Lock(proj.lock_path)

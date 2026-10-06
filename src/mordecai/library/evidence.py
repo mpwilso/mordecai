@@ -20,6 +20,8 @@ from dataclasses import dataclass, fields
 from pathlib import Path
 
 from mordecai.card import CardError, _validate
+from mordecai.library import LibraryError
+from mordecai.library.paths import no_links
 from mordecai.provenance import PathError, hash_cases, hash_skill, sha256, within
 from mordecai.result import ResultError, parse, read_json
 from mordecai.verdict import VERDICTS, Rules, read
@@ -59,13 +61,14 @@ def _rules(raw) -> Rules:
     return Rules(**raw)
 
 
-def cases_dir(card_dir: Path) -> Path | None:
+def cases_dir(card_dir: Path, source_root: Path) -> Path | None:
     """Where the card in card_dir says its cases are, without checking anything else, so the
     caller can fetch them first. None if the card doesn't say or can't be read."""
     try:
+        no_links(source_root, card_dir / "card.json")
         doc, _ = read_json(card_dir / "card.json", "a card")
         _, paths, _ = _validate(doc)
-    except (ResultError, CardError, OSError):
+    except (ResultError, CardError, OSError, LibraryError):
         return None
     if not (paths.get("skill") and paths.get("casesRoot")):
         return None
@@ -76,11 +79,14 @@ def assess(card_dir: Path, version_folder: Path, source_root: Path) -> Evidence:
     """The evidence in card_dir for the skill folder version_folder. The card's cases path is
     read relative to the card's own skill path, and only inside source_root."""
     card_path, result_path = card_dir / "card.json", card_dir / "result.json"
-    if not card_path.exists() and not card_path.is_symlink():
+    try:
+        no_links(source_root, card_path)
+        no_links(source_root, result_path)
+    except LibraryError as e:
+        return Evidence("broken", note=f"the evidence is reached through a link ({e})")
+    if not card_path.exists():
         return Evidence("unmeasured")
     try:
-        if card_path.is_symlink() or result_path.is_symlink():
-            raise CardError("the card or its result is a link")
         doc, _ = read_json(card_path, "a card")
         hashes, paths, tested = _validate(doc)
         if not result_path.is_file():
@@ -109,7 +115,7 @@ def assess(card_dir: Path, version_folder: Path, source_root: Path) -> Evidence:
     if not skill_ok:
         return Evidence("stale", verdict, model, "the card was made for other files")
     note = None
-    cases = cases_dir(card_dir)
+    cases = cases_dir(card_dir, source_root)
     try:
         if cases is None or not within(cases, source_root) or not cases.is_dir():
             note = "the eval cases aren't in the source, so only the skill was checked"

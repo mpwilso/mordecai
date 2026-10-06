@@ -399,7 +399,7 @@ class Library:
     def evidence(self, entry: Resolved, picked: Picked) -> Evidence:
         snap = entry.source
         card_dir = snap.root / entry.copy.path / "evidence" / str(picked.version)
-        cases = cases_dir(card_dir)
+        cases = cases_dir(card_dir, snap.root)
         if cases is not None and within(cases, snap.root):
             rel = Path(os.path.relpath(cases, snap.root)).as_posix()
             if not rel.startswith(".."):

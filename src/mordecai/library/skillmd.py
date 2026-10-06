@@ -18,6 +18,7 @@ from pathlib import Path
 import strictyaml
 
 from mordecai.library import LibraryError
+from mordecai.library.paths import fold
 from mordecai.library.versions import check_name, valid_name
 
 MAX_FRONTMATTER = 64 * 1024
@@ -133,8 +134,16 @@ def walk(folder: Path) -> tuple[list[str], list[str], bool]:
         nonlocal executable, total
         with os.scandir(d) as it:
             entries = sorted(it, key=lambda x: x.name)
+        folded: dict[str, str] = {}
         for entry in entries:
             rel = prefix + entry.name
+            other = folded.setdefault(fold(entry.name), entry.name)
+            if other != entry.name:
+                errors.append(
+                    f"{prefix}{other} and {rel} differ only by case or Unicode form, so they "
+                    "collide on macOS and Windows"
+                )
+                continue
             if BAD_PART.search(entry.name):
                 errors.append(f"{rel!r} has a control character or backslash in its name")
                 continue

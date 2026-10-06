@@ -16,6 +16,7 @@ from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 
 from mordecai.library import LibraryError
+from mordecai.library.paths import no_links, open_new
 from mordecai.library.skillmd import BAD_PART
 
 GITHUB = "https://github.com"
@@ -61,9 +62,10 @@ def _env(auth: bool) -> dict[str, str]:
     return env
 
 
-def git(repo: Path | None, *args: str, auth: bool = False, check: bool = True) -> str:
-    """git's standard output. A failure is a LibraryError with git's message, token removed."""
-    cmd = ["git", *SAFE] + (["-C", str(repo)] if repo is not None else []) + list(args)
+def git(repo: Path | None, *args: str, auth: bool = False, check: bool = True, config=()) -> str:
+    """git's standard output. A failure is a LibraryError with git's message, token removed.
+    config is extra -c settings, as a flat list."""
+    cmd = ["git", *SAFE, *config] + (["-C", str(repo)] if repo is not None else []) + list(args)
     try:
         done = subprocess.run(cmd, capture_output=True, env=_env(auth), timeout=300, check=False)
     except FileNotFoundError as e:
@@ -228,13 +230,16 @@ def materialize(repo: Path, commit: str, prefix: str, dest: Path, budget: list[i
             budget[0] -= len(data)
             if budget[0] < 0:
                 raise LibraryError("the source is too large to read")
+            # A link written earlier is never gone through: on a case-insensitive file system
+            # a link "A" and a file "a/b" from one tree would otherwise meet.
+            no_links(dest, target.parent)
             target.parent.mkdir(parents=True, exist_ok=True)
+            no_links(dest, target)
             if e.mode == "120000":
                 os.symlink(os.fsdecode(data), target)
             else:
-                target.write_bytes(data)
-                if e.mode == "100755":
-                    target.chmod(0o755)
+                with os.fdopen(open_new(target, 0o755 if e.mode == "100755" else 0o644), "wb") as f:
+                    f.write(data)
 
 
 def cache_dir() -> Path:
@@ -267,5 +272,21 @@ def fetch_github(repo: str, ref: str | None) -> tuple[Path, str]:
             raise LibraryError(f"{ref!r} isn't a ref Mordecai will use")
         specs.append(f"+{ref}:refs/mordecai/ref")
         want = "refs/mordecai/ref"
-    git(bare, "fetch", "--quiet", "--no-tags", "--", url, *specs, auth=url.startswith(GITHUB))
+    # Only HTTPS to github.com (the tests point GITHUB at a local folder instead), no submodules,
+    # and no hooks, even if the cache's Git config or a template added some.
+    guard = ["-c", f"core.hooksPath={os.devnull}"]
+    if url.startswith("https://"):
+        guard += ["-c", "protocol.allow=never", "-c", "protocol.https.allow=always"]
+    git(
+        bare,
+        "fetch",
+        "--quiet",
+        "--no-tags",
+        "--no-recurse-submodules",
+        "--",
+        url,
+        *specs,
+        auth=url.startswith("https://github.com/"),
+        config=guard,
+    )
     return bare, resolve(bare, want)

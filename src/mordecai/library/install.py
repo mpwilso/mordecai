@@ -18,8 +18,10 @@ from pathlib import Path
 from mordecai.library import LibraryError
 from mordecai.library.evidence import Evidence
 from mordecai.library.lock import LOCK_NAME, Lock
-from mordecai.library.skillmd import check_folder, walk
+from mordecai.library.paths import BAD_TEXT, DRIVE, no_links, open_new
+from mordecai.library.skillmd import check_folder, frontmatter, walk
 from mordecai.library.sources import Library, Picked, Resolved
+from mordecai.library.versions import valid_name
 from mordecai.provenance import hash_dir, within
 
 PROJECT_TARGETS = {
@@ -53,16 +55,6 @@ def project(root: Path | None = None, user: bool = False) -> Project:
     return Project(root, root / LOCK_NAME)
 
 
-def _no_links(root: Path, path: Path) -> None:
-    """Refuse if any existing folder from root down to path is a link."""
-    rel = path.relative_to(root)
-    current = root
-    for part in rel.parts:
-        current = current / part
-        if current.is_symlink():
-            raise LibraryError(f"{current} is a symbolic link; Mordecai won't install through it")
-
-
 def target_dir(proj: Project, target: str) -> Path:
     """The skills folder a target names: a tool name, or a folder inside the project."""
     name = ALIASES.get(target, target)
@@ -70,12 +62,44 @@ def target_dir(proj: Project, target: str) -> Path:
     if name in table:
         path = proj.root / table[name]
     else:
+        if BAD_TEXT.search(target) or DRIVE.match(target):
+            raise LibraryError(
+                f"the target {target!r} has a backslash, a drive or a control character; "
+                "use a tool name or a folder like tools/skills"
+            )
         path = Path(os.path.expanduser(target))
         path = path if path.is_absolute() else proj.root / path
         path = Path(os.path.normpath(path))
     if not within(path, proj.root) or path == proj.root:
         raise LibraryError(f"the target {target} isn't a folder inside {proj.root}")
-    _no_links(proj.root, path)
+    no_links(proj.root, path)
+    return path
+
+
+def check_installed(proj: Project, key: str, entry: dict) -> Path:
+    """The folder a lockfile entry names, if it can be one Mordecai installed: <target>/<skill>
+    inside the project, reached without links, and (when it exists) a skill folder whose
+    SKILL.md names that skill. A lockfile may have been edited by someone else, so update and
+    uninstall act only on folders that pass this."""
+    skill = entry.get("skill")
+    parts = key.split("/")
+    if len(parts) < 2 or parts[-1] != skill or not valid_name(skill):
+        raise LibraryError(f"the lockfile entry {key!r} isn't <target>/<skill>")
+    path = proj.root / key
+    if not within(path, proj.root):
+        raise LibraryError(f"the lockfile entry {key!r} leads outside {proj.root}")
+    no_links(proj.root, path)
+    if path.exists():
+        md = path / "SKILL.md"
+        try:
+            fields, _ = frontmatter(md.read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError, LibraryError):
+            fields = {}
+        if not path.is_dir() or md.is_symlink() or fields.get("name") != skill:
+            raise LibraryError(
+                f"{key} isn't a {skill} skill folder, so Mordecai won't touch it; check "
+                "mordecai-lock.json"
+            )
     return path
 
 
@@ -232,6 +256,8 @@ def plan(
                 f"{key} is a symbolic link (perhaps from another tool); Mordecai won't replace it"
             )
         if path.exists():
+            if existing is not None:
+                check_installed(proj, key, existing)
             if existing is None:
                 raise LibraryError(
                     f"{key} already exists and Mordecai didn't install it. Remove it, or "
@@ -261,11 +287,7 @@ def _copy(src: Path, dest: Path) -> None:
         out = dest / rel
         out.parent.mkdir(parents=True, exist_ok=True)
         data = (src / rel).read_bytes()
-        fd = os.open(
-            out,
-            os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0),
-            0o755 if os.stat(src / rel).st_mode & 0o111 else 0o644,
-        )
+        fd = open_new(out, 0o755 if os.stat(src / rel).st_mode & 0o111 else 0o644)
         with os.fdopen(fd, "wb") as f:
             f.write(data)
 
@@ -282,7 +304,7 @@ def apply(p: Plan, proj: Project, lock: Lock) -> list[str]:
             continue
         parent = d.path.parent
         parent.mkdir(parents=True, exist_ok=True)
-        _no_links(proj.root, parent)
+        no_links(proj.root, parent)
         tmp = Path(tempfile.mkdtemp(prefix=f".mordecai-{p.entry.copy.skill}-", dir=parent))
         try:
             staged = tmp / p.entry.copy.skill
@@ -344,12 +366,7 @@ def plan_uninstall(
         )
     out = []
     for key, entry in entries.items():
-        path = proj.root / key
-        if not within(path, proj.root):
-            raise LibraryError(f"the lockfile entry {key!r} leads outside {proj.root}")
-        _no_links(proj.root, path.parent)
-        if path.is_symlink():
-            raise LibraryError(f"{key} is a symbolic link; Mordecai won't remove it")
+        path = check_installed(proj, key, entry)
         if path.exists() and not force and hash_dir(path) != entry["hash"]:
             raise LibraryError(
                 f"{key} has changed since Mordecai installed it. Pass --force to remove it anyway."
