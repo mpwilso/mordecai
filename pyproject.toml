@@ -31,6 +31,7 @@ mordecai = "mordecai.cli:main"
 
 [dependency-groups]
 dev = [
+    "coverage==7.16.2",
     "pytest==9.1.1",
     "ruff==0.16.10",
 ]
@@ -56,3 +57,7 @@ select = ["E", "F", "W", "I", "B", "UP"]
 [tool.ruff.lint.per-file-ignores]
 # Tests keep each exact expected message on one line.
 "tests/*" = ["E501"]
+
+[tool.coverage.run]
+source = ["mordecai"]
+branch = true
