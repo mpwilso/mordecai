@@ -5,7 +5,7 @@
     "result": "sha256:2e9a8af74e86988cd281776d37e7fad2a6c45e3e68d0ab6c974f1af3f00896bf",
     "skill": "sha256:45c98bc9dd064ce8eb9e4feeca16e6a8213be93530077e9ab09f94a583cb9f92"
   },
-  "mordecai": "0.1.0",
+  "mordecai": "0.3.0",
   "numbers": {
     "casesCompared": 9,
     "change": 0.0,
@@ -53,7 +53,7 @@
     },
     "skill": "../../evals/planted/5a-twin"
   },
-  "reason": "The model scored 100% without the skill, and the 90% interval (+0 to +0 points) rules out a gain of 10 points.",
+  "reason": "The model scored 100% without the skill, and the 90% interval (+0 to +0 points) rules out a gain or a loss of 10 points.",
   "rules": {
     "ceiling": 0.9,
     "confidence": 0.9,

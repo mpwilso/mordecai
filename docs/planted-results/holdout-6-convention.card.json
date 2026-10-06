@@ -5,7 +5,7 @@
     "result": "sha256:202df37527d3781ccba4109c29bbc01898f6266ce4f6eabfcfe986c9a185d008",
     "skill": "sha256:c21f2c4808219aafb110877b53b6bd65b60f0b116d4a1b20248d011fdb0d39af"
   },
-  "mordecai": "0.2.0",
+  "mordecai": "0.3.0",
   "numbers": {
     "casesCompared": 9,
     "change": 1.0,

@@ -5,7 +5,7 @@
     "result": "sha256:06cf8a4738645aad259bd8029e0ae44aa5ef147105826d600ac7bfaba814a17c",
     "skill": "sha256:f35f631cd4d56be549cbde93716b7e205a49ca31af97911c9f477bc6ef5390b7"
   },
-  "mordecai": "0.1.0",
+  "mordecai": "0.3.0",
   "numbers": {
     "casesCompared": 9,
     "change": 1.0,
@@ -76,5 +76,7 @@
     "startedAt": "2026-10-05T22:13:29.047Z"
   },
   "verdict": "helps",
-  "warnings": []
+  "warnings": [
+    "2 of 72 runs had a tool call refused by permissions (0 with the skill, 2 without). They were graded on what they produced, so a refusal, not the skill, may have moved their scores."
+  ]
 }

@@ -2,6 +2,8 @@
 
 The predictions, the pass criterion and the frozen rules are in [planted-skills.md](planted-skills.md), committed in bd92b23 before any suite ran. Each card below is what `mordecai identify` wrote, unedited, and is saved in [planted-results/](planted-results/). On 2026-10-05, after the drift demo, all seven cards were rewritten by `mordecai identify` from the same raw results so that they store relative paths instead of absolute local ones. Only the `paths` field changed. Every verdict, count, interval and hash is byte-for-byte the same. Raw eval results stay in `evals/results/`, which git ignores.
 
+On 2026-10-06 all 14 cards were rebuilt by `mordecai identify` 0.3.0 from the same raw results and traces, so they carry the refusal warnings (D19). Every count, interval and hash is the same. Four cards gained the warning (suites 1, 1 on Sonnet, 4 and 5b), and no run counts as blocked. Two cards were made under the frozen 0.1.0 rules and read differently under the 0.2.0 rules: 3-outdated is now Inconclusive instead of Already handled, as the "Verdict rule problem" below proposed, and 5a-twin keeps its verdict with a reworded reason. The table and the text below report what each card said when its suite ran, since that is what the predictions were scored against. The cards as they were then are at commit 63fb958.
+
 Every run: `claude plugin eval <suite> --model <pinned ID> --judge-model <same ID> --no-publish --max-cost-usd <cap> --scaffold -j 2 --threshold 0`, 3 runs per side, temporary files kept inside the repo so the traces could be checked. Costs are Claude Code's list-price estimates (`costUsd` in the result).
 
 ## Spend
@@ -59,7 +61,7 @@ All three held, so the main set continued.
 
 Diagnosis: **case design problem**, specifically a wrong premise about the model, not run noise and not a rule problem. The skill was planted as "something the model already does", but Haiku 4.5 doesn't default to Conventional Commits. Without the skill it wrote a clean imperative summary and no type prefix in 22 of 27 runs, for example "Rename getUser to fetchUser" (commit-1, all three runs), "Remove unused legacy_auth module" (commit-7, all three) and "Fix typo in login failure error message" (commit-9, all three). Only 5 of 27 baseline runs used a type prefix (commit-2, commit-4 twice, commit-5, commit-6). The rules read those numbers correctly: a 19% baseline is nowhere near the 90% ceiling, and every case improved. The prediction in planted-skills.md named this risk. One with-skill failure was the grader being strict rather than the model being wrong: commit-6 run 3 wrote `test(date parsing): ...`, with a space in the scope, which the scope pattern `[\w./-]+` doesn't allow. That cost one run out of 27 and doesn't change the verdict.
 
-**3-outdated: Already handled, a miss.** Predicted Hurts. The card says the model scored 93% without the skill and 78% with it, a change of -15 points with an interval of -41 to +7. [Card](planted-results/3-outdated.card.json).
+**3-outdated: Already handled, a miss.** Predicted Hurts. The card said the model scored 93% without the skill and 78% with it, a change of -15 points with an interval of -41 to +7. [Card](planted-results/3-outdated.card.json), rebuilt since: under the 0.2.0 rules the same numbers read Inconclusive.
 
 Diagnosis: **two causes, a case design problem and a verdict rule problem, plus a little run noise.**
 

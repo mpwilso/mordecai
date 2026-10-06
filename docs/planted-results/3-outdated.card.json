@@ -5,7 +5,7 @@
     "result": "sha256:9ce219e12de52e42c7b6717ea8ac7b0caf9761010c82ccf801bf95caa75671b5",
     "skill": "sha256:9bf162cf9ff8414c8904634fb999b74fb2b3c0d181dad1564eb72d140157d02c"
   },
-  "mordecai": "0.1.0",
+  "mordecai": "0.3.0",
   "numbers": {
     "casesCompared": 9,
     "change": -0.14814814814814817,
@@ -53,7 +53,7 @@
     },
     "skill": "../../evals/planted/3-outdated"
   },
-  "reason": "The model scored 93% without the skill, and the 90% interval (-41 to +7 points) rules out a gain of 10 points.",
+  "reason": "The model scored 93% without the skill, but the 90% interval (-41 to +7 points) doesn't rule out a loss of 10 points.",
   "rules": {
     "ceiling": 0.9,
     "confidence": 0.9,
@@ -75,6 +75,6 @@
     "model": "claude-haiku-4-5-20251001",
     "startedAt": "2026-10-05T22:31:22.906Z"
   },
-  "verdict": "already-handled",
+  "verdict": "inconclusive",
   "warnings": []
 }
