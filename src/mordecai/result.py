@@ -114,12 +114,13 @@ def skill_graders(case: dict) -> tuple[set[str], set[str]]:
     fire, silent = set(), set()
     for g in _items(case, "graders", f"case {case.get('name')!r}"):
         config = _get(g, "config", dict, "a grader") or {}
+        name = _get(g, "name", str, "a grader")
         if g.get("type") != "tool_used" or config.get("tool") != "Skill":
             continue
         if config.get("max") == 0:
-            silent.add(g.get("name"))
+            silent.add(name)
         else:
-            fire.add(g.get("name"))
+            fire.add(name)
     return fire, silent
 
 
@@ -127,7 +128,8 @@ def _run(raw: dict, fire: set[str], silent: set[str], arm: str, where: str) -> R
     score = _number(raw, "score", where, high=1)
     if score is None:
         raise ResultError(f"{where}: the run has no score")
-    results = {g.get("name"): g.get("passed") for g in _items(raw, "graders", where)}
+    graders = _items(raw, "graders", where)
+    results = {_get(g, "name", str, f"{where}, a grader"): g.get("passed") for g in graders}
     fired = None
     if arm == "with" and fire and all(n in results for n in fire):
         fired = all(results[n] is True for n in fire)

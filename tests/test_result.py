@@ -66,6 +66,16 @@ BAD = {
         "path should be a string",
     ),
     "trace path a number": (lambda d: run0(d).update(tracePath=3), "tracePath should be a string"),
+    "case grader name a list": (
+        lambda d: d["cases"][0]["graders"].append(
+            {"name": ["x"], "type": "tool_used", "config": {"tool": "Skill"}}
+        ),
+        "name should be a string",
+    ),
+    "run grader name an object": (
+        lambda d: run0(d)["graders"].append({"name": {}, "passed": True}),
+        "name should be a string",
+    ),
 }
 
 
