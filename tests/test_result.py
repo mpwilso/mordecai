@@ -177,3 +177,42 @@ def test_a_trace_without_a_readable_result_message_says_nothing(tmp_path, text):
     assert result.trace_denials(trace) is None
     assert result.trace_denials(tmp_path / "missing.jsonl") is None
     assert result.trace_denials(tmp_path) is None
+
+
+def test_a_refusal_inside_the_runs_own_folder_is_blocked(tmp_path):
+    """D19: a refusal counts as blocked only when the tool is one the run had and it aimed
+    inside the run's working folder or a plugin folder it loaded. The 8 recorded refusals all
+    reached outside, like these first three."""
+    cwd, plugin = "/e/run-1/work/cwd", "/repo/evals/planted/4-vague"
+    init = {
+        "type": "system",
+        "subtype": "init",
+        "cwd": cwd,
+        "tools": ["Glob", "Grep", "Read", "Skill"],
+        "plugins": [{"name": "p", "path": plugin}, {"name": "b", "path": "builtin"}],
+    }
+
+    def refusals(*denials, first=init):
+        trace = tmp_path / "trace.jsonl"
+        end = {"type": "result", "permission_denials": list(denials)}
+        trace.write_text("".join(json.dumps(m) + "\n" for m in (first, end) if m))
+        return result.trace_refusals(trace)
+
+    outside = [
+        {"tool_name": "Glob", "tool_input": {"pattern": ".git/HEAD", "path": "/e/run-1"}},
+        {"tool_name": "Read", "tool_input": {"file_path": "/e/run-1/.gitconfig"}},
+        {"tool_name": "Glob", "tool_input": {"pattern": "/repo/.git/packed-refs"}},
+        {"tool_name": "Glob", "tool_input": {"pattern": "../../*", "path": cwd}},
+        {"tool_name": "Bash", "tool_input": {"command": f"cat {cwd}/x"}},  # not a tool it had
+    ]
+    assert refusals(*outside) == result.Refusals(5, 0)
+    inside = [
+        {"tool_name": "Read", "tool_input": {"file_path": f"{plugin}/skills/notes/SKILL.md"}},
+        {"tool_name": "Glob", "tool_input": {"pattern": "**/*.md"}},
+        {"tool_name": "Grep", "tool_input": {"pattern": "x", "path": "docs"}},
+        {"tool_name": "Read", "tool_input": {"file_path": "notes.md"}},
+    ]
+    assert refusals(*inside) == result.Refusals(4, 4)
+    # With no init message there's no folder to judge by, so nothing counts as blocked.
+    assert refusals(*inside, first=None) == result.Refusals(4, 0)
+    assert result.trace_denials(tmp_path / "trace.jsonl") == 4

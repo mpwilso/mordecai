@@ -182,6 +182,30 @@ def test_a_card_with_other_rules_is_broken_and_fast(setup, rules):
     assert time.monotonic() - start < 5
 
 
+@pytest.mark.parametrize(
+    "changes,state,verdict",
+    [
+        ({"numbers.blockedRuns": 1, "verdict": "invalid"}, "current", "invalid"),
+        ({"numbers.blockedRuns": 1}, "broken", None),  # its verdict no longer follows
+        ({"numbers.blockedRuns": -1}, "broken", None),
+        ({"numbers.blockedRuns": True}, "broken", None),
+        ({"numbers.blockedRuns": 10**6}, "broken", None),
+    ],
+)
+def test_the_check_takes_the_cards_blocked_runs(setup, changes, state, verdict):
+    """D19: a library card doesn't ship its traces, so the check reruns the verdict with the
+    count of blocked runs the card recorded."""
+    repo, _, _ = setup
+    edit_card(repo / "library/greeting/variants/brief/evidence/1.0.0/card.json", **changes)
+    commit(repo, "blocked runs")
+    with lib_for(repo) as lib:
+        r = lib.get("greeting", "brief")
+        e = lib.evidence(r, lib.pick(r))
+    assert e.state == state, e
+    if verdict:
+        assert e.verdict == verdict
+
+
 def test_a_card_for_other_files_is_stale_after_a_release(setup):
     repo, proj, _ = setup
     md = repo / "library/greeting/variants/brief/greeting/SKILL.md"

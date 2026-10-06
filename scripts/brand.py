@@ -271,7 +271,7 @@ def demo_text() -> str:
     ]
     cases.append({"name": "quiet", "with": [1, 1, 1], "without": [1, 1, 1], "quiet": True})
     with tempfile.TemporaryDirectory() as tmp:
-        plugin = Path(tmp)
+        plugin = Path(tmp) / "plugin"
         skill = plugin / "skills" / "release-notes"
         skill.mkdir(parents=True)
         (skill / "SKILL.md").write_text("Demo skill for the brand card.\n")
@@ -280,7 +280,13 @@ def demo_text() -> str:
             (plugin / "evals" / case["name"] / "prompt.md").write_text(case["name"] + "\n")
         doc = make_result(cases, plugin_path=str(plugin))
         doc["suite"]["plugins"][0].update(name="release-notes", version="1.4.0")
-        card = build(parse(doc), b"demo", plugin)
+        trace = Path(tmp) / "trace.jsonl"  # clean, beside the plugin so the skill hash keeps
+        trace.write_text('{"type":"result","permission_denials":[]}\n')
+        for case in doc["cases"]:
+            for runs in case["arms"].values():
+                for run in runs:
+                    run["tracePath"] = str(trace)
+        card = build(parse(doc), b"demo", plugin, roots=[Path(tmp)])
     return crawl(card, width=60)
 
 

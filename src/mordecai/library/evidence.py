@@ -16,7 +16,7 @@ The states:
 """
 
 import os
-from dataclasses import dataclass, fields
+from dataclasses import dataclass, fields, replace
 from pathlib import Path
 
 from mordecai.card import CardError, _validate
@@ -49,6 +49,17 @@ class Evidence:
 
     def blocked(self, refuse) -> bool:
         return self.state in refuse or (self.applies and self.verdict in refuse)
+
+
+def _blocked(doc: dict, suite) -> int:
+    """The runs the card says the setup blocked (D19). A library card doesn't ship its traces,
+    so the check takes the card's count; older cards don't have one."""
+    numbers = doc.get("numbers") if isinstance(doc.get("numbers"), dict) else {}
+    n = numbers.get("blockedRuns", 0)
+    runs = sum(len(c.with_runs) + len(c.without_runs) for c in suite.cases)
+    if isinstance(n, bool) or not isinstance(n, int) or not 0 <= n <= runs:
+        raise CardError("the card's blockedRuns isn't a count of its runs")
+    return n
 
 
 def _rules(raw) -> Rules:
@@ -98,6 +109,7 @@ def assess(card_dir: Path, version_folder: Path, source_root: Path) -> Evidence:
         if sha256(result_bytes) != hashes.get("result"):
             raise CardError("result.json isn't the result this card was made from")
         suite = parse(result_doc)
+        suite = replace(suite, blocked_runs=_blocked(doc, suite))
         subject = doc.get("subject") if isinstance(doc.get("subject"), dict) else {}
         names = [s for s in subject.get("skills") or [] if isinstance(s, str)]
         names += [p.name for p in suite.plugins[:1] if p.name]

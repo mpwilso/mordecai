@@ -79,6 +79,7 @@ class Reading:
     turns_with: float | None
     turns_without: float | None
     warnings: tuple[str, ...] = field(default_factory=tuple)
+    blocked_runs: int = 0  # runs the setup refused inside their own folder (D19)
 
 
 def _mean(xs) -> float | None:
@@ -127,6 +128,11 @@ def _problems(suite: Suite) -> list[str]:
     skipped = sum(1 for r in runs if r.skipped_paid)
     if skipped:
         problems.append(f"{skipped} of {len(runs)} runs skipped their judge graders.")
+    if suite.blocked_runs:
+        problems.append(
+            f"{suite.blocked_runs} of {len(runs)} runs had a tool call refused inside their own "
+            "folder or the skill's, so the setup, not the skill, decided them."
+        )
     if not any(c.compared for c in suite.cases):
         problems.append("No case ran without the skill, so there is nothing to compare.")
     return problems
@@ -252,6 +258,7 @@ def read(
         turns_with=_mean(r.turns for r in with_runs),
         turns_without=_mean(r.turns for r in without_runs),
         warnings=tuple(_warnings(suite, effect, skill_names or [])),
+        blocked_runs=suite.blocked_runs,
     )
 
     def verdict(name, reason, iv=None):

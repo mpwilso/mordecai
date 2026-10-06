@@ -11,6 +11,8 @@ number at least zero is refused with a ResultError, never read as something else
 
 import json
 import math
+import posixpath
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -74,6 +76,9 @@ class Suite:
     root: str | None
     plugins: tuple[Plugin, ...]
     cases: tuple[Case, ...]
+    # Runs whose traces show the setup refusing them inside their own folder (D19). Set from
+    # the traces when a card is made, and from the card when the library checks it.
+    blocked_runs: int = 0
 
 
 def _get(raw: dict, key: str, kind, where: str):
@@ -208,13 +213,49 @@ def parse(doc: dict) -> Suite:
     )
 
 
-def trace_denials(path: Path) -> int | None:
-    """How many tool calls permissions refused in a run, from the run's trace: the JSON Lines
+@dataclass(frozen=True)
+class Refusals:
+    total: int  # tool calls permissions refused
+    blocked: int  # of those, refused on a tool the run had, aimed inside its folder (D19)
+
+
+def _target(tool: str, tool_input: dict, cwd: str) -> str | None:
+    """The absolute path a refused call aimed at: a Glob's pattern up to its first wildcard,
+    under its path; a Grep's path; otherwise the call's file or path argument."""
+    if not isinstance(tool_input, dict):
+        return None
+    base = tool_input.get("path") if isinstance(tool_input.get("path"), str) else "."
+    if tool == "Glob":
+        pattern = tool_input.get("pattern")
+        if not isinstance(pattern, str):
+            return None
+        fixed = re.split(r"[*?\[{]", pattern, maxsplit=1)[0] or "."
+        return posixpath.normpath(posixpath.join(cwd, base, fixed))
+    if tool == "Grep":
+        return posixpath.normpath(posixpath.join(cwd, base))
+    for key in ("file_path", "notebook_path", "path"):
+        value = tool_input.get(key)
+        if isinstance(value, str) and value:
+            return posixpath.normpath(posixpath.join(cwd, value))
+    return None
+
+
+def _inside(path: str, roots: list[str]) -> bool:
+    return any(path == r or path.startswith(r.rstrip("/") + "/") for r in roots)
+
+
+def trace_refusals(path: Path) -> Refusals | None:
+    """The tool calls permissions refused in a run, from the run's trace: the JSON Lines
     stream Claude Code writes, where each message of type "result" lists the calls refused
     since the one before it in permission_denials. A trace can hold more than one, as when a
     run hits its turn limit and goes on, so they are added up. The result JSON itself has no
-    such field. None when the trace is missing, isn't a regular file, is over MAX_BYTES, or
-    has no readable result message."""
+    such field.
+
+    A refusal is blocked (D19) when the tool is one the run had (the init message's tools)
+    and it aimed inside the run's working folder (init cwd) or a plugin folder the run
+    loaded. Then the setup, not the model, stopped it. Without an init message nothing
+    counts as blocked. None when the trace is missing, isn't a regular file, is over
+    MAX_BYTES, or has no readable result message."""
     try:
         if not path.is_file():
             return None
@@ -224,20 +265,50 @@ def trace_denials(path: Path) -> int | None:
         return None
     if len(data) > MAX_BYTES:
         return None
-    found = None
+    found, tools, roots = None, set(), []
     for line in data.splitlines():
-        if b'"permission_denials"' not in line:
+        init = b'"subtype":"init"' in line or b'"subtype": "init"' in line
+        if not init and b'"permission_denials"' not in line:
             continue
         try:
             message = json.loads(line, parse_constant=_no_constant)
         except (ValueError, RecursionError):
             continue
-        if not isinstance(message, dict) or message.get("type") != "result":
+        if not isinstance(message, dict):
+            continue
+        if message.get("type") == "system" and message.get("subtype") == "init":
+            cwd = message.get("cwd")
+            if isinstance(cwd, str) and cwd.startswith("/"):
+                plugins = message.get("plugins") if isinstance(message.get("plugins"), list) else []
+                folders = [p.get("path") for p in plugins if isinstance(p, dict)]
+                roots = [posixpath.normpath(cwd)]
+                roots += [
+                    posixpath.normpath(f)
+                    for f in folders
+                    if isinstance(f, str) and f.startswith("/")
+                ]
+                tools = {t for t in message.get("tools") or [] if isinstance(t, str)}
+            continue
+        if message.get("type") != "result":
             continue
         denials = message.get("permission_denials")
-        if isinstance(denials, list):
-            found = (found or 0) + len(denials)
+        if not isinstance(denials, list):
+            continue
+        found = found or Refusals(0, 0)
+        blocked = 0
+        for d in denials:
+            tool = d.get("tool_name") if isinstance(d, dict) else None
+            if roots and tool in tools:
+                target = _target(tool, d.get("tool_input"), roots[0])
+                blocked += bool(target and _inside(target, roots))
+        found = Refusals(found.total + len(denials), found.blocked + blocked)
     return found
+
+
+def trace_denials(path: Path) -> int | None:
+    """How many tool calls permissions refused in a run (see trace_refusals)."""
+    found = trace_refusals(path)
+    return None if found is None else found.total
 
 
 def _no_constant(name: str):

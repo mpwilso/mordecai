@@ -240,3 +240,13 @@ def test_suite_3_from_the_planted_check():
         "The model scored 93% without the skill, but the 90% interval (-41 to +7 points) "
         "doesn't rule out a loss of 10 points."
     )
+
+
+def test_runs_the_setup_blocked_make_the_card_invalid():
+    """D19: a refusal inside the run's own folder means the setup, not the skill, decided it."""
+    cases = same(6, [1, 1, 1], [0, 0, 0], fired=[True] * 3)
+    suite = parse(make_result(cases))
+    r = read(replace(suite, blocked_runs=2), ["demo-skill"])
+    assert r.verdict == "invalid" and r.blocked_runs == 2
+    assert "2 of 36 runs had a tool call refused inside their own folder" in r.reason
+    assert read(suite, ["demo-skill"]).verdict == "helps"
