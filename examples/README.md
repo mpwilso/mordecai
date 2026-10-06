@@ -15,6 +15,7 @@
 | `pr-description` variant `payments` | team | only the team has it, and `[variants]` makes it the default |
 | `ferry-workflow` variant `qrx` | org | the default, through `[variants]`; measured Helps |
 | `branch-naming` variant `camelcase` | org | measured Hurts, so install refuses it |
+| `mordecai` base | org | only the org has it |
 
 The team's `payments` variant is released (tag `skill/pr-description.payments@1.0.0`). The personal `mobile` copy is committed but not released, the way a personal library often is, so it installs as untagged, with a warning.
 

@@ -359,7 +359,13 @@ class Library:
         found = self.entries.get((skill, variant))
         if found is None:
             if not any(s == skill for s, _ in self.entries):
-                raise LibraryError(f"no source has a skill named {skill!r}")
+                hint = ""
+                if self.config.path is None:
+                    hint = (
+                        f"; no {CONFIG_NAME} was found, so the only source is the current "
+                        "folder. Pass --config, or set MORDECAI_LIBRARY_CONFIG"
+                    )
+                raise LibraryError(f"no source has a skill named {skill!r}{hint}")
             names = [r.copy.variant or "base" for r in self.copies(skill)]
             raise LibraryError(
                 f"{skill} has no {'variant ' + repr(variant) if variant else 'base'}; "

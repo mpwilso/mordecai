@@ -100,7 +100,7 @@ uv sync --extra library
 uv run mordecai library list
 ```
 
-To install into another project, run it from there with `uv run --project /path/to/mordecai mordecai library install <skill>`, or pass `--project`.
+With no config, the only source is the current folder. To install into another project, give it a config that lists your library, with `--config` or in `~/.config/mordecai/library.toml`, and run it from that project: `uv run --project /path/to/mordecai --extra library mordecai library install <skill> --config /path/to/mordecai-library.toml`.
 
 **The MCP server.** `mordecai mcp` is a stdio server with seven tools: `list_skills`, `search_skills`, `get_skill`, `skill_history`, `check_updates`, `install_skill` and `uninstall_skill`. The last two change files: they write only inside the targets the config's `[install] targets` allows, they're marked destructive so a client can ask you first, they can't override the install policy, and replacing an installed copy takes a second call after the diff. No tool writes to GitHub. The server reads the config from the folder it is started in (the project), and installs into that project unless you pass `--project`. `get_skill` returns skill text written by someone else, and a model may treat that text as instructions; that is one reason installing goes through the gate, and reading a skill over MCP is only the fallback. Errors name no local folders.
 

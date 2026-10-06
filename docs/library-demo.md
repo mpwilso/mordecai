@@ -28,6 +28,8 @@ branch-naming
 ferry-workflow  (default variant: qrx)
   base                   1.0.0              unmeasured                 org
   variant qrx            1.0.0              helps                      org  (based on 1.0.0)
+mordecai
+  base                   1.0.0              unmeasured                 org
 pr-description  (default variant: payments)
   base                   2.0.0              unmeasured                 org
   variant mobile         0.0.0 (untagged)   unmeasured                 personal  (based on 1.0.0; behind base 2.0.0; shadows org)
@@ -146,7 +148,7 @@ $ cat $DEMO/mordecai-lock.json
 
 ```
 $ uv run mordecai library install ferry-workflow --project $DEMO
-warning: Claude Code reads .claude/skills, not .agents/skills; add --target claude to install it there too.
+warning: Claude Code reads skills from .claude/skills, not .agents/skills; install to the claude target too if you use it.
 Installed ferry-workflow (variant qrx) 1.0.0 (helps) into .agents/skills/ferry-workflow.
 Locked in $DEMO/mordecai-lock.json at commit 9fa950b9a9b0.
 ```
@@ -176,7 +178,7 @@ Installing another variant into a target that already holds one would replace it
 ```
 $ uv run mordecai library install pr-description --variant platform --project $DEMO
 warning: pr-description (variant platform) 2.0.0 has no card, so nothing says whether it helps.
-warning: Claude Code reads .claude/skills, not .agents/skills; add --target claude to install it there too.
+warning: Claude Code reads skills from .claude/skills, not .agents/skills; install to the claude target too if you use it.
 .agents/skills/pr-description would change:
   --- a/.agents/skills/pr-description/SKILL.md
   +++ b/.agents/skills/pr-description/SKILL.md
@@ -216,6 +218,7 @@ $ uv run mordecai library status --project $DEMO
 unmeasured       branch-naming (base) 1.0.0 has no card
 blocked          branch-naming (variant camelcase) 1.0.0 can't be installed: hurts
 unmeasured       ferry-workflow (base) 1.0.0 has no card
+unmeasured       mordecai (base) 1.0.0 has no card
 unmeasured       pr-description (base) 2.0.0 has no card
 shadowed         pr-description (variant mobile) from 'personal' shadows the copy in 'org'
 behind-base      pr-description (variant mobile) is based on base 1.0.0; the base is at 2.0.0
@@ -234,8 +237,9 @@ The resolved copies, one plugin per skill, as a Claude Code plugin marketplace. 
 $ uv run mordecai library export --marketplace $DEMO/marketplace --name example-org-skills --owner "Example Org"
   branch-naming        base         1.0.0    unmeasured
   ferry-workflow       qrx          1.0.0    helps
+  mordecai             base         1.0.0    unmeasured
   pr-description       payments     1.0.0    unmeasured
-Wrote 3 skill(s) to $DEMO/marketplace.
+Wrote 4 skill(s) to $DEMO/marketplace.
 ```
 
 [examples/managed-settings.json](../examples/managed-settings.json) restricts Claude Code to this marketplace and installs each plugin, once the folder is committed to a repository. The install policy, the precedence rule and the lineage report all ran on the user's machine, from Git, with no model and no network.
@@ -259,6 +263,12 @@ $ cat $DEMO/marketplace/.claude-plugin/marketplace.json
       "name": "ferry-workflow",
       "source": "./plugins/ferry-workflow",
       "description": "Use when naming a git branch or writing a pull request description for work tracked in this team's ticket system. (Mordecai: helps, ferry-workflow.qrx 1.0.0)",
+      "version": "1.0.0"
+    },
+    {
+      "name": "mordecai",
+      "source": "./plugins/mordecai",
+      "description": "Use when the user asks whether a skill measurably helps, wants a Mordecai card read or checked, or wants to list or install skills from a Mordecai skill library. (Mordecai: unmeasured, mordecai 1.0.0)",
       "version": "1.0.0"
     },
     {

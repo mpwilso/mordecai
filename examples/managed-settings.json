@@ -11,6 +11,7 @@
   "enabledPlugins": {
     "pr-description@example-org-skills": true,
     "ferry-workflow@example-org-skills": true,
-    "branch-naming@example-org-skills": true
+    "branch-naming@example-org-skills": true,
+    "mordecai@example-org-skills": true
   }
 }
