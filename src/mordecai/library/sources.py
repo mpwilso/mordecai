@@ -58,6 +58,7 @@ class Config:
     variants: dict = field(default_factory=dict)
     refuse: tuple[str, ...] = DEFAULT_REFUSE
     targets: tuple[str, ...] = DEFAULT_TARGETS
+    export: tuple[str, ...] | None = None  # the skills export writes; None for all
 
 
 def find_config(explicit: Path | None, cwd: Path) -> Path | None:
@@ -95,7 +96,7 @@ def _subpath(value: str, where: str) -> str:
 
 def parse_config(doc: dict, path: Path | None, base: Path) -> Config:
     where = str(path) if path else "the config"
-    _keys(doc, {"source", "variants", "policy", "install"}, where)
+    _keys(doc, {"source", "variants", "policy", "install", "export"}, where)
     raw = doc.get("source", [])
     if not isinstance(raw, list) or not all(isinstance(s, dict) for s in raw):
         raise LibraryError(f"{where}: [[source]] should be a list of tables")
@@ -149,9 +150,18 @@ def parse_config(doc: dict, path: Path | None, base: Path) -> Config:
         raise LibraryError(
             f"{where}: [install] targets should list names from {', '.join(TARGET_NAMES)}"
         )
+    export = doc.get("export", {})
+    if not isinstance(export, dict):
+        raise LibraryError(f"{where}: [export] should be a table")
+    _keys(export, {"skills"}, f"{where}, [export]")
+    chosen = export.get("skills")
+    if chosen is not None:
+        if not isinstance(chosen, list):
+            raise LibraryError(f"{where}: [export] skills should be a list of skill names")
+        chosen = tuple(check_name(n) for n in chosen)
     if not sources:
         sources = [SourceSpec(name="local", path=base)]
-    return Config(path, tuple(sources), dict(variants), tuple(refuse), tuple(targets))
+    return Config(path, tuple(sources), dict(variants), tuple(refuse), tuple(targets), chosen)
 
 
 def load_config(explicit: Path | None = None, cwd: Path | None = None) -> Config:

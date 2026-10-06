@@ -6,7 +6,10 @@ install would pick, byte for byte. --skills writes the same copies as plain <dir
 folders, the layout npx skills and APM read first.
 
 Each copy is the one install would pick (the config's default variant, or the base) at its
-newest release, and the install policy applies: a refused copy is left out and reported.
+newest release. An export goes to tools that don't run Mordecai's gate, so it refuses what the
+default policy refuses (Hurts, Invalid, broken) whatever the config says, as well as anything
+else the config's policy refuses. A refused copy is left out and reported. The config's
+[export] skills, when set, limits the export to those skills.
 Both write mordecai-export.json beside the copies, with each one's source, commit, version and
 verdict. A folder is written only if it is empty or holds a previous export.
 """
@@ -19,6 +22,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from mordecai.library import LibraryError
+from mordecai.library.evidence import DEFAULT_REFUSE
 from mordecai.library.install import _copy
 from mordecai.library.skillmd import check_folder
 from mordecai.library.sources import Library
@@ -56,7 +60,13 @@ def _prepare(out: Path) -> None:
 
 def _resolved(lib: Library, plugin_names: bool) -> tuple[list[tuple], list[str]]:
     picks, skipped = [], []
-    for skill in lib.skills():
+    refuse = sorted(set(DEFAULT_REFUSE) | set(lib.config.refuse))
+    chosen = lib.config.export
+    if chosen is not None:
+        missing = sorted(set(chosen) - set(lib.skills()))
+        if missing:
+            raise LibraryError(f"[export] skills names skills no source has: {', '.join(missing)}")
+    for skill in lib.skills() if chosen is None else sorted(chosen):
         variant = lib.default_variant(skill)
         try:
             if plugin_names and skill.startswith(RESERVED_PLUGIN_PREFIXES):
@@ -67,7 +77,7 @@ def _resolved(lib: Library, plugin_names: bool) -> tuple[list[tuple], list[str]]
             if report.errors:
                 raise LibraryError(f"{entry.copy.label} isn't valid: {report.errors[0]}")
             evidence = lib.evidence(entry, picked)
-            if evidence.blocked(lib.config.refuse):
+            if evidence.blocked(refuse):
                 raise LibraryError(
                     f"{entry.copy.label} {picked.version} is refused: its "
                     f"evidence says {evidence.label}"

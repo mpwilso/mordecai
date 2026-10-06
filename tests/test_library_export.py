@@ -90,3 +90,36 @@ def test_export_command(repo, gitenv, monkeypatch):
     )
     assert code == 0
     assert "Wrote 1 skill(s)" in out.getvalue()
+
+
+def test_an_export_never_holds_what_the_default_policy_refuses(repo, gitenv):
+    """Exports reach tools that don't run the gate, so a config can't loosen them."""
+    doc = {
+        "source": [{"name": "org", "path": str(repo)}],
+        "variants": {"greeting": "brief"},
+        "policy": {"refuse": []},
+    }
+    with Library(parse_config(doc, None, repo.parent)) as lib:
+        from mordecai.library import install as inst
+        from mordecai.library.lock import Lock
+
+        proj = inst.project(gitenv)
+        assert inst.plan(lib, proj, Lock(gitenv / "x.json"), "greeting").refused is None
+        for export in (
+            lambda: export_skills(lib, gitenv / "flat"),
+            lambda: export_marketplace(lib, gitenv / "market", "acme", "Acme"),
+        ):
+            r = export()
+            assert r.written == [] and "hurts" in r.skipped[0]
+    assert not (gitenv / "flat/greeting").exists()
+    assert not (gitenv / "market/plugins/greeting").exists()
+
+
+def test_export_skills_limits_what_is_published(repo, gitenv):
+    doc = {"source": [{"name": "org", "path": str(repo)}], "export": {"skills": ["greeting"]}}
+    with Library(parse_config(doc, None, repo.parent)) as lib:
+        assert [r["skill"] for r in export_skills(lib, gitenv / "a").written] == ["greeting"]
+    doc["export"] = {"skills": ["nope"]}
+    with Library(parse_config(doc, None, repo.parent)) as lib:
+        with pytest.raises(LibraryError, match="no source has: nope"):
+            export_skills(lib, gitenv / "b")
