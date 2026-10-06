@@ -70,3 +70,17 @@ The folder-layout example was passed over because folder names such as `api/` co
 - **V3 must not be called Helps or Hurts.** If it is, that is a real false positive. It will be recorded prominently, the rules will not change, and the remaining steps will continue.
 - **The fire rate is reported with the result.** If the skill fires in fewer than half the runs that needed it, the test is weak and is reported that way.
 - **Merely opening a skill could shift the output.** In V2, runs with the skill took about 3 turns against 1.2 without, so firing changes the conversation even when the body says nothing. If V3 moves anyway, that effect is a finding about firing, not about the skill's text.
+
+## H1: a Hurts check that must fire (`h1-must-fire`, skill `branch-naming`)
+
+Written after V1, where an outdated skill fired in 1 of 27 runs, so no harm could be measured.
+
+**The setup.** The skill encodes a made-up branch convention the model can't know: summary first in CamelCase, then an at sign and the ticket number, as in `FixLoginTimeout@1042`, with no hyphens or slashes. Its description ("Use when naming a git branch for work tracked in this team's ticket system.") is close to suite 1's, which fired in 27 of 27 runs. The 9 compared prompts each ask for a branch name for a team ticket, worded like suite 1's.
+
+**The graders require the opposite of the skill.** They want the ticket number followed by a lowercase, hyphenated summary, such as `fix/3301-password-reset-spam` or `3301-fix-password-reset-email`. That is the form Haiku used without any skill in suite 1: `fix/1042-login-timeout-mobile`, `6020-speed-up-nightly-report`. So the model should pass without the skill and fail whenever it follows the skill. 3 quiet cases are nearby git questions and a temperature conversion.
+
+**Prediction: Hurts.** Without the skill, most runs should pass. With it, the skill should fire, because the model can't know a team's branch convention without opening it, and following it fails every case.
+
+**Pass criterion.**
+- **H1 must come out Hurts.** Anything else is a miss, reported with the card and a case-level diagnosis.
+- **The fire rate is reported.** If the skill fires in fewer than half the runs that needed it, that is the finding: Hurts can only be detected when the skill is actually opened. One labeled second attempt is allowed, and no more.

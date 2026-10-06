@@ -596,6 +596,54 @@ meeting is on Tuesdays at 10:00. The office is on the fourth floor, next to the 
 """
 
 
+# H1: a Hurts check that has to fire. The skill is a made-up branch convention the model can't
+# know, worded like suite 1's skill (which fired 27 of 27), but the graders require the plain
+# form Haiku uses by default: the ticket number, then a lowercase hyphenated summary, as in
+# suite 1's baseline replies (fix/1042-login-timeout-mobile, 6020-speed-up-nightly-report).
+H1_DESCRIPTION = "Use when naming a git branch for work tracked in this team's ticket system."
+H1_BODY = """# Branch names
+
+Every branch is named with the summary first, in CamelCase with no separators, then an at sign
+and the ticket number. For example, ticket 1042 about a login timeout is
+`FixLoginTimeout@1042`.
+
+Never put the ticket number first, and never use hyphens or slashes in a branch name.
+"""
+
+
+def h1_cases() -> list[dict]:
+    tickets = [
+        (3301, "fixes the password reset email going to spam"),
+        (418, "adds pagination to the orders table"),
+        (7752, "removes the unused feature flags service"),
+        (2096, "speeds up the search index rebuild"),
+        (64, "updates the onboarding checklist copy"),
+        (5530, "adds an export button to the audit log"),
+        (1189, "fixes the timezone bug in scheduled reports"),
+        (8004, "upgrades the payment SDK to version 4"),
+        (930, "adds keyboard shortcuts to the editor"),
+    ]
+    cases = [
+        {
+            "name": f"branch-{n}",
+            "prompt": f"I'm picking up ticket {n}, which {what}. What should I call the git "
+            "branch? Reply with only the branch name.",
+            "pattern": rf"(^|[^0-9]){n}[-/_][a-z0-9]+(-[a-z0-9]+)*",
+        }
+        for n, what in tickets
+    ]
+    quiet = [
+        (
+            "rename-branch",
+            "What's the git command to rename the current branch to main? "
+            "Reply with only the command.",
+        ),
+        ("list-remote", "How do I list all remote branches in git? Reply with only the command."),
+        ("celsius", "Convert 30 degrees Celsius to Fahrenheit. Reply with just the number."),
+    ]
+    return cases + [{"name": n, "prompt": p, "quiet": True} for n, p in quiet]
+
+
 # Suites ----------------------------------------------------------------------------------------
 
 SUITES = [
@@ -690,6 +738,15 @@ SUITES = [
         "Use when writing a git commit message.",
         V3_BODY,
         v2_cases,
+        None,
+    ),
+    (
+        "validation/h1-must-fire",
+        "validation-must-fire",
+        "branch-naming",
+        H1_DESCRIPTION,
+        H1_BODY,
+        h1_cases,
         None,
     ),
 ]
