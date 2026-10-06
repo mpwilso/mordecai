@@ -34,6 +34,11 @@ BAD = {
     ),
     "cost a string": (lambda d: run0(d).update(costUsd="free"), "costUsd should be a number"),
     "turns NaN": (lambda d: run0(d).update(turns=float("nan")), "turns should be a number"),
+    "score a huge integer": (lambda d: run0(d).update(score=10**400), "score should be a number"),
+    "cost a huge integer": (
+        lambda d: run0(d).update(costUsd=10**400),
+        "costUsd should be a number",
+    ),
     "error a number": (lambda d: run0(d).update(error=7), "error should be a string"),
     "skipped a string": (
         lambda d: run0(d).update(skippedPaidGraders="no"),

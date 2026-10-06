@@ -95,12 +95,21 @@ def _items(raw: dict, key: str, where: str) -> list[dict]:
     return items
 
 
+def _finite(value: int | float) -> bool:
+    """Whether value is finite as a float. An integer too big for a float isn't, and would
+    otherwise raise OverflowError."""
+    try:
+        return math.isfinite(value)
+    except OverflowError:
+        return False
+
+
 def _number(raw: dict, key: str, where: str, high: float | None = None) -> float | None:
     """raw[key] as a finite number from 0 (to high, if given), or None if missing or null."""
     value = raw.get(key)
     if value is None:
         return None
-    if isinstance(value, bool) or not isinstance(value, int | float) or not math.isfinite(value):
+    if isinstance(value, bool) or not isinstance(value, int | float) or not _finite(value):
         raise ResultError(f"{where}: {key} should be a number, not {json.dumps(value)[:40]}")
     if value < 0 or (high is not None and value > high):
         span = f"from 0 to {high:g}" if high is not None else "at least 0"
