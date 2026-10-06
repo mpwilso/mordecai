@@ -1,5 +1,5 @@
-"""No tracked file names a local home folder: results, cards and docs use paths relative to the
-repository, or placeholders such as $DEMO."""
+"""What no tracked file may hold: a local home folder (results, cards and docs use paths relative
+to the repository, or placeholders such as $DEMO), or an em or en dash."""
 
 import subprocess
 
@@ -25,5 +25,17 @@ def test_no_tracked_file_has_a_home_folder_path():
         if path.is_file() and not path.is_symlink():
             data = path.read_bytes()
             if any(m in data for m in MARKERS):
+                bad.append(rel)
+    assert bad == []
+
+
+def test_no_tracked_file_has_an_em_or_en_dash():
+    dashes = [chr(0x2014).encode(), chr(0x2013).encode()]
+    bad = []
+    for rel in tracked():
+        path = ROOT / rel
+        if path.is_file() and not path.is_symlink():
+            data = path.read_bytes()
+            if any(d in data for d in dashes):
                 bad.append(rel)
     assert bad == []
