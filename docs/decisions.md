@@ -119,3 +119,10 @@ Reversible decisions made during the library build, each with the options consid
 - **Decision:** targets refuse backslashes, drives and control characters; materializing a source never writes through a link and never replaces a file; evidence reached through a link is broken and never read; a skill folder can't hold two names that differ only by case or Unicode form; fetches allow only HTTPS, no submodules and no hooks.
 - **Why:** each was reproduced first (tests/test_library_security.py says which). They matter most on macOS and Windows, where a case-insensitive or backslash-separated file system turns a harmless Linux name into an escape.
 - **Reverse:** per check, in `paths.py`, `gitio.py`, `evidence.py` and `skillmd.py`.
+
+## D18. No config can drop the default refusals
+
+- **Decision:** Hurts, Invalid and broken are always refused. A config's `[policy] refuse` can add to them and never remove them. Only `--allow`, typed at the command line for one install or update, overrides one, and `update` never reuses an override recorded in the lockfile. This narrows D7.
+- **Options:** a fully configurable policy, as before.
+- **Why:** the library and the MCP server read `mordecai-library.toml` from the project they run in, and a project someone else wrote could ship one with `refuse = []`. A lockfile can be edited the same way. Exports already couldn't be loosened (D15).
+- **Reverse:** the line after `# A config can add refusals` in `sources.parse_config`, and `plan_updates`' `allow` in `install.py`.

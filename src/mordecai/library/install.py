@@ -397,10 +397,16 @@ class Update:
 
 
 def plan_updates(
-    lib: Library, proj: Project, lock: Lock, skill: str | None = None, force: bool = False
+    lib: Library,
+    proj: Project,
+    lock: Lock,
+    skill: str | None = None,
+    force: bool = False,
+    allow: list[str] | None = None,
 ) -> list[Update]:
     """For each locked install (of skill, if given), the plan that would bring it to the newest
-    release of the same copy."""
+    release of the same copy. The overrides an install recorded in the lockfile aren't reused:
+    a lockfile may have been edited, so only allow, from the command line, overrides a refusal."""
     out = []
     for key, entry in sorted(lock.entries.items()):
         if skill and entry["skill"] != skill:
@@ -416,7 +422,7 @@ def plan_updates(
                 entry["variant"],
                 None,
                 [target],
-                entry.get("allowed"),
+                allow,
                 force,
                 exact=True,
             )

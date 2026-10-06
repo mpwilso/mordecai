@@ -161,6 +161,9 @@ def parse_config(doc: dict, path: Path | None, base: Path) -> Config:
         chosen = tuple(check_name(n) for n in chosen)
     if not sources:
         sources = [SourceSpec(name="local", path=base)]
+    # A config can add refusals but never drop the defaults: only --allow, typed at the command
+    # line for one install, overrides Hurts, Invalid or broken.
+    refuse = [*DEFAULT_REFUSE, *(r for r in refuse if r not in DEFAULT_REFUSE)]
     return Config(path, tuple(sources), dict(variants), tuple(refuse), tuple(targets), chosen)
 
 

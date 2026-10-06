@@ -32,7 +32,8 @@ library = "examples/personal/library"
 pr-description = "payments"
 ferry-workflow = "qrx"
 
-# Verdicts and evidence states install refuses. These are the defaults.
+# Install always refuses hurts, invalid and broken; a config can add to them, never drop them.
+# Only --allow, typed at the command line, overrides a refusal.
 [policy]
 refuse = ["hurts", "invalid", "broken"]
 

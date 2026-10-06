@@ -127,6 +127,13 @@ def _parser() -> argparse.ArgumentParser:
     where(c, "update")
     c.add_argument("--yes", action="store_true", help="apply the updates after the diff")
     c.add_argument(
+        "--allow",
+        action="append",
+        default=[],
+        metavar="VERDICT",
+        help="update even though the policy refuses this verdict or state (repeatable)",
+    )
+    c.add_argument(
         "--force",
         action="store_true",
         help="replace folders that changed since they were installed",
@@ -359,7 +366,7 @@ def cmd_install(lib, args, out) -> int:
 def cmd_update(lib, args, out) -> int:
     proj = inst.project(args.project, args.user)
     lock = Lock(proj.lock_path)
-    updates = inst.plan_updates(lib, proj, lock, args.skill, args.force)
+    updates = inst.plan_updates(lib, proj, lock, args.skill, args.force, args.allow)
     if not updates:
         _p(out, "Nothing is installed.")
         return 0

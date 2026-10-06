@@ -104,7 +104,12 @@ def test_an_export_never_holds_what_the_default_policy_refuses(repo, gitenv):
         from mordecai.library.lock import Lock
 
         proj = inst.project(gitenv)
-        assert inst.plan(lib, proj, Lock(gitenv / "x.json"), "greeting").refused is None
+        # A config can't loosen install either; only --allow can.
+        assert inst.plan(lib, proj, Lock(gitenv / "x.json"), "greeting").refused
+        assert (
+            inst.plan(lib, proj, Lock(gitenv / "y.json"), "greeting", allow=["hurts"]).refused
+            is None
+        )
         for export in (
             lambda: export_skills(lib, gitenv / "flat"),
             lambda: export_marketplace(lib, gitenv / "market", "acme", "Acme"),

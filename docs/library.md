@@ -34,7 +34,7 @@ Every Git source is read at a commit, from Git's objects, never from a working t
 
 A version can carry a card and the eval result it was made from, beside it in `evidence/<version>/`. The library never trusts the verdict written in the card: it checks that the result is the one the card was made from, reruns the verdict rules on it, and checks that the card's skill hash equals the hash of that version's files. Listing shows the verdict, or one of these: unmeasured (no card), stale (a card for other files), or broken (a card that doesn't match its result).
 
-Install refuses Hurts, Invalid and broken by default, and warns on stale and unmeasured. `--allow hurts` overrides one refusal, at the command line only, and the lockfile records it.
+Install always refuses Hurts, Invalid and broken, and warns on stale and unmeasured. A config's `[policy] refuse` can add to those, never drop them, so a project's own `mordecai-library.toml` can't switch the gate off. `--allow hurts`, typed at the command line, overrides one refusal for one install or update; the lockfile records it, but a later update never reuses it.
 
 In the seeded library, two variants carry real cards from the planted check. Their skill folders are byte for byte the planted skills, their result files are the recorded results with local paths made relative (each evidence folder's NOTE.md gives the original hash), and their cards were made from them with `mordecai identify`:
 

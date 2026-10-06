@@ -106,13 +106,14 @@ def test_hurts_is_refused_unless_allowed_and_the_override_is_recorded(setup):
     assert lock["installed"][".agents/skills/greeting"]["allowed"] == ["hurts"]
 
 
-def test_the_policy_is_configurable(setup):
+def test_a_config_can_add_refusals_but_not_drop_the_defaults(setup):
     repo, proj, _ = setup
     with lib_for(repo, policy={"refuse": ["unmeasured"]}) as lib:
+        assert lib.config.refuse == ("hurts", "invalid", "broken", "unmeasured")
         p = inst.plan(lib, inst.project(proj), Lock(proj / "x.json"), "greeting", "formal")
         assert p.refused and "unmeasured" in p.refused
         p = inst.plan(lib, inst.project(proj), Lock(proj / "x.json"), "greeting", "brief")
-        assert p.refused is None
+        assert p.refused and "hurts" in p.refused
 
 
 def edit_card(path, **changes):

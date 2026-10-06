@@ -83,7 +83,7 @@ library = "library"         # optional: the library folder inside the source; de
 pr-description = "mobile"   # the variant install uses when --variant isn't given
 
 [policy]
-refuse = ["hurts", "invalid", "broken"]
+refuse = ["unmeasured"]   # added to Hurts, Invalid and broken, which are always refused
 
 [install]
 targets = ["agents", "claude"]   # where the MCP server may install
@@ -110,7 +110,7 @@ targets = ["agents", "claude"]   # where the MCP server may install
   | broken | the card can't be read, its result is missing or has a different hash, or the result gives a different verdict | refused |
 
 - **Code decides.** The library never trusts the verdict written in a card. It reruns the engine on the stored result, with the rules the card records, and uses that.
-- **Install policy.** `refuse` lists verdicts and states install won't accept. The default is `hurts`, `invalid` and `broken`; the brief asked for Hurts and Invalid, and broken is added because a card that doesn't match its own result can't be read either way. Stale and unmeasured always get a warning. `install --allow VERDICT` overrides one refusal for one install, and the lockfile records that it was overridden.
+- **Install policy.** Install always refuses `hurts`, `invalid` and `broken`; the brief asked for Hurts and Invalid, and broken is added because a card that doesn't match its own result can't be read either way. `[policy] refuse` in a config can add other verdicts or states, such as `unmeasured`, but can't drop those three, since a config may come with a project someone else wrote. Stale and unmeasured get a warning. `install --allow VERDICT` (or `update --allow`), typed at the command line, overrides one refusal for one install, and the lockfile records it; a recorded override is never reused, since a lockfile can be edited. The MCP server can't override a refusal at all.
 - **The limit.** The gate trusts committed result files. Someone who writes a fake result and a card from it passes the gate. The card proves which files a result is about, not that the eval really ran.
 
 ## Delivery
