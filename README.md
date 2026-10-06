@@ -132,7 +132,7 @@ Two suites were rerun on Claude Sonnet 5.5 (`claude-sonnet-5-5`). Neither verdic
 
 ### Unit tests
 
-Each verdict and warning has a test on a constructed result, along with hashing, staleness, relative card paths, `lint`, `check --model` and the command line. One test is built from the real suite 3 result. `uv run pytest` runs 52 tests, and none call a model. The result format comes from a real `claude plugin eval` run, not from the docs alone.
+Each verdict and warning has a test on a constructed result, along with hashing, staleness, relative card paths, `lint`, `check --model` and the command line. One test is built from the real suite 3 result. `uv run pytest` runs 52 tests, and none call a model. CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs the tests, lint, the format check, `scripts/brand.py --check` and `scripts/planted.py --check` on Python 3.11, 3.12 and 3.13, on every push and pull request. Live eval runs are never part of CI: they call a model and cost money, and CI has no secrets. The result format comes from a real `claude plugin eval` run, not from the docs alone.
 
 ### What wasn't checked
 
