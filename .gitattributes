@@ -7,3 +7,4 @@ docs/brand/*.png linguist-generated
 docs/planted-results/** linguist-generated
 tests/fixtures/** linguist-vendored
 library/**/evidence/** linguist-generated
+skills/** linguist-generated

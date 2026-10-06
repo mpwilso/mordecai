@@ -1,0 +1,10 @@
+# The library in this repository, as `mordecai library` reads it when run from here.
+# skills/ is written from it: uv run mordecai library export --skills skills
+
+[[source]]
+name = "mordecai"
+path = "."
+
+# ferry-workflow's qrx variant is the one measured Helps (planted suite 1).
+[variants]
+ferry-workflow = "qrx"
