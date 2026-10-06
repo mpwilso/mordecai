@@ -20,6 +20,7 @@ The ceiling for this check is $35. Before each run, the spend so far plus that r
 | 8 | V2 pilot (no skill, 1 run per case, `--ablation none`) | claude-haiku-4-5-20251001 | $0.30 | $0.25 | $11.08 |
 | 9 | V1 v1-outdated | claude-haiku-4-5-20251001 | $3 | $1.54 | $12.62 |
 | 10 | V2 v2-noisy-placebo | claude-haiku-4-5-20251001 | $3 | $1.23 | $13.85 |
+| 11 | V3 v3-inert-placebo | claude-haiku-4-5-20251001 | $3 | $1.24 | $15.09 |
 
 Not counted above: the one-case run on 2026-10-05 that captured the result format ($0.07, before this check).
 
@@ -119,6 +120,7 @@ Predictions: [validation-skills.md](validation-skills.md) for V1 and V2 (committ
 |---|---|---|---|---|---|---|---|---|---|
 | V1 v1-outdated | Hurts | Inconclusive | Miss | 0 / 7 / 2 | 85% / 96% | 1 of 27; 0 of 9 quiet | 22 of 24 cells | $1.54 | 2026-10-05 23:37 |
 | V2 v2-noisy-placebo | Not Helps, not Hurts | **Hurts** | **Design defect: not an inert placebo** (first recorded as "Miss: false-positive test failed") | 0 / 3 / 6 | 0% / 37% | 27 of 27; 0 of 9 quiet | 19 of 24 cells | $1.23 | 2026-10-05 23:42 |
+| V3 v3-inert-placebo | Not Helps, not Hurts | Inconclusive | Match | 2 / 3 / 4 | 15% / 26% | 27 of 27; 0 of 9 quiet | 16 of 24 cells | $1.24 | 2026-10-05 23:57 |
 
 **V1 v1-outdated: Inconclusive, a miss.** The card reads: "The model scored 96% without the skill, but the 90% interval (-26 to +0 points) doesn't rule out a loss of 10 points." [Card](planted-results/v1-outdated.card.json).
 
@@ -144,3 +146,9 @@ Diagnosis: **case design problem: the placebo wasn't inert. The rules read a rea
 So V2 doesn't show that the rules make false calls on noise. It shows that a "placebo" has to be inert with respect to the grader, which this one wasn't. A placebo whose text says nothing about style or format is still untested. Run agreement was 19 of 24 cells, the noisiest suite so far.
 
 **Not run, because of the stop:** the two sealed holdouts, the suite 2 drift demo on Sonnet, `check --model` and the README rewrite. See [review-queue.md](review-queue.md).
+
+**V3 v3-inert-placebo: Inconclusive, a match. The inert placebo stayed out of Helps and Hurts on noisy runs.** The card reads: "The 90% interval runs -33 to +11 points, too wide to call." With the skill, 15% of runs used a Conventional Commits prefix; without it, 26%. 2 cases were better, 3 the same, 4 worse. [Card](planted-results/v3-inert-placebo.card.json). Predictions: [validation-skills.md](validation-skills.md), committed in ef49573.
+
+- **This is the noisy placebo the check lacked.** The skill fired in all 27 runs that needed it, so it was really opened every time. Runs disagreed often: all 3 agreed in only 16 of 24 case-and-side cells (67%), against 94% in the first main set. Cases moved both ways: csv-tests went from 0 of 3 to 1 of 3, and commit-6 from 2 of 3 to 0 of 3. The rules didn't turn that into a verdict.
+- **The point estimate leans negative (-11)**, and the interval includes zero. That fits noise. It is also consistent with a small effect of opening a skill at all: runs with it took 2.5 turns on average, against 1.3 without. One suite can't tell those apart.
+- **Claude Code updated itself** from 2.1.289 to 2.1.290 between V2 and V3. The card records the version. The eval format and every check here were unchanged.

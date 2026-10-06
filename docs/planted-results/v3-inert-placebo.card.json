@@ -1,0 +1,80 @@
+{
+  "card": 1,
+  "hashes": {
+    "cases": "sha256:96ee8832f99af274748888d203e3afa5d59259b0155e7f4bf79157fb94942a66",
+    "result": "sha256:d21e020048275fd6a3e30f2c0cbf13f8209e34549c29ac6338a3ccbd7434a48f",
+    "skill": "sha256:dd4bd47e6e69cea07d9b010be24249c0a2ae5f096e57c67bd034f64260851d2a"
+  },
+  "mordecai": "0.2.0",
+  "numbers": {
+    "casesCompared": 9,
+    "change": -0.1111111111111111,
+    "costPerRunWith": 0.01870698888888889,
+    "costPerRunWithout": 0.016914292592592594,
+    "fired": [
+      27,
+      27
+    ],
+    "flat": 3,
+    "improved": 2,
+    "interval": [
+      -0.3333,
+      0.1111
+    ],
+    "misfired": [
+      0,
+      9
+    ],
+    "turnsPerRunWith": 3.0,
+    "turnsPerRunWithout": 1.3703703703703705,
+    "withScore": 0.14814814814814814,
+    "withoutScore": 0.25925925925925924,
+    "worse": 4
+  },
+  "paths": {
+    "caseDirs": [
+      "evals/bump-pytest",
+      "evals/ci-workflow",
+      "evals/commit-2",
+      "evals/commit-4",
+      "evals/commit-5",
+      "evals/commit-6",
+      "evals/csv-tests",
+      "evals/docstring-typo",
+      "evals/log-oneline",
+      "evals/percent",
+      "evals/readme-link",
+      "evals/rebase"
+    ],
+    "casesRoot": ".",
+    "relativeTo": {
+      "casesRoot": "the skill directory",
+      "skill": "the card's directory"
+    },
+    "skill": "../../evals/planted/validation/v3-inert-placebo"
+  },
+  "reason": "The 90% interval runs -33 to +11 points, too wide to call.",
+  "rules": {
+    "ceiling": 0.9,
+    "confidence": 0.9,
+    "min_cases": 5,
+    "min_effect": 0.1,
+    "resamples": 2000,
+    "seed": 0
+  },
+  "subject": {
+    "plugin": "validation-inert-placebo",
+    "skills": [
+      "team-background"
+    ],
+    "version": "1.0.0"
+  },
+  "tested": {
+    "claudeVersion": "2.1.290",
+    "judgeModel": "claude-haiku-4-5-20251001",
+    "model": "claude-haiku-4-5-20251001",
+    "startedAt": "2026-10-05T23:57:19.553Z"
+  },
+  "verdict": "inconclusive",
+  "warnings": []
+}
