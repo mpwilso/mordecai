@@ -1,0 +1,78 @@
+{
+  "card": 1,
+  "hashes": {
+    "cases": "sha256:417d28c8319e5b9a0ceb5f28209cc5e1fe276cbdc39a60d92a66bd5bdb19bab9",
+    "result": "sha256:06cf8a4738645aad259bd8029e0ae44aa5ef147105826d600ac7bfaba814a17c",
+    "skill": "sha256:6f05f0dadc4921f984f206d238ba8edfb6bea341a3253f5abb2e24f04e4ab64b"
+  },
+  "mordecai": "0.2.0",
+  "numbers": {
+    "casesCompared": 9,
+    "change": 1.0,
+    "costPerRunWith": 0.01914068888888889,
+    "costPerRunWithout": 0.024983922222222225,
+    "fired": [
+      27,
+      27
+    ],
+    "flat": 0,
+    "improved": 9,
+    "interval": [
+      1.0,
+      1.0
+    ],
+    "misfired": [
+      0,
+      9
+    ],
+    "turnsPerRunWith": 3.0,
+    "turnsPerRunWithout": 2.037037037037037,
+    "withScore": 1.0,
+    "withoutScore": 0.0,
+    "worse": 0
+  },
+  "paths": {
+    "caseDirs": [
+      "evals/branch-1042",
+      "evals/branch-2310",
+      "evals/branch-51",
+      "evals/branch-6020",
+      "evals/branch-877",
+      "evals/delete-branch",
+      "evals/fahrenheit",
+      "evals/pr-1777",
+      "evals/pr-2210",
+      "evals/pr-4402",
+      "evals/pr-913",
+      "evals/undo-commit"
+    ],
+    "casesRoot": "../../../../../evals/planted/1-convention",
+    "relativeTo": {
+      "casesRoot": "the skill directory",
+      "skill": "the card's directory"
+    },
+    "skill": "../../ferry-workflow"
+  },
+  "reason": "The skill raised the score: 90% interval +100 to +100 points.",
+  "rules": {
+    "ceiling": 0.9,
+    "confidence": 0.9,
+    "min_cases": 5,
+    "min_effect": 0.1,
+    "resamples": 2000,
+    "seed": 0
+  },
+  "subject": {
+    "plugin": "planted-convention",
+    "skills": [],
+    "version": "1.0.0"
+  },
+  "tested": {
+    "claudeVersion": "2.1.289",
+    "judgeModel": "claude-haiku-4-5-20251001",
+    "model": "claude-haiku-4-5-20251001",
+    "startedAt": "2026-10-05T22:13:29.047Z"
+  },
+  "verdict": "helps",
+  "warnings": []
+}
