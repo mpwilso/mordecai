@@ -67,7 +67,7 @@ All three read `.agents/skills/` in the project and `~/.agents/skills/` for the 
 
 ## npx skills
 
-Source: [vercel-labs/skills](https://github.com/vercel-labs/skills), README and source at commit 14cf84a (2026-10-05).
+Source: [vercel-labs/skills](https://github.com/vercel-labs/skills), README and source as of their commit `14cf84aa922c` (2026-10-05).
 
 - **Discovery.** It looks in the repo root (if it holds `SKILL.md`), `skills/` and its `.curated`, `.experimental` and `.system` folders, and about 55 agent folders such as `.agents/skills/` and `.claude/skills/`, walking each up to three levels deep. It also reads skills declared in a root `.claude-plugin/marketplace.json` or `plugin.json`. "If no skills are found in standard locations, a recursive search is performed", up to five folders deep; `--full-depth` forces that search.
 - **Same names.** The first copy found wins, with no warning.

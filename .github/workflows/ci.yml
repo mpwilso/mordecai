@@ -21,9 +21,13 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           persist-credentials: false
+          # The full history, so the test that checks the commits the docs cite can run.
+          fetch-depth: 0
       - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
         with:
           python-version: ${{ matrix.python-version }}
+      # The engine on its own: no library extra, so the library's tests skip and
+      # tests/test_engine_boundary.py shows identify, check and lint work without it.
       - name: Install
         run: uv sync --locked
       - name: Tests
@@ -36,3 +40,24 @@ jobs:
         run: uv run python scripts/brand.py --check
       - name: Planted suites match scripts/planted.py
         run: uv run python scripts/planted.py --check
+
+  library:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
+        with:
+          python-version: ${{ matrix.python-version }}
+      # The library extra (the MCP SDK and strictyaml) and the reference validator, so every
+      # library and MCP test runs.
+      - name: Install
+        run: uv sync --locked --extra library --group spec
+      - name: Tests
+        run: uv run pytest

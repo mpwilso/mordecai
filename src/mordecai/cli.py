@@ -1,6 +1,8 @@
 """mordecai identify: read an eval result and print the card.
 mordecai check: say whether a card still matches the skill and cases it was measured on.
 mordecai lint: run the case-quality warnings on a plugin's eval cases before an eval.
+mordecai library and mordecai mcp: the skill library, in mordecai.library. They are handed over
+before this module parses anything, so the engine never imports the library.
 
 Exit codes: 0 for a clean result, 1 for what the command checks for (a --fail-on verdict, a
 stale card, lint warnings), and 2 for input Mordecai can't read or won't use.
@@ -75,6 +77,9 @@ def _parser() -> argparse.ArgumentParser:
     )
     lt = sub.add_parser("lint", help="run the case-quality warnings on a plugin's eval cases")
     lt.add_argument("plugin", type=Path, nargs="+", help="plugin directories")
+    # Listed for --help only: main() hands these to mordecai.library before parsing.
+    sub.add_parser("library", help="keep, release and install skills, with each version's verdict")
+    sub.add_parser("mcp", help="serve the skill library to MCP clients over stdio")
     return p
 
 
@@ -154,7 +159,27 @@ def lint_plugins(args, out) -> int:
     return worst
 
 
+LIBRARY_MODULES = ("strictyaml", "mcp")
+
+
+def _library(argv: list[str], out) -> int:
+    try:
+        from mordecai.library.cli import main as library_main
+    except ImportError as e:
+        if (e.name or "").split(".")[0] not in LIBRARY_MODULES:
+            raise
+        print(
+            f"mordecai: {argv[0]} needs the optional library extra: uv sync --extra library",
+            file=sys.stderr,
+        )
+        return 2
+    return library_main(argv, out)
+
+
 def main(argv: list[str] | None = None, out=None) -> int:
+    argv = sys.argv[1:] if argv is None else argv
+    if argv and argv[0] in ("library", "mcp"):
+        return _library(argv, out)
     args = _parser().parse_args(argv)
     out = out or sys.stdout
     if args.command == "identify":

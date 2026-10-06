@@ -18,8 +18,15 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
     "Topic :: Software Development :: Quality Assurance",
 ]
-# Standard library only.
+# The verdict engine is standard library only. The skill library and its MCP server need the
+# `library` extra: uv sync --extra library, or pip install "mordecai-skills[library]".
 dependencies = []
+
+[project.optional-dependencies]
+library = [
+    "mcp==2.3.0",
+    "strictyaml==1.7.3",
+]
 
 [project.urls]
 Homepage = "https://github.com/mpwilso/mordecai"
@@ -40,6 +47,11 @@ dev = [
 #   PLAYWRIGHT_BROWSERS_PATH=.playwright uv run playwright install chromium
 visual = [
     "playwright==1.63.0",
+]
+# The reference validator, used by a test to cross-check every stored and exported skill:
+#   uv sync --extra library --group spec
+spec = [
+    "skills-ref==0.1.1",
 ]
 
 [build-system]
