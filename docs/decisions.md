@@ -126,3 +126,17 @@ Reversible decisions made during the library build, each with the options consid
 - **Options:** a fully configurable policy, as before.
 - **Why:** the library and the MCP server read `mordecai-library.toml` from the project they run in, and a project someone else wrote could ship one with `refuse = []`. A lockfile can be edited the same way. Exports already couldn't be loosened (D15).
 - **Reverse:** the line after `# A config can add refusals` in `sources.parse_config`, and `plan_updates`' `allow` in `install.py`.
+
+## D19. A refusal inside the run's own folder makes the card Invalid
+
+- **Status:** proposed. Prediction, committed before the change is replayed: across the 15 recorded results in evals/results, no verdict changes and no run counts as blocked. All 8 refused runs reached outside their working folder (the eval's temp root, the repo above it, `.git`, `.gitconfig`), so they stay a warning. scripts/simulate.py moves nothing.
+- **Decision:** a run is blocked when permissions refused a tool the run had (the trace's init `tools`) on a path inside its working folder (init `cwd`) or the skill's plugin folder. Then the setup, not the skill, decided the run, and the card is Invalid, as with a rate limit. A refusal anywhere else is the model wandering and stays a warning. When traces can't be read, the card says denials weren't checked. The card records `blockedRuns`, and the library's check uses it, since a library card doesn't ship its traces.
+- **Options:** Invalid on any refused tool the case allows, wherever it points (cards 1, 1-sonnet, 4 and 5b would turn Invalid for the model's own wandering); a warning only.
+- **Why:** the ISR regression runs that couldn't read their own skill files measured nothing, while a model looking for `.git` above its folder is behaviour the eval should see.
+
+## D20. A card's rules must be the engine's rules
+
+- **Status:** proposed. Prediction: every card in library/ and evals/results uses the default rules, so none turns broken; a card with `resamples` 0 or 10**9, `min_cases` 0, or a float where an integer belongs is broken in under a second.
+- **Decision:** the library refuses a card whose rules differ from `DEFAULT_RULES`, and any error while it recomputes a card's verdict makes that card broken instead of escaping.
+- **Options:** bounds on each number; allowing only rules stricter than the defaults.
+- **Why:** a card that carries looser rules (`min_effect` 0, `min_cases` 1) can honestly earn Helps on almost no evidence, and a card with `resamples` 0 crashed the check while a huge one hung it. Equal rules close both at once.
