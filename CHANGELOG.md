@@ -13,6 +13,7 @@ The skill library: skills kept in Git, each with a base and named variants, each
 - `mordecai mcp`: a stdio MCP server with `list_skills`, `search_skills`, `get_skill`, `skill_history`, `check_updates`, `install_skill` and `uninstall_skill`. It can't override the install policy, and writes only inside configured targets.
 - A seeded library, examples of a three-source config and managed settings, and [docs/library-demo.md](docs/library-demo.md), a walk-through with no model calls.
 - A card warns when runs had a tool call refused by permissions, with how many on each side. The result JSON has no field for a refusal, so Mordecai reads it from each run's trace (`permission_denials`), when the trace is inside the current directory or `--skill`. The verdict doesn't change; see [open question 4](docs/open-questions.md#open-question-4-runs-that-say-nothing-about-the-skill).
+- Fixes: a result with a grader name that isn't a string, or a number too big for a float, is refused with exit code 2 instead of a traceback. A case prompt names the skill only when it holds the name as a whole word, so a skill called `commit` no longer gets the warning (or a failing `lint`) from a prompt saying "uncommitted".
 - The library and its MCP server need the optional extra: `uv sync --extra library`. `identify`, `check` and `lint` still need only the standard library.
 
 ## 0.2.0 (2026-10-06)
