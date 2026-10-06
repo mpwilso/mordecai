@@ -22,6 +22,7 @@ The ceiling for this check is $35. Before each run, the spend so far plus that r
 | 10 | V2 v2-noisy-placebo | claude-haiku-4-5-20251001 | $3 | $1.23 | $13.85 |
 | 11 | V3 v3-inert-placebo | claude-haiku-4-5-20251001 | $3 | $1.24 | $15.09 |
 | 12 | holdout 6-convention | claude-haiku-4-5-20251001 | $3 | $1.28 | $16.37 |
+| 13 | holdout 7-filler | claude-haiku-4-5-20251001 | $3 | $1.30 | $17.67 |
 
 Not counted above: the one-case run on 2026-10-05 that captured the result format ($0.07, before this check).
 
@@ -170,5 +171,10 @@ Both run once each on Haiku under the 0.2.0 rules (03d2619).
 | Suite | Predicted | Actual | Match | Better / same / worse | With / without | Fired | Run agreement | Cost | Run (UTC) |
 |---|---|---|---|---|---|---|---|---|---|
 | holdout 6-convention | Helps | Helps | Match | 9 / 0 / 0 | 100% / 0% | 27 of 27; 0 of 9 quiet | 24 of 24 cells | $1.28 | 2026-10-06 00:03 |
+| holdout 7-filler | Not Helps, not Hurts | No effect | Match (with the caveat above) | 0 / 9 / 0 | 0% / 0% | 27 of 27; 0 of 9 quiet | 24 of 24 cells | $1.30 | 2026-10-06 00:06 |
 
 **Holdout 6: Helps, a match.** Same shape as suite 1. Every with-skill run wrote the `ZK-<ticket> | <area> | <summary>` line, every baseline run didn't, and the skill fired in all 27 runs that needed it. One baseline run hit the 4-turn cap and scored 0, as every baseline run did. [Card](planted-results/holdout-6-convention.card.json).
+
+**Holdout 7: No effect, a match, read with the caveat written before it ran.** Every run on both sides scored 0 on the compared cases, so the change was exactly 0. The skill fired in all 27 runs that needed it. As the note said, a baseline at 0 leaves the skill's plain-language instructions no way to change the score: this shows that the rules don't invent a gain on a floor, and nothing more. Four runs hit the 4-turn cap and scored 0, like every other run of their cases. [Card](planted-results/holdout-7-filler.card.json).
+
+**Both sealed holdouts matched.** They were written before any result existed and run exactly once.
