@@ -152,3 +152,16 @@ So V2 doesn't show that the rules make false calls on noise. It shows that a "pl
 - **This is the noisy placebo the check lacked.** The skill fired in all 27 runs that needed it, so it was really opened every time. Runs disagreed often: all 3 agreed in only 16 of 24 case-and-side cells (67%), against 94% in the first main set. Cases moved both ways: csv-tests went from 0 of 3 to 1 of 3, and commit-6 from 2 of 3 to 0 of 3. The rules didn't turn that into a verdict.
 - **The point estimate leans negative (-11)**, and the interval includes zero. That fits noise. It is also consistent with a small effect of opening a skill at all: runs with it took 2.5 turns on average, against 1.3 without. One suite can't tell those apart.
 - **Claude Code updated itself** from 2.1.289 to 2.1.290 between V2 and V3. The card records the version. The eval format and every check here were unchanged.
+
+## Sealed holdouts: a note before they run
+
+Both holdouts are as committed in 6c37ff9 and unedited since. `git log -- evals/planted/holdout` shows only that commit.
+
+**Holdout 7 (`changelog-helper`, the placebo) is not inert. Its result will be read with this caveat.** Its body is: "Changelog entries should be clear and useful to readers. Describe what changed in plain language, keep each entry brief, and mention anything a reader needs to act on." Those are behavior-changing instructions, the same kind of text that made V2 a design defect. But holdout 7's grader requires the made-up line format `ZK-<ticket> | <area> | <summary>`, which no run can produce without holdout 6's real skill. So the instructions can't create a pass, and with a baseline expected at or near 0 there is nothing for them to lower. As a result:
+
+- a No effect result here shows only that the rules don't invent a gain on a floor;
+- it doesn't test noise, and it can't test Hurts.
+
+**Holdout 6 (`changelog-format`)** is a made-up convention like suite 1, predicted Helps. It has no caveat.
+
+Both run once each on Haiku under the 0.2.0 rules (03d2619).
