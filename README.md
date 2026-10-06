@@ -7,9 +7,7 @@
 
 <p align="center"><b>Skill catalogs count downloads. Mordecai checks whether the skill helps.</b></p>
 
-<p align="center">v0.1: the verdict rules have not yet been checked against real eval runs.</p>
-
-Status: A portfolio project, built to show how I design, test and judge an AI tool. Version 0.1, a first slice. It reads real eval results and writes a card. Its rules have been checked on simulated skills with a known effect, and not yet on planted skills with real runs.
+Status: A portfolio project, built to show how I design, test and judge an AI tool. Version 0.2.0. Its verdict rules have been checked on simulated skills and on 12 planted skill suites with real eval runs, almost all on one small model (Claude Haiku 4.5). On the first set, 3 of 5 planted skills got their predicted verdict. Every result is in [docs/planted-skills-results.md](docs/planted-skills-results.md), including the misses.
 
 Mordecai is for teams that share Claude skills. Claude Code already runs a skill's test cases with and without the skill (`claude plugin eval`). Mordecai reads that result and decides what the skill can honestly claim: it helps, it hurts, the model already handles it, or there isn't enough to tell. The card it writes is tied to the exact skill, cases and model it was measured on, so a team can see when a claim has gone stale.
 
@@ -68,7 +66,9 @@ Code decides, not a model. The rules run in this order, and the first one that a
 
 The interval is a bootstrap over cases, and over runs inside each case, with a fixed seed, so the same result always gives the same card. Cases that check the skill stays quiet are left out of the change and reported as misfires.
 
-Every card also lists warnings that don't change the verdict: a model alias instead of a pinned ID, fewer than 3 runs per side, no case that checks the skill stays quiet, no case that checks it fired, and case prompts that name the skill (which tests whether the model follows an instruction, not whether it finds the skill).
+Every card also lists warnings that don't change the verdict: a model alias instead of a pinned ID, fewer than 3 runs per side, no case that checks the skill stays quiet, no case that checks it fired, and case prompts that name the skill (which tests whether the model follows an instruction, not whether it finds the skill). `mordecai lint` runs the same checks on case files before an eval.
+
+**The two Already handled rows changed in 0.2.0.** Under the original rules, Already handled only checked that the interval ruled out a 10-point gain. In the planted check, that hid harm. An outdated skill (suite 3) gave the wrong answer in 5 of the 6 runs where it fired, and the card still said Already handled, with an interval of -41 to +7. The rules never flagged that skill as Hurts, and the new rules don't either, because its interval reaches +7. They now call it Inconclusive. The change was designed after seeing that result, so suite 3 can't count as evidence for it. Of the seven cards recorded before the change, it moves only suite 3.
 
 ## Crawl mode
 
@@ -84,18 +84,72 @@ Crawl mode is a fan nod. It isn't affiliated with or endorsed by the author or p
 
 ## How it was tested
 
-- **The result format** comes from a real `claude plugin eval` run (Claude Code 2.1.289, two runs per side, $0.07), not from the docs alone. Parsing ignores fields it doesn't use, as the format's docs ask.
-- **Each verdict and warning** has a test on a constructed result, along with hashing, staleness and the command line. `uv run pytest` runs 37 tests.
-- **The rules were run on simulated skills with a known effect**, 200 suites per row, in [docs/simulation.md](docs/simulation.md). A placebo was called Helps or Hurts in 2 to 4% of suites. A skill worth +40 points was called Helps in 94% of suites at 10 cases. A skill worth +20 points was called Helps only 52% of the time even at 15 cases; the rest were Inconclusive.
+### Planted skills, run for real
 
-That last row is the main thing the simulation taught me. With pass or fail graders and 3 runs per side, these rules rarely claim an effect that isn't there, and often can't confirm one that is. An Inconclusive card usually means "measure more".
+Each planted skill has a known intended effect. Its prediction was committed before it ran, and the commit order is the record: the first set's predictions are in [6c37ff9](docs/planted-skills.md), and its results start at ea8021a. Each suite has 12 cases: 9 compared, and 3 where the skill should stay quiet. Every suite ran with 3 runs per side and regex or tool-use graders only. Details, cards and costs are in [docs/planted-skills-results.md](docs/planted-skills-results.md).
+
+**First set, 0.1.0 rules, Claude Haiku 4.5: 3 of 5 skills got their predicted verdict.** The criterion written in advance was that every suite gets its predicted outcome, so the check as a whole failed.
+
+| Suite | Predicted | Actual | |
+|---|---|---|---|
+| 1. A made-up convention | Helps | Helps (+100) | Match |
+| 2. Conventional Commits | Already handled | Helps (+78) | Miss. Haiku rarely uses the format unprompted (5 of 27 runs), so the premise was wrong |
+| 3. An outdated rule | Hurts | Already handled (-15) | Miss. The skill fired in 6 of 27 runs; see the verdicts section |
+| 4. A vague description | Never fired | Never fired | Match |
+| 5a. A twin placebo | Not Helps or Hurts | Already handled | Match. Every run agreed, so there was no noise to misread |
+| 5b. A filler placebo | Not Helps or Hurts | No effect | Match. Every run agreed |
+
+**Validation and sealed holdouts, 0.2.0 rules, frozen at 03d2619.** The validation suites were written after the first results, so they are not blind. The two holdouts were written with the first set, before any result, and each ran once.
+
+| Suite | Predicted | Actual | |
+|---|---|---|---|
+| V1. An outdated rule meant to fire | Hurts | Inconclusive (-11) | Miss. The skill fired in 1 of 27 runs |
+| V2. Meant as a noisy placebo | Not Helps or Hurts | Hurts (-37) | Design defect. Its text ("Say what changed in plain words") changed behavior, and the rules read that real effect correctly |
+| V3. An inert placebo on V2's cases | Not Helps or Hurts | Inconclusive (-11, interval -33 to +11) | Match. It fired in 27 of 27 runs, on noisy runs |
+| Holdout 6. A made-up changelog format | Helps | Helps (+100) | Match |
+| Holdout 7. A filler placebo | Not Helps or Hurts | No effect | Match, with a caveat: its text isn't inert, but its baseline was 0%, so it could only show a false gain |
+| H1. A made-up convention that conflicts with the graders | Hurts | Hurts (-100) | Match. It fired in 27 of 27 runs |
+
+What these show:
+
+- **No placebo has been called Helps or Hurts on noise.** V3 is the clearest test. Its skill fired every time, its runs disagreed often (all 3 runs agreed in 16 of 24 case-and-side cells), and its card said Inconclusive. V2's Hurts was a real effect from an instruction in its text, not a false call.
+- **Hurts detection depends on the skill being opened.** The rules found the harm when the harmful skill fired in every run (H1). They couldn't confirm it when it fired in 6 of 27 runs (suite 3) or 1 of 27 (V1). Both of those cards said Inconclusive or Already handled, not Hurts.
+- **Real runs were much less noisy than the simulation assumed.** In the first set, all 3 runs of a side agreed in 94% of case-and-side cells.
+
+Total cost of the planted runs: $20.60 at list price, across 15 runs, one of them a $0.25 pilot.
+
+### Model comparisons
+
+Two suites were rerun on Claude Sonnet 5.5 (`claude-sonnet-5-5`). Neither verdict moved. Suite 1 stayed Helps (+100 on both models). Suite 2 stayed Helps, but its baseline went down, not up: Sonnet used a Conventional Commits prefix unprompted in 0 of 27 runs, against Haiku's 5. The change grew from +78 to +100. Both cards in each pair match the same skill and case files, so only the model tells them apart. `mordecai check --model` reports that (see [setup](#setup)).
+
+### Simulation
+
+[docs/simulation.md](docs/simulation.md) runs the rules on simulated skills with a known effect, 200 suites per row. The first simulation treated every run as an independent coin flip, which makes 3 runs agree only about a third of the time. Real runs agreed 94% of the time, so that assumption didn't match. Rerun at 94% agreement:
+
+- **A placebo was called Helps or Hurts in 0% of suites**, against up to 4% with coin flips.
+- **A skill worth +20 points was called Helps in 13%, 36% and 56% of suites at 5, 10 and 15 cases.** That's almost the same as with coin flips (14%, 35% and 52%). The remaining uncertainty is between cases, not between runs: a +20 point skill changes the outcome of only some cases. A moderate effect needs well over 15 cases to be called reliably.
+- **A skill worth +40 points was called Helps in 80% of suites at 10 cases and 96% at 15.**
+
+### Unit tests
+
+Each verdict and warning has a test on a constructed result, along with hashing, staleness, relative card paths, `lint`, `check --model` and the command line. One test is built from the real suite 3 result. `uv run pytest` runs 52 tests, and none call a model. The result format comes from a real `claude plugin eval` run, not from the docs alone.
+
+### What wasn't checked
+
+- **Other models.** Everything ran on Claude Haiku 4.5, except two suites rerun on Claude Sonnet 5.5.
+- **Judge-graded suites.** Every grader was a regex or a tool-use check, so judge disagreement was never in play.
+- **Skills with a moderate real effect,** somewhere around +10 to +30 points. The changes measured on the planted cards were -100, -37, -15, -11, 0, +78 and +100.
+- **A harmful skill that fires in some runs but not others.** The rules gave Already handled (0.1.0) or Inconclusive (0.2.0) in those cases, and there is no verdict for it.
+- **Domains other than git workflow and Python project setup.**
+- **Invalid and partial results from real runs.** No real run hit a cost cap or a rate limit, so those paths are tested only on constructed results.
+- **Using `--fail-on` as a CI gate on a real repository.**
 
 ## Known limits
 
-- **Not yet checked against real runs.** The next step is a set of planted skills whose effect is known in advance: one that encodes a convention the model can't know, one that restates what the model already does, one with an outdated rule that conflicts with the repo, one with a vague description, and a placebo. The simulation treats runs as independent coin flips; real cases share causes, and judges disagree with themselves.
-- **The bootstrap is optimistic with few runs.** When every run in both arms agrees, the interval shrinks to a point.
+- **Hurts needs the skill to be opened.** A harmful skill that fires rarely gets Inconclusive, or Already handled under the 0.1.0 rules, not Hurts. Check the card's "Fired in" line.
+- **The bootstrap is optimistic when runs agree.** In 8 of the 13 planted cards that have an interval, it collapsed to a single point, such as +100 to +100.
+- **Results come from one small model.** See [what wasn't checked](#what-wasnt-checked).
 - **Only one plugin per result.** Cards name the first plugin in the suite.
-- **Staleness covers files, not the model.** `mordecai check` notices a changed skill or case. A new model only shows up as a different model on the next card.
 - **Cost, not tokens.** The eval result reports each run's estimated cost at list price, not its tokens, so that's what the card compares.
 
 ## Setup
@@ -108,21 +162,35 @@ cd mordecai
 uv sync
 ```
 
-Run your skill's eval with a pinned model, then read it:
+Check your cases, run your skill's eval with a pinned model, then read it:
 
 ```
+uv run mordecai lint path/to/plugin
 claude plugin eval path/to/plugin --model claude-sonnet-5-5 --json result.json --no-publish --max-cost-usd 5
-uv run mordecai identify result.json --card card.json --markdown card.md
-uv run mordecai check card.json
+uv run mordecai identify result.json --skill path/to/plugin --card card.json --markdown card.md
+uv run mordecai check card.json --model claude-sonnet-5-5
 ```
 
-`identify` prints the card, and can write it as JSON and as Markdown for a pull request. `--fail-on hurts,invalid` makes it exit 1 on those verdicts, for CI. `check` exits 1 when the skill or its cases have changed since the card was written.
+- `lint` exits 1 if the case files would get any warning.
+- `identify` prints the card, and can write it as JSON and as Markdown for a pull request. `--fail-on hurts,invalid` makes it exit 1 on those verdicts, for CI.
+- `check` exits 1 when the skill or its cases have changed since the card was written. With `--model`, it also exits 1 when the card was measured on a different model.
+
+Cards store paths relative to where the card is written, so a card still checks after the repository is cloned somewhere else.
+
+A worked example from the planted check: suite 2's Haiku card matches its files, but not Sonnet.
+
+```
+$ uv run mordecai check docs/planted-results/2-commits.card.json --model claude-sonnet-5-5
+Stale: docs/planted-results/2-commits.card.json
+  - The card was measured on claude-haiku-4-5-20251001, not claude-sonnet-5-5.
+```
 
 ## What's next
 
-1. `mordecai measure`: run the eval with a pinned model and a cost cap, then write the card, in one step.
-2. The planted skills check, run for real, with every result published, including the misses.
-3. A registry template: a Git repo that's also a Claude Code plugin marketplace, with a GitHub Action that posts each skill's card on its pull request and blocks the merge on Hurts, Invalid or a stale card.
+1. A way to report a skill that rarely fires, distinct from Inconclusive. A proposal and its effect on every recorded card are in [docs/review-queue.md](docs/review-queue.md); it isn't applied.
+2. A planted skill with a moderate effect, to check the simulation's +20 point finding on real runs.
+3. `mordecai measure`: run the eval with a pinned model and a cost cap, then write the card, in one step.
+4. A registry template: a Git repo that's also a Claude Code plugin marketplace, with a GitHub Action that posts each skill's card on its pull request and blocks the merge on Hurts, Invalid or a stale card.
 
 ## Prior art
 

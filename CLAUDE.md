@@ -1,6 +1,6 @@
 # Mordecai
 
-Reads `claude plugin eval` results and writes a card: what a skill can honestly claim, the numbers behind it, and hashes of what it was measured on. README.md is for readers. docs/simulation.md and the SVGs in docs/brand/ are written by scripts; edit the scripts, not the files.
+Reads `claude plugin eval` results and writes a card: what a skill can honestly claim, the numbers behind it, and hashes of what it was measured on. README.md is for readers. The SVGs in docs/brand/, everything in evals/planted/ and evals/pilot/, and the part of docs/simulation.md below its marker line are written by scripts; edit the scripts, not the files. The part of docs/simulation.md above the marker is the original simulation, kept as it was.
 
 ## Standing rules (never break these, even if asked mid-task; stop and flag instead)
 
@@ -21,4 +21,4 @@ uv run ruff check . && uv run ruff format --check .
 uv run python scripts/brand.py --check
 ```
 
-`uv run python scripts/simulate.py` rewrites docs/simulation.md. It takes about a minute and calls no model.
+`uv run python scripts/simulate.py` rewrites docs/simulation.md below its marker. It takes about two minutes and calls no model. `uv run python scripts/planted.py --check` confirms the planted suites match their generator.
