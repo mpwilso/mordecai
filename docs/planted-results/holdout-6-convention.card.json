@@ -1,0 +1,82 @@
+{
+  "card": 1,
+  "hashes": {
+    "cases": "sha256:60cf970c4c3335afc5edd89053c1d80181c528c969fba985123ade7e8be5476b",
+    "result": "sha256:202df37527d3781ccba4109c29bbc01898f6266ce4f6eabfcfe986c9a185d008",
+    "skill": "sha256:c21f2c4808219aafb110877b53b6bd65b60f0b116d4a1b20248d011fdb0d39af"
+  },
+  "mordecai": "0.2.0",
+  "numbers": {
+    "casesCompared": 9,
+    "change": 1.0,
+    "costPerRunWith": 0.018672555555555557,
+    "costPerRunWithout": 0.018178203703703703,
+    "fired": [
+      27,
+      27
+    ],
+    "flat": 0,
+    "improved": 9,
+    "interval": [
+      1.0,
+      1.0
+    ],
+    "misfired": [
+      0,
+      9
+    ],
+    "turnsPerRunWith": 3.0,
+    "turnsPerRunWithout": 2.1481481481481484,
+    "withScore": 1.0,
+    "withoutScore": 0.0,
+    "worse": 0
+  },
+  "paths": {
+    "caseDirs": [
+      "evals/diff-stat",
+      "evals/entry-1203",
+      "evals/entry-1517",
+      "evals/entry-2001",
+      "evals/entry-318",
+      "evals/entry-442",
+      "evals/entry-655",
+      "evals/entry-73",
+      "evals/entry-840",
+      "evals/entry-97",
+      "evals/hours",
+      "evals/semver-major"
+    ],
+    "casesRoot": ".",
+    "relativeTo": {
+      "casesRoot": "the skill directory",
+      "skill": "the card's directory"
+    },
+    "skill": "../../evals/planted/holdout/6-convention"
+  },
+  "reason": "The skill raised the score: 90% interval +100 to +100 points.",
+  "rules": {
+    "ceiling": 0.9,
+    "confidence": 0.9,
+    "min_cases": 5,
+    "min_effect": 0.1,
+    "resamples": 2000,
+    "seed": 0
+  },
+  "subject": {
+    "plugin": "holdout-convention",
+    "skills": [
+      "changelog-format"
+    ],
+    "version": "1.0.0"
+  },
+  "tested": {
+    "claudeVersion": "2.1.290",
+    "judgeModel": "claude-haiku-4-5-20251001",
+    "model": "claude-haiku-4-5-20251001",
+    "startedAt": "2026-10-06T00:03:06.578Z"
+  },
+  "verdict": "helps",
+  "warnings": [
+    "1 of 72 runs ended with an error. They were graded on what they produced."
+  ]
+}
