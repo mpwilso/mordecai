@@ -1,6 +1,6 @@
 # Decisions
 
-Reversible decisions made during the library build, each with the options considered, the reason, and how to reverse it. The library was built from a short written specification, called the brief here; where a decision departs from it, the entry says so. Questions that need the author's judgment are in [decisions-for-matt.md](decisions-for-matt.md).
+Reversible decisions made during the library build, each with the options considered, the reason, and how to reverse it. The library was built from a short written specification, called the brief here; where a decision departs from it, the entry says so. Trade-offs still open are in [open-questions.md](open-questions.md).
 
 ## D1. The library's dependencies are an extra, not a dependency group
 

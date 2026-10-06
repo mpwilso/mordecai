@@ -72,3 +72,35 @@ Two suites were rerun on Claude Sonnet 5.5, and neither verdict moved. All other
 `claude plugin eval` marks a run `aborted` when a [mock](https://code.claude.com/docs/en/plugin-evals)'s `expect:` or `abort_when` stops it. The run scores 0 and its `error` stays null, so Mordecai reads it as an ordinary failed run. That is the same trap as a rate limit: a run that says nothing about the skill can still move the change. No recorded result has an aborted run, since none of the planted suites uses mocks.
 
 **The tradeoff.** Treating aborted runs like rate-limited ones, as Invalid, would be a rule change, so it isn't made here. It would only matter for suites with mocks, and it could hide a skill that makes the agent call a tool the wrong way, which is a real effect. Counting aborted runs in a warning would be a smaller first step.
+
+## Open questions from the skill library
+
+The library added in 0.3.0 leaves these trade-offs open. The decisions it did make are in [decisions.md](decisions.md).
+
+### Open question 5: version stamps in frontmatter
+
+A copy's version and lineage live in its `CHANGELOG.md`. The `mordecai-version`, `mordecai-variant` and `mordecai-based-on` metadata keys are optional, and checked against the changelog when present (decision D4).
+
+**The tradeoff.** Required stamps would make every installed copy carry its own version. But a card hashes the skill folder's exact bytes, so a stamp written at release changes those bytes, and a skill measured before it joined the library, like the planted variants, couldn't carry stamps without losing its card. Requiring them would mean re-measuring those variants.
+
+### Open question 6: what a library repository publishes at its root
+
+This repository publishes one skill, `mordecai`, in `skills/` (decision D15). With no skill in a standard folder, npx skills searches the whole repository and, among same-named copies, installs whichever it lists first.
+
+**The tradeoff.** `npx skills add --full-depth` still searches everything, including the planted suites' deliberately harmful skills. Closing that would mean marking the planted skills `metadata.internal`, which changes the bytes their cards measured, or moving the suites, which changes paths the docs cite. For now the README says not to use `--full-depth` on this repository.
+
+### Open question 7: `release` makes a commit
+
+A tag has to point at a commit that holds the updated changelog, so `release` commits the copy's folder and refuses when anything else is uncommitted, as `npm version` does.
+
+**The tradeoff.** The alternative, where the author commits and `release` only tags, adds a manual step to every release and can tag a commit whose changelog doesn't match, which install would then refuse.
+
+### Open question 8: unverified client setups
+
+The setup snippets for VS Code with Copilot, Cursor and Codex in [library.md](library.md#setup) follow each tool's docs, but none has been run in its client. Open points are the folder each client starts a stdio server in and whether each passes `MORDECAI_GITHUB_TOKEN` through. This repository's `.mcp.json` for Claude Code can be tried without changing any user config.
+
+### Open question 9: no size limit on fetches
+
+Each Git call stops after five minutes, and reading a source's files is capped at 200 MB, but the fetch itself can download a large repository into the cache before that.
+
+**The tradeoff.** A size check before the first fetch would need the GitHub API, and a token for private repositories. It is accepted as a limit for now.

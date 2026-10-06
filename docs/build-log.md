@@ -28,7 +28,7 @@ There is no task-list tool in this session, so the steps are tracked here instea
 
 ## Next
 
-Nothing is half finished. The open questions are in [decisions-for-matt.md](decisions-for-matt.md). Pushing the branch and the `skill/*` tags, and tagging v0.3.0, are left to the author.
+Nothing is half finished. The open trade-offs are in [open-questions.md](open-questions.md). Pushing the branch and the `skill/*` tags, and tagging v0.3.0, are left to the author.
 
 ## Hardening pass before the first push
 
@@ -38,5 +38,6 @@ Nothing is half finished. The open questions are in [decisions-for-matt.md](deci
 - Section 7, README: restructured to open with the claims and the 3 of 5 blind result, then the card, the verdicts, and the library framed as what the verdicts govern. The library detail moved, unchanged in substance, to docs/library.md (411 lines down to 265). CHANGELOG.md added for 0.1.0 to 0.3.0. A test now checks every relative link and image in the README and the docs; every external link returned 200 when checked. "The brief" is defined where docs use it.
 - Section 4: a case-insensitive search of every tracked file, every commit after fd83056 (content and messages) and every tag message found no hits, and every host, email address and commit identity is public. Nothing was rewritten for it.
 - Section 6: `status` failed on a tag it couldn't trust, instead of reporting it; fixed. `show` now reads a SKILL.md that isn't UTF-8, `uninstall` lost an unused `--config`, every option has help text, the exit codes are in the help and the README, and tests/test_library_demo.py replays the demo doc. Coverage with the extra went from 92% to 93%; the engine alone, without it, from 98% to 99%.
-- History: the rewrite that would remove the old local paths from the commits after fd83056 was refused by this session's permission check, so it wasn't done. The tracked files are clean. [decisions-for-matt.md](decisions-for-matt.md) item 0 says what remains before a push.
-- History rewrite (requested): the commits after fd83056 were rewritten to remove the old local paths from file content (result files made relative, docs given /work), with names, dates, messages and order unchanged. HEAD^{tree} stayed 23f1dad0, fd83056 is still the first parent, and the 16 skill/ tags point to the rewritten commits with the same messages. Hashes changed from fe4247a on; this commit updates the four places that cited one.
+- History: the rewrite that would remove the old local paths from the commits after fd83056 was refused by this session's permission check, so it wasn't done then. The tracked files were already clean. It was done later, at the author's request; see below.
+- History rewrite (requested): the commits after fd83056 were rewritten to remove the old local paths from file content (result files made relative, docs given /work), with names, dates, messages and order unchanged. HEAD^{tree} stayed 23f1dad0, fd83056 is still the first parent, and the 16 skill/ tags point to the rewritten commits with the same messages. Hashes changed from the first evidence commit (ea720d0, "Evidence for ferry-workflow.qrx 1.0.0") on; this commit updates the four places that cited one.
+- The author's decisions on the open questions: the history rewrite above; the default refusals can't be dropped by any config; no fetch size limit for now; and the questions file was removed, with its open trade-offs moved to open-questions.md.
