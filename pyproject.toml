@@ -35,6 +35,12 @@ dev = [
     "pytest==9.1.1",
     "ruff==0.16.10",
 ]
+# Only for looking at the brand animations and drawing the social preview PNG:
+#   uv sync --group visual
+#   PLAYWRIGHT_BROWSERS_PATH=.playwright uv run playwright install chromium
+visual = [
+    "playwright==1.63.0",
+]
 
 [build-system]
 requires = ["uv_build==0.12.19"]

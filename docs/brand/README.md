@@ -19,6 +19,10 @@ The mark and the word MORDECAI. Use [lockup-light.svg](lockup-light.svg) on ligh
 
 [crawl-card.svg](crawl-card.svg) is crawl mode, for the README. A pixel chest shakes, opens and lifts out a potion, and the card's lines arrive one by one. The text is the output of `mordecai identify --crawl` for a demo skill with simulated results, printed by the tool's own code when the script runs. With reduced motion, the chest is shown open with the potion out.
 
+## Looking at the animations
+
+`scripts/frames.py` makes contact sheets of an SVG shown as an `<img>`, the way GitHub shows it: one frame every 5% of the loop and at every keyframe, plus the still frame. With `--live` it screenshots the image unchanged as it plays, from a file or a URL. Sheets go to `frames/`, which git ignores.
+
 ## Palette
 
 One hue, a potion red. The light and dark values are in `PALETTE` in `scripts/brand.py`, and the crawl card's colors are in `CARD` and `PIXEL`.
