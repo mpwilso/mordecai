@@ -174,7 +174,14 @@ def build(config: Path | None = None, project_dir: Path | None = None) -> MCPSer
                 "warnings": p.warnings,
             }
             if p.refused:
-                return {**out, "installed": False, "refused": p.refused}
+                return {
+                    **out,
+                    "installed": False,
+                    "refused": f"{p.refused} Only a person can override that, at the command "
+                    f"line: mordecai library install {skill}"
+                    + (f" --variant {p.entry.copy.variant}" if p.entry.copy.variant else "")
+                    + f" --allow {p.refused_as}.",
+                }
             if p.replaces and not confirm_replace:
                 return {
                     **out,
@@ -208,12 +215,16 @@ def build(config: Path | None = None, project_dir: Path | None = None) -> MCPSer
     return server
 
 
-def main(argv: list[str]) -> int:
+def parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="mordecai mcp", description="Serve the skill library to MCP clients over stdio."
     )
     p.add_argument("--config", type=Path, help="the library config (mordecai-library.toml)")
     p.add_argument("--project", type=Path, help="the project installs go into (default: here)")
-    args = p.parse_args(argv)
+    return p
+
+
+def main(argv: list[str]) -> int:
+    args = parser().parse_args(argv)
     build(args.config, args.project).run("stdio")
     return 0

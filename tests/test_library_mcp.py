@@ -107,6 +107,8 @@ async def test_install_refuses_hurts_and_targets_outside_the_config(setup):
     _, proj, server = setup
     r = await call(server, "install_skill", skill="greeting", variant="brief")
     assert r["installed"] is False and "hurts" in r["refused"]
+    assert "Only a person can override that" in r["refused"]
+    assert "install greeting --variant brief --allow hurts" in r["refused"]
     assert not (proj / ".agents").exists()
     for target in ("github", "../../etc", "/tmp/x"):
         r = await call(server, "install_skill", skill="greeting", target=target)
@@ -152,3 +154,22 @@ async def test_mordecai_mcp_runs_over_stdio(setup, gitenv):
     assert not r.is_error, r.content
     data = r.structured_content or json.loads(r.content[0].text)
     assert data["skills"][0]["skill"] == "greeting"
+
+
+def test_the_project_mcp_config_starts_this_server():
+    """.mcp.json at the repository root, the file `claude mcp add --scope project` writes."""
+    from conftest import ROOT
+
+    from mordecai.library.server import parser
+
+    doc = json.loads((ROOT / ".mcp.json").read_text())
+    server = doc["mcpServers"]["mordecai"]
+    assert server["type"] == "stdio" and server["command"] == "uv"
+    args = server["args"]
+    assert args[:5] == ["run", "--extra", "library", "mordecai", "mcp"]
+    assert args[args.index("--config") + 1] == "mordecai-library.toml"
+    assert (ROOT / "mordecai-library.toml").is_file()
+    assert args[args.index("--project") + 1] == "${MORDECAI_MCP_PROJECT:-.mcp-demo}"
+    assert "/.mcp-demo/" in (ROOT / ".gitignore").read_text()
+    parsed = parser().parse_args(args[5:])
+    assert str(parsed.config) == "mordecai-library.toml"

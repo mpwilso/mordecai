@@ -105,10 +105,18 @@ To install into another project, run it from there with `uv run --project /path/
 
 None of these snippets has been run against its client. Each follows the client's own docs as read on 2026-10-06; the parts marked unverified weren't stated there.
 
-Claude Code ([docs](https://code.claude.com/docs/en/mcp)), from your project folder. Unverified: that Claude Code starts the server in the project folder and passes your environment to it.
+Claude Code ([docs](https://code.claude.com/docs/en/mcp)) reads a project's `.mcp.json`, the file `claude mcp add --scope project` writes, and asks before it starts a server from one. This repository has one, [.mcp.json](.mcp.json): it serves this repository's library, and installs into a gitignored `.mcp-demo/` folder (or `$MORDECAI_MCP_PROJECT`), so you can try it without touching your user config. Run `uv sync --extra library`, start Claude Code in the repository, approve the `mordecai` server, and check `/mcp` shows it connected. For your own project, put this in its `.mcp.json`. Unverified: that Claude Code starts the server in the project folder.
 
-```
-claude mcp add mordecai -- uv run --project /path/to/mordecai mordecai mcp
+```json
+{
+  "mcpServers": {
+    "mordecai": {
+      "type": "stdio",
+      "command": "uv",
+      "args": ["run", "--project", "/path/to/mordecai", "--extra", "library", "mordecai", "mcp"]
+    }
+  }
+}
 ```
 
 GitHub Copilot in VS Code, `.vscode/mcp.json` ([docs](https://code.visualstudio.com/docs/copilot/reference/mcp-configuration)). The server starts in the workspace folder. Unverified: where `${env:...}` reads its value from.
@@ -119,7 +127,7 @@ GitHub Copilot in VS Code, `.vscode/mcp.json` ([docs](https://code.visualstudio.
     "mordecai": {
       "type": "stdio",
       "command": "uv",
-      "args": ["run", "--project", "/path/to/mordecai", "mordecai", "mcp"],
+      "args": ["run", "--project", "/path/to/mordecai", "--extra", "library", "mordecai", "mcp"],
       "env": { "MORDECAI_GITHUB_TOKEN": "${env:MORDECAI_GITHUB_TOKEN}" }
     }
   }
@@ -134,7 +142,7 @@ Cursor, `.cursor/mcp.json` ([docs](https://cursor.com/docs/context/mcp)). Unveri
     "mordecai": {
       "type": "stdio",
       "command": "uv",
-      "args": ["run", "--project", "/path/to/mordecai", "mordecai", "mcp", "--project", "${workspaceFolder}"],
+      "args": ["run", "--project", "/path/to/mordecai", "--extra", "library", "mordecai", "mcp", "--project", "${workspaceFolder}"],
       "env": { "MORDECAI_GITHUB_TOKEN": "${env:MORDECAI_GITHUB_TOKEN}" }
     }
   }
@@ -146,7 +154,7 @@ Codex, `~/.codex/config.toml` ([docs](https://developers.openai.com/codex/mcp)).
 ```toml
 [mcp_servers.mordecai]
 command = "uv"
-args = ["run", "--project", "/path/to/mordecai", "mordecai", "mcp", "--project", "/path/to/your/project"]
+args = ["run", "--project", "/path/to/mordecai", "--extra", "library", "mordecai", "mcp", "--project", "/path/to/your/project"]
 env_vars = ["MORDECAI_GITHUB_TOKEN"]
 ```
 
@@ -155,7 +163,7 @@ env_vars = ["MORDECAI_GITHUB_TOKEN"]
 ```toml
 [upstream.mordecai]
 command = "uv"
-args = ["run", "--project", "/path/to/mordecai", "mordecai", "mcp", "--project", "/path/to/your/project"]
+args = ["run", "--project", "/path/to/mordecai", "--extra", "library", "mordecai", "mcp", "--project", "/path/to/your/project"]
 
 [upstream.mordecai.tools]
 list_skills = { class = "open-world" }

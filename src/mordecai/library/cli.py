@@ -306,7 +306,7 @@ def cmd_install(lib, args, out) -> int:
     )
     label = f"{p.entry.copy.label} {p.picked.version}"
     if p.refused:
-        _p(out, f"Refused: {p.refused}")
+        _p(out, f"Refused: {p.refused} Pass --allow {p.refused_as} to install it anyway.")
         return 1
     _print_plan(p, out)
     if p.replaces and not args.yes:
@@ -336,7 +336,7 @@ def cmd_update(lib, args, out) -> int:
             _p(out, f"{u.key}: {u.problem}")
             pending += 1
         elif u.plan.refused:
-            _p(out, f"{u.key}: {u.plan.refused}")
+            _p(out, f"{u.key}: {u.plan.refused} It stays at {u.entry['version']}.")
             pending += 1
         elif not u.available:
             _p(out, f"{u.key}: up to date ({u.entry['version']}).")

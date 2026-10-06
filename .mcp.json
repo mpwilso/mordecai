@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "mordecai": {
+      "type": "stdio",
+      "command": "uv",
+      "args": [
+        "run",
+        "--extra",
+        "library",
+        "mordecai",
+        "mcp",
+        "--config",
+        "mordecai-library.toml",
+        "--project",
+        "${MORDECAI_MCP_PROJECT:-.mcp-demo}"
+      ]
+    }
+  }
+}

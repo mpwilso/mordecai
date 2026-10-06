@@ -8,3 +8,5 @@ __pycache__/
 .coverage
 .playwright/
 /frames/
+# Where the MCP server in .mcp.json installs when you try it.
+/.mcp-demo/

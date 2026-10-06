@@ -134,6 +134,7 @@ class Plan:
     destinations: list[Destination]
     warnings: list[str] = field(default_factory=list)
     refused: str | None = None
+    refused_as: str | None = None  # the verdict or state the policy refused
     allowed: list[str] = field(default_factory=list)
     executable: bool = False
 
@@ -183,10 +184,11 @@ def plan(
         what = (
             evidence.verdict if evidence.applies and evidence.verdict in refuse else evidence.state
         )
+        p.refused_as = what
         p.refused = (
             f"{label} is refused: its evidence says {what}"
             + (f" ({evidence.note})" if evidence.note else "")
-            + f". Pass --allow {what} to install it anyway."
+            + "."
         )
     elif evidence.state == "unmeasured":
         p.warnings.append(f"{label} has no card, so nothing says whether it helps.")
@@ -213,8 +215,8 @@ def plan(
     names = targets or ["agents"]
     if not proj.user and all(ALIASES.get(t, t) == "agents" for t in names):
         p.warnings.append(
-            "Claude Code reads .claude/skills, not .agents/skills; add --target "
-            "claude to install it there too."
+            "Claude Code reads skills from .claude/skills, not .agents/skills; install to "
+            "the claude target too if you use it."
         )
     seen = set()
     for t in names:
