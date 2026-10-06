@@ -176,6 +176,21 @@ def test_warnings():
     assert "6 case prompt(s) name the skill" in text
 
 
+def test_a_prompt_names_the_skill_only_as_a_whole_word():
+    from mordecai.verdict import case_warnings
+
+    def named(prompt, skill):
+        cases = parse(make_result(same(1, [1], [0], fired=[True], prompt=prompt))).cases
+        return any("name the skill" in w for w in case_warnings(cases, cases, [3], [skill]))
+
+    assert named("Use commit to save this.", "commit")
+    assert named("Write a PR description.", "pr-description")
+    assert named("Run the pr-description skill.", "pr-description")
+    assert not named("Stage the uncommitted files.", "commit")
+    assert not named("Demonstrate the change.", "demo")
+    assert not named("Improve the project.", "pr")
+
+
 def test_a_pinned_model_and_a_full_suite_has_no_warnings():
     cases = same(6, [1, 1, 1], [0, 0, 0], fired=[True] * 3)
     cases.append({"name": "quiet", "with": [1, 1, 1], "without": [1, 1, 1], "quiet": True})

@@ -132,6 +132,11 @@ def _problems(suite: Suite) -> list[str]:
     return problems
 
 
+def _names(name: str, prompt: str) -> bool:
+    """Whether prompt holds name as a whole word, so "commit" isn't found in "uncommitted"."""
+    return re.search(rf"(?<![a-z0-9]){re.escape(name)}(?![a-z0-9])", prompt) is not None
+
+
 def case_warnings(
     cases: list[Case], effect: list[Case], run_counts: list[int], skill_names: list[str]
 ) -> list[str]:
@@ -158,7 +163,7 @@ def case_warnings(
     for c in effect:
         prompt = c.prompt.lower()
         for s in skill_names:
-            if s and (s.lower() in prompt or s.lower().replace("-", " ") in prompt):
+            if s and (_names(s.lower(), prompt) or _names(s.lower().replace("-", " "), prompt)):
                 named.append(c.name)
                 break
     if named:
