@@ -24,7 +24,7 @@ from mordecai.library import LibraryError
 from mordecai.library.paths import no_links
 from mordecai.provenance import PathError, hash_cases, hash_skill, sha256, within
 from mordecai.result import ResultError, parse, read_json
-from mordecai.verdict import VERDICTS, Rules, read
+from mordecai.verdict import DEFAULT_RULES, VERDICTS, Rules, read
 
 STATES = ("current", "cases-changed", "stale", "unmeasured", "broken")
 DEFAULT_REFUSE = ("hurts", "invalid", "broken")
@@ -58,7 +58,10 @@ def _rules(raw) -> Rules:
     for k, v in raw.items():
         if isinstance(v, bool) or not isinstance(v, int | float):
             raise CardError(f"the card's rule {k} isn't a number")
-    return Rules(**raw)
+    # D20: looser rules could earn a verdict on almost no evidence, and odd ones crashed or hung
+    if any(v != getattr(DEFAULT_RULES, k) for k, v in raw.items()):
+        raise CardError("the card's rules aren't this engine's rules")
+    return DEFAULT_RULES
 
 
 def cases_dir(card_dir: Path, source_root: Path) -> Path | None:
@@ -98,7 +101,11 @@ def assess(card_dir: Path, version_folder: Path, source_root: Path) -> Evidence:
         subject = doc.get("subject") if isinstance(doc.get("subject"), dict) else {}
         names = [s for s in subject.get("skills") or [] if isinstance(s, str)]
         names += [p.name for p in suite.plugins[:1] if p.name]
-        verdict = read(suite, names, _rules(doc.get("rules"))).verdict
+        rules = _rules(doc.get("rules"))
+        try:
+            verdict = read(suite, names, rules).verdict
+        except Exception as e:  # D20: a card never crashes the check, whatever its result holds
+            raise CardError(f"its verdict couldn't be recomputed ({type(e).__name__})") from e
         if verdict != doc.get("verdict"):
             raise CardError(
                 f"the card says {doc.get('verdict')!r}, but its result gives {verdict!r}"

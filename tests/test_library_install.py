@@ -152,6 +152,36 @@ def test_a_card_that_doesnt_match_its_version_or_result(setup, tamper, state):
         assert bool(p.refused) == (state in ("broken", "cases-changed"))
 
 
+@pytest.mark.parametrize(
+    "rules",
+    [
+        {"resamples": 0},  # was IndexError
+        {"resamples": 10**9},  # was a hang
+        {"resamples": 2000.5},  # was TypeError
+        {"min_cases": 0},  # was ZeroDivisionError on quiet cases
+        {"min_effect": 0, "min_cases": 1},  # looser rules: the verdict may even agree
+        {"confidence": 0.5},
+    ],
+)
+def test_a_card_with_other_rules_is_broken_and_fast(setup, rules):
+    """D20: only the engine's own rules are accepted, so a hostile card can't crash, hang or
+    shop for an easier verdict."""
+    import time
+
+    repo, _, _ = setup
+    edit_card(
+        repo / "library/greeting/variants/brief/evidence/1.0.0/card.json",
+        **{f"rules.{k}": v for k, v in rules.items()},
+    )
+    commit(repo, "other rules")
+    start = time.monotonic()
+    with lib_for(repo) as lib:
+        r = lib.get("greeting", "brief")
+        e = lib.evidence(r, lib.pick(r))
+    assert e.state == "broken" and "rules" in e.note, e
+    assert time.monotonic() - start < 5
+
+
 def test_a_card_for_other_files_is_stale_after_a_release(setup):
     repo, proj, _ = setup
     md = repo / "library/greeting/variants/brief/greeting/SKILL.md"
