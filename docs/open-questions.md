@@ -67,11 +67,19 @@ Two suites were rerun on Claude Sonnet 5.5, and neither verdict moved. All other
 
 **The tradeoff.** Another model would show whether verdicts move across models, which neither rerun did. A judge-graded suite would test something the check hasn't touched at all: every grader so far was a regex or a tool-use check, so judge disagreement was never in play. Of the two, a judge-graded suite would add more new information per dollar.
 
-## Open question 4: runs a mock aborted
+## Open question 4: runs that say nothing about the skill
 
-`claude plugin eval` marks a run `aborted` when a [mock](https://code.claude.com/docs/en/plugin-evals)'s `expect:` or `abort_when` stops it. The run scores 0 and its `error` stays null, so Mordecai reads it as an ordinary failed run. That is the same trap as a rate limit: a run that says nothing about the skill can still move the change. No recorded result has an aborted run, since none of the planted suites uses mocks.
+Two kinds of run can score low for reasons that have nothing to do with the skill, and neither sets the run's `error`, so Mordecai grades both as ordinary runs. That is the same trap as a rate limit, which is Invalid: a run that says nothing about the skill can still move the change.
 
-**The tradeoff.** Treating aborted runs like rate-limited ones, as Invalid, would be a rule change, so it isn't made here. It would only matter for suites with mocks, and it could hide a skill that makes the agent call a tool the wrong way, which is a real effect. Counting aborted runs in a warning would be a smaller first step.
+**Runs that had a tool call refused by permissions (a warning since 0.3.0, Invalid when the setup blocked them).** The result JSON has no field for a refusal. The run's trace (`tracePath`) does: each `result` message in it lists the refused calls in `permission_denials`. In the kept traces of the planted check, 8 of 1,018 runs (in 15 results) had at least one refusal, all with `error` null and a score of 0: 2 in suite 1, 1 in suite 1 on Sonnet, 3 in suite 4, 1 in 5b and 1 in the V2 pilot. All 13 refused calls were Read or Glob, mostly on Git files such as `.git/HEAD` and `.gitconfig`, or on the folder above the run's own. A card now warns with the number of such runs on each side, and the verdict doesn't change. None of the 14 recorded verdicts moves; the warning would appear on the cards for suites 1, 1 on Sonnet, 4 and 5b. The recorded cards in [planted-results](planted-results/) were made before the warning and are kept as they were.
+
+Settled since (D19): a refusal makes the card Invalid only when the run had the tool and the call aimed inside the run's own working folder or the skill's plugin folder. Then the setup, not the skill, decided the run, as when the ISR regression runs couldn't read their own skill files. A refusal anywhere else, like the 13 above, is the model reaching outside its folder and stays a warning. Replayed over the 15 recorded results, no run counts as blocked and no verdict moves. A card now also says when refusals weren't checked because no trace could be read.
+
+Still open:
+
+- **The card doesn't hash the traces.** A card records how many runs the setup blocked (`blockedRuns`, written only when it isn't 0), and the library's check takes that count, since a library card doesn't ship its traces. A card made without the traces, or one edited to drop the count, says nothing about blocked runs. The "weren't checked" warning shows the first case; nothing catches the second.
+
+**Runs a mock aborted (not handled).** `claude plugin eval` marks a run `aborted` when a [mock](https://code.claude.com/docs/en/plugin-evals)'s `expect:` or `abort_when` stops it. The run scores 0 and its `error` stays null. No recorded result has an aborted run, since none of the planted suites uses mocks, so the field's exact shape hasn't been seen and nothing reads it yet. Treating aborted runs as Invalid would be a rule change. It would only matter for suites with mocks, and it could hide a skill that makes the agent call a tool the wrong way, which is a real effect. A warning, as for refusals, is the smaller first step once a real result shows the field.
 
 ## Open questions from the skill library
 

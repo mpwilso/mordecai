@@ -79,6 +79,7 @@ class Reading:
     turns_with: float | None
     turns_without: float | None
     warnings: tuple[str, ...] = field(default_factory=tuple)
+    blocked_runs: int = 0  # runs the setup refused inside their own folder (D19)
 
 
 def _mean(xs) -> float | None:
@@ -127,9 +128,19 @@ def _problems(suite: Suite) -> list[str]:
     skipped = sum(1 for r in runs if r.skipped_paid)
     if skipped:
         problems.append(f"{skipped} of {len(runs)} runs skipped their judge graders.")
+    if suite.blocked_runs:
+        problems.append(
+            f"{suite.blocked_runs} of {len(runs)} runs had a tool call refused inside their own "
+            "folder or the skill's, so the setup, not the skill, decided them."
+        )
     if not any(c.compared for c in suite.cases):
         problems.append("No case ran without the skill, so there is nothing to compare.")
     return problems
+
+
+def _names(name: str, prompt: str) -> bool:
+    """Whether prompt holds name as a whole word, so "commit" isn't found in "uncommitted"."""
+    return re.search(rf"(?<![a-z0-9]){re.escape(name)}(?![a-z0-9])", prompt) is not None
 
 
 def case_warnings(
@@ -158,7 +169,7 @@ def case_warnings(
     for c in effect:
         prompt = c.prompt.lower()
         for s in skill_names:
-            if s and (s.lower() in prompt or s.lower().replace("-", " ") in prompt):
+            if s and (_names(s.lower(), prompt) or _names(s.lower().replace("-", " "), prompt)):
                 named.append(c.name)
                 break
     if named:
@@ -185,10 +196,37 @@ def _warnings(suite: Suite, effect: list[Case], skill_names: list[str]) -> list[
             f"{errored} of {len(runs)} runs ended with an error. They were graded on what "
             "they produced."
         )
+    warnings += _denial_warnings(suite)
     # Counted from the runs themselves: --runs overrides the case's own runs setting.
     counts = [min(len(c.with_runs), len(c.without_runs)) for c in effect]
     warnings += case_warnings(suite.cases, effect, counts, skill_names)
     return warnings
+
+
+def _denial_warnings(suite: Suite) -> list[str]:
+    """A warning when runs had a tool call refused by permissions. A refused call can lower a
+    run's score for reasons that have nothing to do with the skill, and the run's error stays
+    null, so nothing else notices it. Only runs whose traces were read are counted."""
+    sides = {
+        "with": [r for c in suite.cases for r in c.with_runs],
+        "without": [r for c in suite.cases for r in c.without_runs],
+    }
+    denied = {arm: sum(1 for r in runs if r.denied) for arm, runs in sides.items()}
+    total = sum(denied.values())
+    if not total:
+        return []
+    runs = sides["with"] + sides["without"]
+    read_ = sum(1 for r in runs if r.denied is not None)
+    of = (
+        f"{len(runs)} runs"
+        if read_ == len(runs)
+        else f"the {read_} runs whose traces were read (of {len(runs)})"
+    )
+    return [
+        f"{total} of {of} had a tool call refused by permissions ({denied['with']} with the "
+        f"skill, {denied['without']} without). They were graded on what they produced, so a "
+        "refusal, not the skill, may have moved their scores."
+    ]
 
 
 def read(
@@ -220,6 +258,7 @@ def read(
         turns_with=_mean(r.turns for r in with_runs),
         turns_without=_mean(r.turns for r in without_runs),
         warnings=tuple(_warnings(suite, effect, skill_names or [])),
+        blocked_runs=suite.blocked_runs,
     )
 
     def verdict(name, reason, iv=None):

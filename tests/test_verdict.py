@@ -1,6 +1,7 @@
 """Each verdict, in the order the rules apply, and the warnings."""
 
 import json
+from dataclasses import replace
 
 from conftest import FIXTURES, make_result, same
 
@@ -90,6 +91,52 @@ def test_other_errors_are_data_with_a_warning():
     assert any("1 of 36 runs ended with an error" in w for w in r.warnings)
 
 
+def with_denials(cases, with_denied, without_denied, **kw):
+    """The reading of cases where the first with_denied with-runs and the first without_denied
+    without-runs, counted across cases, had a tool call refused."""
+    suite = parse(make_result(cases, **kw))
+    left = {"with": with_denied, "without": without_denied}
+
+    def mark(runs, arm):
+        out = []
+        for r in runs:
+            out.append(replace(r, denied=left[arm] > 0))
+            left[arm] -= 1
+        return tuple(out)
+
+    cases = tuple(
+        replace(
+            c, with_runs=mark(c.with_runs, "with"), without_runs=mark(c.without_runs, "without")
+        )
+        for c in suite.cases
+    )
+    return read(replace(suite, cases=cases), ["demo-skill"])
+
+
+def test_refused_tool_calls_are_a_warning_not_a_verdict():
+    cases = same(6, [1, 1, 1], [0, 0, 0], fired=[True] * 3)
+    r = with_denials(cases, 1, 2)
+    assert r.verdict == "helps"
+    assert (
+        "3 of 36 runs had a tool call refused by permissions (1 with the skill, 2 without). "
+        "They were graded on what they produced, so a refusal, not the skill, may have moved "
+        "their scores." in r.warnings
+    )
+
+
+def test_refusals_are_counted_only_in_runs_whose_traces_were_read():
+    cases = same(6, [1, 1, 1], [0, 0, 0], fired=[True] * 3)
+    assert not any("refused" in w for w in with_denials(cases, 0, 0).warnings)
+    assert not any("refused" in w for w in verdict_of(cases).warnings)
+    suite = parse(make_result(cases))
+    first = suite.cases[0]
+    first = replace(first, with_runs=(replace(first.with_runs[0], denied=True),))
+    r = read(replace(suite, cases=(first,) + suite.cases[1:]), ["demo-skill"])
+    assert "1 of the 1 runs whose traces were read (of 34) had a tool call refused" in " ".join(
+        r.warnings
+    )
+
+
 def test_skipped_judges_are_invalid():
     r = verdict_of(same(6, [1, 1, 1], [0, 0, 0], skipped=True))
     assert r.verdict == "invalid"
@@ -127,6 +174,21 @@ def test_warnings():
     assert "Some cases ran 1 time(s) per side" in text
     assert "No case checks that the skill stays quiet" in text
     assert "6 case prompt(s) name the skill" in text
+
+
+def test_a_prompt_names_the_skill_only_as_a_whole_word():
+    from mordecai.verdict import case_warnings
+
+    def named(prompt, skill):
+        cases = parse(make_result(same(1, [1], [0], fired=[True], prompt=prompt))).cases
+        return any("name the skill" in w for w in case_warnings(cases, cases, [3], [skill]))
+
+    assert named("Use commit to save this.", "commit")
+    assert named("Write a PR description.", "pr-description")
+    assert named("Run the pr-description skill.", "pr-description")
+    assert not named("Stage the uncommitted files.", "commit")
+    assert not named("Demonstrate the change.", "demo")
+    assert not named("Improve the project.", "pr")
 
 
 def test_a_pinned_model_and_a_full_suite_has_no_warnings():
@@ -178,3 +240,13 @@ def test_suite_3_from_the_planted_check():
         "The model scored 93% without the skill, but the 90% interval (-41 to +7 points) "
         "doesn't rule out a loss of 10 points."
     )
+
+
+def test_runs_the_setup_blocked_make_the_card_invalid():
+    """D19: a refusal inside the run's own folder means the setup, not the skill, decided it."""
+    cases = same(6, [1, 1, 1], [0, 0, 0], fired=[True] * 3)
+    suite = parse(make_result(cases))
+    r = read(replace(suite, blocked_runs=2), ["demo-skill"])
+    assert r.verdict == "invalid" and r.blocked_runs == 2
+    assert "2 of 36 runs had a tool call refused inside their own folder" in r.reason
+    assert read(suite, ["demo-skill"]).verdict == "helps"

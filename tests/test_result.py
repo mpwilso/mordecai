@@ -34,6 +34,11 @@ BAD = {
     ),
     "cost a string": (lambda d: run0(d).update(costUsd="free"), "costUsd should be a number"),
     "turns NaN": (lambda d: run0(d).update(turns=float("nan")), "turns should be a number"),
+    "score a huge integer": (lambda d: run0(d).update(score=10**400), "score should be a number"),
+    "cost a huge integer": (
+        lambda d: run0(d).update(costUsd=10**400),
+        "costUsd should be a number",
+    ),
     "error a number": (lambda d: run0(d).update(error=7), "error should be a string"),
     "skipped a string": (
         lambda d: run0(d).update(skippedPaidGraders="no"),
@@ -64,6 +69,17 @@ BAD = {
     "plugin path a number": (
         lambda d: d["suite"]["plugins"][0].update(path=1),
         "path should be a string",
+    ),
+    "trace path a number": (lambda d: run0(d).update(tracePath=3), "tracePath should be a string"),
+    "case grader name a list": (
+        lambda d: d["cases"][0]["graders"].append(
+            {"name": ["x"], "type": "tool_used", "config": {"tool": "Skill"}}
+        ),
+        "name should be a string",
+    ),
+    "run grader name an object": (
+        lambda d: run0(d)["graders"].append({"name": {}, "passed": True}),
+        "name should be a string",
     ),
 }
 
@@ -123,3 +139,80 @@ def test_empty_and_zero_run_results_are_invalid_not_errors():
         r = read(parse(doc))
         assert r.verdict == "invalid"
         assert "nothing to compare" in r.reason
+
+
+def test_a_trace_lists_the_tool_calls_permissions_refused(tmp_path):
+    """tests/fixtures/denied-trace.jsonl is the final message of a real run's trace (suite 4,
+    with its local paths replaced). The result JSON has no field for refusals; the trace's
+    result message lists them in permission_denials."""
+    from conftest import FIXTURES
+
+    assert result.trace_denials(FIXTURES / "denied-trace.jsonl") == 2
+    line = {"type": "result", "subtype": "success", "permission_denials": []}
+    clean = tmp_path / "clean.jsonl"
+    clean.write_text(json.dumps({"type": "system"}) + "\n" + json.dumps(line) + "\n")
+    assert result.trace_denials(clean) == 0
+    # Suite 1 has a trace with two result messages: the run hit its turn limit with two
+    # refusals, then went on and ended with none. Every result message counts.
+    first = {"type": "result", "subtype": "error_max_turns", "permission_denials": [{}, {}]}
+    two = tmp_path / "two.jsonl"
+    two.write_text(json.dumps(first) + "\n" + json.dumps(line) + "\n")
+    assert result.trace_denials(two) == 2
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "",
+        "not json\n",
+        json.dumps({"type": "assistant", "permission_denials": [1]}) + "\n",
+        json.dumps({"type": "result", "permission_denials": "many"}) + "\n",
+        "[" * 100000 + "\n",
+    ],
+    ids=["empty", "not json", "not a result message", "denials not a list", "too deep"],
+)
+def test_a_trace_without_a_readable_result_message_says_nothing(tmp_path, text):
+    trace = tmp_path / "trace.jsonl"
+    trace.write_text(text)
+    assert result.trace_denials(trace) is None
+    assert result.trace_denials(tmp_path / "missing.jsonl") is None
+    assert result.trace_denials(tmp_path) is None
+
+
+def test_a_refusal_inside_the_runs_own_folder_is_blocked(tmp_path):
+    """D19: a refusal counts as blocked only when the tool is one the run had and it aimed
+    inside the run's working folder or a plugin folder it loaded. The 8 recorded refusals all
+    reached outside, like these first three."""
+    cwd, plugin = "/e/run-1/work/cwd", "/repo/evals/planted/4-vague"
+    init = {
+        "type": "system",
+        "subtype": "init",
+        "cwd": cwd,
+        "tools": ["Glob", "Grep", "Read", "Skill"],
+        "plugins": [{"name": "p", "path": plugin}, {"name": "b", "path": "builtin"}],
+    }
+
+    def refusals(*denials, first=init):
+        trace = tmp_path / "trace.jsonl"
+        end = {"type": "result", "permission_denials": list(denials)}
+        trace.write_text("".join(json.dumps(m) + "\n" for m in (first, end) if m))
+        return result.trace_refusals(trace)
+
+    outside = [
+        {"tool_name": "Glob", "tool_input": {"pattern": ".git/HEAD", "path": "/e/run-1"}},
+        {"tool_name": "Read", "tool_input": {"file_path": "/e/run-1/.gitconfig"}},
+        {"tool_name": "Glob", "tool_input": {"pattern": "/repo/.git/packed-refs"}},
+        {"tool_name": "Glob", "tool_input": {"pattern": "../../*", "path": cwd}},
+        {"tool_name": "Bash", "tool_input": {"command": f"cat {cwd}/x"}},  # not a tool it had
+    ]
+    assert refusals(*outside) == result.Refusals(5, 0)
+    inside = [
+        {"tool_name": "Read", "tool_input": {"file_path": f"{plugin}/skills/notes/SKILL.md"}},
+        {"tool_name": "Glob", "tool_input": {"pattern": "**/*.md"}},
+        {"tool_name": "Grep", "tool_input": {"pattern": "x", "path": "docs"}},
+        {"tool_name": "Read", "tool_input": {"file_path": "notes.md"}},
+    ]
+    assert refusals(*inside) == result.Refusals(4, 4)
+    # With no init message there's no folder to judge by, so nothing counts as blocked.
+    assert refusals(*inside, first=None) == result.Refusals(4, 0)
+    assert result.trace_denials(tmp_path / "trace.jsonl") == 4

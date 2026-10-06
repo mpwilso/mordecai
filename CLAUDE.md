@@ -10,7 +10,7 @@ The skill library lives in src/mordecai/library/: it imports the engine, the eng
 2. Never run the parallax, loupe, isr or polarizer commands. They are the author's other tools, and they can start agent runs that spend money.
 3. `claude plugin eval` and any other model call spend the user's money. Ask before every live run, and always pass `--max-cost-usd`, `--no-publish` and a pinned `--model`. Record each live run, its cost and its result file in the docs. Tests never call a model.
 4. No global installs: no sudo, apt, pip --break-system-packages or npm -g. Use uv inside this repo. Pin every dev dependency to an exact version.
-5. Local commits only when the user asks. Never set a remote, push, create a GitHub repo, or use gh to change anything.
+5. Commit only when the user asks, on a branch, never on master. Push the branch, wait for CI green, merge it into master (fast-forward, or a pull request when master has moved), push master, wait for CI green, then delete the branch locally and on GitHub. One git command at a time. Never change the remote, create a GitHub repo, or change repository settings.
 6. Every .py file is ASCII-only; tests/test_source_ascii.py enforces it. Build other characters with chr(). Never put \uXXXX escapes in content written with the Write or Edit tools, since they can turn into the actual character.
 7. Code decides verdicts, never a model. Crawl mode only adds fixed text around the plain card's stat block; it never computes or changes a number.
 8. Never change the verdict rules to make one example come out right. Change them for a reason that holds across examples, rerun scripts/simulate.py, and say what moved.

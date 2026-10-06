@@ -158,3 +158,32 @@ def test_an_old_card_with_absolute_paths_still_checks(tmp_path):
     doc["paths"]["skill"] = str(d)
     doc["paths"]["casesRoot"] = str(d)
     assert check(doc, tmp_path / "anywhere", roots=[tmp_path]) == []
+
+
+def test_a_card_reads_refusals_from_run_traces_inside_its_roots(tmp_path, monkeypatch):
+    """The runs' traces are read only where the result's other paths are: inside the current
+    directory or the skill directory. A trace anywhere else is never opened."""
+    inside, outside = tmp_path / "inside", tmp_path / "outside"
+    inside.mkdir()
+    outside.mkdir()
+    trace = (FIXTURES / "denied-trace.jsonl").read_bytes()
+    (inside / "trace.jsonl").write_bytes(trace)
+    (outside / "trace.jsonl").write_bytes(trace)
+    monkeypatch.chdir(inside)
+
+    def card_with(path):
+        doc = make_result(same(6, [1, 1, 1], [0, 0, 0], fired=[True] * 3))
+        doc["cases"][0]["arms"]["without"][1]["tracePath"] = str(path)
+        return build(parse(doc), json.dumps(doc).encode())
+
+    card = card_with(inside / "trace.jsonl")
+    assert card.reading.verdict == "helps"
+    assert any(
+        w.startswith("1 of the 1 runs whose traces were read (of 36) had a tool call refused")
+        and "(0 with the skill, 1 without)" in w
+        for w in card.reading.warnings
+    )
+    assert not any("refused" in w for w in card_with(outside / "trace.jsonl").reading.warnings)
+    # A trace path the system can't even look up is skipped too: the trace is optional.
+    for odd in ("x" * 5000, "a" + chr(0) + "b"):
+        assert card_with(odd).reading.verdict == "helps"

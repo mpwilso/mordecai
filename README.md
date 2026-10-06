@@ -43,10 +43,13 @@ The skill raised the score: 90% interval +100 to +100 points.
   Tested on claude-haiku-4-5-20251001 · judge claude-haiku-4-5-20251001 · Claude Code 2.1.289 · 2026-10-05
   Skill sha256:f35f631cd4d5 · Cases sha256:417d28c8319e · Result sha256:d704ea283576
 
+Warnings
+  - Refused tool calls weren't checked for 72 of 72 runs: their traces are gone or outside the folders Mordecai reads.
+
 Next: Keep it.
 ```
 
-The fixture is the raw result with local paths replaced, so its result hash differs from the one in the recorded card (`sha256:06cf8a473864`). The verdict, the numbers and the other two hashes are the same.
+The fixture is the raw result with local paths replaced, so its result hash differs from the one in the recorded card (`sha256:06cf8a473864`), and its runs' traces aren't beside it, hence the warning. The verdict, the numbers and the other two hashes are the same.
 
 The second example shows that one case is not evidence. It's a one-case eval of a tiny skill, run once while building Mordecai to capture the result format ([tests/fixtures/probe-result.json](tests/fixtures/probe-result.json), skill and case in [tests/fixtures/probe/](tests/fixtures/probe/)). The skill went from 0% to 100%, and the card still won't call it Helps. Its warnings are cut here.
 
@@ -81,7 +84,9 @@ Code decides, not a model. The rules run in this order, and the first one that a
 
 The interval is a bootstrap over cases, and over runs inside each case, with a fixed seed, so the same result always gives the same card. Cases that check the skill stays quiet are left out of the change and reported as misfires.
 
-Every card also lists warnings that don't change the verdict: a model alias instead of a pinned ID, fewer than 3 runs per side, no case that checks the skill stays quiet, no case that checks it fired, and case prompts that name the skill (which tests whether the model follows an instruction, not whether it finds the skill). `mordecai lint` runs the same checks on case files before an eval.
+Every card also lists warnings that don't change the verdict: a model alias instead of a pinned ID, runs that ended with an error other than a usage or rate limit, runs that had a tool call refused by permissions (with how many on each side), fewer than 3 runs per side, no case that checks the skill stays quiet, no case that checks it fired, and case prompts that name the skill (which tests whether the model follows an instruction, not whether it finds the skill). `mordecai lint` runs the last four checks on case files before an eval.
+
+A refused tool call leaves the run's `error` empty, and the result JSON has no field for it, so Mordecai reads it from each run's trace (`tracePath`): the `permission_denials` list in the trace's result message. It reads a trace only if it is inside the current directory or the `--skill` directory, as with every other path a result names. If the run had the tool and the refused call aimed inside the run's own working folder or the skill's folder, the setup decided the run, not the skill, and the card is Invalid; a refusal anywhere else is a warning. `claude plugin eval` writes traces to a temporary folder by default, so a card made after that folder is gone can't see refusals, and it says so.
 
 **The two Already handled rows changed in 0.2.0.** Under the original rules, Already handled only checked that the interval ruled out a 10-point gain. In the planted check, that hid harm. An outdated skill (suite 3) gave the wrong answer in 5 of the 6 runs where it fired, and the card still said Already handled, with an interval of -41 to +7. The rules never flagged that skill as Hurts, and the new rules don't either, because its interval reaches +7. They now call it Inconclusive. The change was designed after seeing that result, so suite 3 can't count as evidence for it. Of the seven cards recorded before the change, it moves only suite 3.
 
@@ -179,7 +184,7 @@ Two suites were rerun on Claude Sonnet 5.5 (`claude-sonnet-5-5`). Neither verdic
 
 ### Unit tests
 
-Each verdict and warning has a test on a constructed result, along with hashing, staleness, relative card paths, `lint`, `check --model` and the command line. Others feed in hostile input: malformed results and cards, paths and links that lead outside the plugin, and names carrying terminal escapes or Markdown. One test is built from the real suite 3 result, and others check that the README's example cards are what the tool prints. The library's tests cover every command, including hostile sources and targets (path traversal, links, malformed frontmatter, a name that doesn't match its folder, a card that doesn't match its version's files or its result), the byte-for-byte install, the seeded library, and the MCP server through the SDK's in-process client and over stdio. `uv run pytest` runs 161 tests without the library extra (the library's test files skip), and 343 with it (`uv sync --extra library --group spec`). None call a model or reach the network. CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs the tests, lint, the format check, `scripts/brand.py --check` and `scripts/planted.py --check` on Python 3.11, 3.12 and 3.13, on every push and pull request, and runs the tests again with the library extra. Live eval runs are never part of CI: they call a model and cost money, and CI has no secrets. The result format comes from a real `claude plugin eval` run, not from the docs alone.
+Each verdict and warning has a test on a constructed result, along with hashing, staleness, relative card paths, `lint`, `check --model` and the command line. Others feed in hostile input: malformed results and cards, paths and links that lead outside the plugin, and names carrying terminal escapes or Markdown. One test is built from the real suite 3 result, and others check that the README's example cards are what the tool prints. The library's tests cover every command, including hostile sources and targets (path traversal, links, malformed frontmatter, a name that doesn't match its folder, a card that doesn't match its version's files or its result), the byte-for-byte install, the seeded library, and the MCP server through the SDK's in-process client and over stdio. `uv run pytest` runs 181 tests without the library extra (the library's test files skip), and 363 with it (`uv sync --extra library --group spec`). None call a model or reach the network. CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs the tests, lint, the format check, `scripts/brand.py --check` and `scripts/planted.py --check` on Python 3.11, 3.12 and 3.13, on every push and pull request, and runs the tests again with the library extra. Live eval runs are never part of CI: they call a model and cost money, and CI has no secrets. The result format comes from a real `claude plugin eval` run, not from the docs alone.
 
 ### What wasn't checked
 
@@ -198,6 +203,7 @@ Each verdict and warning has a test on a constructed result, along with hashing,
 - **The bootstrap is optimistic when runs agree.** In 8 of the 13 planted cards that have an interval, it collapsed to a single point, such as +100 to +100.
 - **Results come from one small model.** See [what wasn't checked](#what-wasnt-checked).
 - **Only one plugin per result.** Cards name the first plugin in the suite.
+- **Refused tool calls are seen only in kept traces.** The permissions warning needs each run's trace, inside the current directory or `--skill`. Without the traces a card can't tell a refused tool call from a skill that did badly. A refusal never changes the verdict; whether it should is an [open question](docs/open-questions.md#open-question-4-runs-that-say-nothing-about-the-skill).
 - **Cost, not tokens.** The eval result reports each run's estimated cost at list price, not its tokens, so that's what the card compares.
 - **Links aren't followed.** A symbolic link in a skill is hashed as the path it points to, never opened, so a card doesn't go stale when the linked file's contents change. This keeps a skill under review from making Mordecai read files outside it.
 

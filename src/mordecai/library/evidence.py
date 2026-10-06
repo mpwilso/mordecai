@@ -16,7 +16,7 @@ The states:
 """
 
 import os
-from dataclasses import dataclass, fields
+from dataclasses import dataclass, fields, replace
 from pathlib import Path
 
 from mordecai.card import CardError, _validate
@@ -24,7 +24,7 @@ from mordecai.library import LibraryError
 from mordecai.library.paths import no_links
 from mordecai.provenance import PathError, hash_cases, hash_skill, sha256, within
 from mordecai.result import ResultError, parse, read_json
-from mordecai.verdict import VERDICTS, Rules, read
+from mordecai.verdict import DEFAULT_RULES, VERDICTS, Rules, read
 
 STATES = ("current", "cases-changed", "stale", "unmeasured", "broken")
 DEFAULT_REFUSE = ("hurts", "invalid", "broken")
@@ -51,6 +51,17 @@ class Evidence:
         return self.state in refuse or (self.applies and self.verdict in refuse)
 
 
+def _blocked(doc: dict, suite) -> int:
+    """The runs the card says the setup blocked (D19). A library card doesn't ship its traces,
+    so the check takes the card's count; older cards don't have one."""
+    numbers = doc.get("numbers") if isinstance(doc.get("numbers"), dict) else {}
+    n = numbers.get("blockedRuns", 0)
+    runs = sum(len(c.with_runs) + len(c.without_runs) for c in suite.cases)
+    if isinstance(n, bool) or not isinstance(n, int) or not 0 <= n <= runs:
+        raise CardError("the card's blockedRuns isn't a count of its runs")
+    return n
+
+
 def _rules(raw) -> Rules:
     names = {f.name for f in fields(Rules)}
     if not isinstance(raw, dict) or set(raw) != names:
@@ -58,7 +69,10 @@ def _rules(raw) -> Rules:
     for k, v in raw.items():
         if isinstance(v, bool) or not isinstance(v, int | float):
             raise CardError(f"the card's rule {k} isn't a number")
-    return Rules(**raw)
+    # D20: looser rules could earn a verdict on almost no evidence, and odd ones crashed or hung
+    if any(v != getattr(DEFAULT_RULES, k) for k, v in raw.items()):
+        raise CardError("the card's rules aren't this engine's rules")
+    return DEFAULT_RULES
 
 
 def cases_dir(card_dir: Path, source_root: Path) -> Path | None:
@@ -95,10 +109,15 @@ def assess(card_dir: Path, version_folder: Path, source_root: Path) -> Evidence:
         if sha256(result_bytes) != hashes.get("result"):
             raise CardError("result.json isn't the result this card was made from")
         suite = parse(result_doc)
+        suite = replace(suite, blocked_runs=_blocked(doc, suite))
         subject = doc.get("subject") if isinstance(doc.get("subject"), dict) else {}
         names = [s for s in subject.get("skills") or [] if isinstance(s, str)]
         names += [p.name for p in suite.plugins[:1] if p.name]
-        verdict = read(suite, names, _rules(doc.get("rules"))).verdict
+        rules = _rules(doc.get("rules"))
+        try:
+            verdict = read(suite, names, rules).verdict
+        except Exception as e:  # D20: a card never crashes the check, whatever its result holds
+            raise CardError(f"its verdict couldn't be recomputed ({type(e).__name__})") from e
         if verdict != doc.get("verdict"):
             raise CardError(
                 f"the card says {doc.get('verdict')!r}, but its result gives {verdict!r}"
