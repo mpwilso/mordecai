@@ -1,6 +1,6 @@
 # Library design
 
-How Mordecai keeps a shared skill library in Git, with a base and named variants for each skill, a version and history for each, and a card that says whether a version helps. Written before the library code, and updated where the code changed it. The research behind it is in [research.md](research.md). Reversible choices made during the build are in [decisions.md](decisions.md).
+How Mordecai keeps a shared skill library in Git, with a base and named variants for each skill, a version and history for each, and a card that says whether a version helps. Written before the library code, and updated where the code changed it. The research behind it is in [research.md](research.md). Reversible choices made during the build are in [decisions.md](decisions.md). It started from a short written specification, called the brief below; where the design departs from it, it says so and why.
 
 ## What it is, in one paragraph
 
@@ -182,6 +182,10 @@ Everything read from a source is untrusted: skill text, file names, changelogs, 
 - **Diff first.** Nothing replaces an installed skill without showing the diff first: `update` needs `--yes`, and the MCP tool needs a second call.
 - **Never executed.** Mordecai never runs a skill's scripts, and never runs Git hooks or filters from a source: files come from `git cat-file`, and every Git call disables `core.fsmonitor`. But a skill's scripts run with the user's own permissions whenever their AI tool uses them, so install says when a skill includes executable files or a `scripts/` folder.
 - **Paths stay inside.** A file path from a source must be relative, without `..`, and without control characters. A target must be inside the project (or home, for `--user`), no folder on the way to it may be a symbolic link, and every write is checked with the engine's `within()` before it happens. Files are written to a temporary folder beside the destination and renamed into place, so a failed install leaves nothing half written.
+- **Lockfiles are untrusted too.** Before update or uninstall acts on an entry, it must be `<target>/<skill>` inside the project, reached without links, and hold a SKILL.md naming that skill, so a crafted lockfile can't point either at other files.
+- **Names that collide.** A skill folder may not hold two names that differ only by case or Unicode form, and a target may not contain a backslash, a drive or a control character, since those escape or collide on macOS and Windows.
+- **Links are never gone through.** Evidence reached through a link is broken and never read, and materializing a source refuses to write through a link.
+- **Fetches** allow only HTTPS, recurse into no submodules, and run no hooks.
 - **Limits.** A skill folder may hold at most 1,000 files and 20 MB, and frontmatter at most 64 KB, so a hostile source can't fill a disk or exhaust memory.
 - **Printed safely.** Every name, description and note is printed through the engine's `clean()`, so text from a source can't send terminal escapes.
 - **The engine's protections are reused**, not copied: `within()`, the directory hash that never follows a link, and `clean()`.

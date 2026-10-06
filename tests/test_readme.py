@@ -90,3 +90,27 @@ def test_no_em_or_en_dashes_in_the_readme_and_library_docs():
     for doc in docs:
         text = (ROOT / doc).read_text(encoding="utf-8")
         assert chr(0x2014) not in text and chr(0x2013) not in text, doc
+
+
+def test_every_relative_link_and_image_resolves():
+    """Links and images in the README and the docs lead to files that exist; a #fragment on a
+    Markdown file must be one of its headings."""
+    docs = [ROOT / "README.md", ROOT / "CHANGELOG.md", ROOT / "examples" / "README.md"]
+    docs += sorted((ROOT / "docs").glob("*.md"))
+    bad = []
+    for doc in docs:
+        text = doc.read_text(encoding="utf-8")
+        targets = re.findall(r"\]\(([^)\s]+)\)", text) + re.findall(
+            r'(?:src|srcset)="([^"]+)"', text
+        )
+        for target in targets:
+            if target.startswith(("http://", "https://", "#", "mailto:")):
+                continue
+            path, _, fragment = target.partition("#")
+            resolved = (doc.parent / path).resolve()
+            if not resolved.exists():
+                bad.append(f"{doc.name}: {target}")
+            elif fragment and resolved.suffix == ".md":
+                if fragment not in _slugs(resolved.read_text(encoding="utf-8")):
+                    bad.append(f"{doc.name}: {target}")
+    assert bad == []

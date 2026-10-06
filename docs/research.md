@@ -2,9 +2,9 @@
 
 What the specification, the AI coding tools and the existing skill installers and servers do, as read on 2026-10-06, and what Mordecai's library adds. Every claim links to the page it came from. Where a page couldn't be read or a claim couldn't be confirmed, it says so. No code was copied from any of these projects.
 
-## Corrections to the brief
+## Corrections to the starting assumptions
 
-The brief listed what was already known. Most of it holds. These parts were wrong, incomplete or out of date:
+The library was built from a short written specification, called the brief here, which listed what was already known about these tools. Most of it holds. These parts were wrong, incomplete or out of date:
 
 1. **Skill names.** The spec allows only `a-z`, `0-9` and hyphens, but the reference validator also accepts any lowercase Unicode letter (it checks `isalnum()` after NFKC normalization). Mordecai uses the spec's ASCII rule, since names also become folder names and Git tag names, and ASCII-only names can't hide a lookalike character.
 2. **Unique metadata keys.** The spec has no uniqueness rule. It says only "We recommend making your key names reasonably unique to avoid accidental conflicts." Duplicate keys fail in `skills-ref` because its YAML parser, strictyaml, refuses them.
