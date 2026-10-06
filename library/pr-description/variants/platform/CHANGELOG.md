@@ -4,6 +4,12 @@
 
 Based on base 1.1.0.
 
+## 1.1.0 - 2026-10-06
+
+Based on base 1.1.0.
+
+- Name the paged team when a change touches an alert.
+
 ## 1.0.0 - 2026-10-06
 
 Based on base 1.1.0.
