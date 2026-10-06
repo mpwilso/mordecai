@@ -1,18 +1,25 @@
-"""Draws Mordecai's logo lockups and the crawl mode card, light and dark.
+"""Draws Mordecai's logo lockups, the crawl mode card and the social preview.
 
     uv run python scripts/brand.py          write the files
     uv run python scripts/brand.py --check  exit 1 if a file differs from what this would write
+    uv run --group visual python scripts/brand.py --png  also draw docs/brand/social-preview.png
 
 Standard library only, plus Mordecai itself: the crawl card's text is printed by the same code
 as `mordecai identify --crawl`, from a demo result built here, so the picture can't say
-something the tool wouldn't. tests/test_brand.py runs the check. docs/brand/README.md says
-what the mark means.
+something the tool wouldn't. The one exception is --png, which renders the social preview in
+headless Chromium from the visual dependency group. The PNG carries the hash of the SVG it was
+drawn from, so --check can tell it's current without a browser. tests/test_brand.py runs the
+check. docs/brand/README.md says what the mark means.
 """
 
 import math
+import os
 import re
+import struct
 import sys
 import tempfile
+import zlib
+from hashlib import sha256
 from html import escape
 from pathlib import Path
 
@@ -96,6 +103,81 @@ def lockup(theme: str, motion: bool = True) -> str:
     )
 
 
+# The social preview ------------------------------------------------------------------------
+
+PREVIEW = ROOT / "docs" / "brand" / "social-preview.png"
+PREVIEW_SIZE = (1280, 640)
+PREVIEW_BG = "#0d1117"  # GitHub's dark page
+TAGLINE = ("Reads a skill's eval results and says", "what the skill can honestly claim.")
+
+
+def social_preview() -> str:
+    """The still dark lockup, centered, with the tagline below, for GitHub's link preview."""
+    w, h = PREVIEW_SIZE
+    scale = 2.2
+    lw, lh = 410 * scale, 100 * scale
+    mark = re.sub(
+        r"^<svg [^>]*><title>[^<]*</title>",
+        f'<svg x="{(w - lw) / 2:g}" y="130" width="{lw:g}" height="{lh:g}" viewBox="0 0 410 100">',
+        lockup("dark", motion=False).rstrip("\n"),
+    )
+    tagline = "".join(
+        f'<text x="{w / 2:g}" y="{450 + i * 50}" text-anchor="middle" font-family="{escape(SANS)}" '
+        f'font-size="36" fill="{CARD["dim"]}">{ascii_xml(line)}</text>'
+        for i, line in enumerate(TAGLINE)
+    )
+    return (
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {w} {h}" width="{w}" '
+        f'height="{h}"><rect width="{w}" height="{h}" fill="{PREVIEW_BG}"/>{mark}{tagline}</svg>\n'
+    )
+
+
+def png_source(png: bytes) -> tuple[tuple[int, int], str | None]:
+    """A PNG's size, and the hash of the SVG it was drawn from, as stamped by stamp()."""
+    size = struct.unpack(">II", png[16:24])
+    pos, source = 8, None
+    while pos < len(png):
+        length, kind = struct.unpack(">I4s", png[pos : pos + 8])
+        if kind == b"tEXt":
+            key, _, value = png[pos + 8 : pos + 8 + length].partition(b"\0")
+            if key == b"Source":
+                source = value.decode("ascii")
+        pos += 12 + length
+    return size, source
+
+
+def stamp(png: bytes, source: str) -> bytes:
+    """The PNG with a tEXt chunk naming the SVG it was drawn from, right after its header."""
+    data = b"Source\0" + source.encode("ascii")
+    chunk = struct.pack(">I", len(data)) + b"tEXt" + data
+    chunk += struct.pack(">I", zlib.crc32(b"tEXt" + data))
+    return png[:33] + chunk + png[33:]
+
+
+def render_preview() -> bytes:
+    """Draws the preview in headless Chromium. Needs the visual dependency group and a browser
+    in .playwright/, so CI only checks the stamp and never runs this."""
+    os.environ.setdefault("PLAYWRIGHT_BROWSERS_PATH", str(ROOT / ".playwright"))
+    from playwright.sync_api import sync_playwright
+
+    w, h = PREVIEW_SIZE
+    svg = social_preview()
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": w, "height": h})
+        page.set_content(f'<!doctype html><body style="margin:0">{svg}</body>')
+        png = page.screenshot()
+        browser.close()
+    return stamp(png, sha256(svg.encode()).hexdigest())
+
+
+def preview_is_current() -> bool:
+    if not PREVIEW.exists():
+        return False
+    size, source = png_source(PREVIEW.read_bytes())
+    return size == PREVIEW_SIZE and source == sha256(social_preview().encode()).hexdigest()
+
+
 # The crawl card ----------------------------------------------------------------------------
 
 CARD_ALT = (
@@ -158,7 +240,6 @@ PIXEL = {
     "Y": "#FDE68A",
 }
 PX = 6  # screen pixels per art pixel
-LID_OPEN = -20  # degrees the lid turns to open
 LID_OPEN = -20  # degrees the lid turns to open
 
 
@@ -309,8 +390,14 @@ def main(argv: list[str]) -> int:
         else:
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(text, encoding="utf-8", newline="\n")
+    if "--png" in argv:
+        PREVIEW.write_bytes(render_preview())
     for name in stale:
         print(f"brand: {name} differs from scripts/brand.py; run it")
+    if not preview_is_current():
+        name = PREVIEW.relative_to(ROOT).as_posix()
+        print(f"brand: {name} wasn't drawn from the current preview; run it with --png")
+        return 1
     return 1 if stale else 0
 
 

@@ -1,6 +1,6 @@
 # Mordecai brand
 
-Every SVG here is drawn by `scripts/brand.py`. To change one, edit the script and run `uv run python scripts/brand.py`. `tests/test_brand.py` fails if a file and the script disagree.
+Every SVG here, and the social preview PNG, is drawn by `scripts/brand.py`. To change one, edit the script and run `uv run python scripts/brand.py`. `tests/test_brand.py` fails if a file and the script disagree.
 
 ## The mark
 
@@ -18,6 +18,10 @@ The mark and the word MORDECAI. Use [lockup-light.svg](lockup-light.svg) on ligh
 ## The crawl card
 
 [crawl-card.svg](crawl-card.svg) is crawl mode, for the README. A pixel chest shakes, opens and lifts out a potion, and the card's lines arrive one by one. The potion is drawn behind the chest's front and clipped at its rim, so it only shows above the chest, and the lid turns about the body's corner so it stays joined. `tests/test_brand.py` checks that, at every keyframe, the art stays at least 8px inside the border and clear of the text. The text is the output of `mordecai identify --crawl` for a demo skill with simulated results, printed by the tool's own code when the script runs. With reduced motion, the chest is shown open with the potion out.
+
+## The social preview
+
+[social-preview.png](social-preview.png) is the 1280x640 image GitHub shows when the repository is linked: the still dark lockup with the tagline below. It's uploaded by hand in the repository's Settings, under General, Social preview. `uv run --group visual python scripts/brand.py --png` draws it in headless Chromium (setup in `scripts/frames.py`), and stamps it with the hash of the SVG it was drawn from, so `--check` fails when the drawing changes and the PNG hasn't been redrawn.
 
 ## Looking at the animations
 

@@ -197,3 +197,17 @@ def test_the_potion_is_drawn_behind_the_chest_body_and_in_front_of_the_lid():
     order = [c.get("class") or c.get("clip-path") or c.tag[len(SVG_NS) :] for c in chest]
     assert order[:2] == ["lid", "url(#rim)"] and set(order[2:]) == {"rect"}
     assert chest[1][0].get("class") == "potion"
+
+
+def test_the_social_preview_is_drawn_from_the_current_lockup():
+    """The PNG is 1280x640 and stamped with the hash of the SVG scripts/brand.py draws now."""
+    size, source = brand.png_source(brand.PREVIEW.read_bytes())
+    assert size == (1280, 640)
+    assert source == brand.sha256(brand.social_preview().encode()).hexdigest()
+    assert "animation" not in brand.social_preview()
+
+
+def test_a_stamp_is_read_back():
+    png = brand.PREVIEW.read_bytes()
+    restamped = brand.stamp(png[:33] + png[33 + 12 + len(b"Source\0") + 64 :], "abc")
+    assert brand.png_source(restamped) == ((1280, 640), "abc")
