@@ -185,10 +185,37 @@ def _warnings(suite: Suite, effect: list[Case], skill_names: list[str]) -> list[
             f"{errored} of {len(runs)} runs ended with an error. They were graded on what "
             "they produced."
         )
+    warnings += _denial_warnings(suite)
     # Counted from the runs themselves: --runs overrides the case's own runs setting.
     counts = [min(len(c.with_runs), len(c.without_runs)) for c in effect]
     warnings += case_warnings(suite.cases, effect, counts, skill_names)
     return warnings
+
+
+def _denial_warnings(suite: Suite) -> list[str]:
+    """A warning when runs had a tool call refused by permissions. A refused call can lower a
+    run's score for reasons that have nothing to do with the skill, and the run's error stays
+    null, so nothing else notices it. Only runs whose traces were read are counted."""
+    sides = {
+        "with": [r for c in suite.cases for r in c.with_runs],
+        "without": [r for c in suite.cases for r in c.without_runs],
+    }
+    denied = {arm: sum(1 for r in runs if r.denied) for arm, runs in sides.items()}
+    total = sum(denied.values())
+    if not total:
+        return []
+    runs = sides["with"] + sides["without"]
+    read_ = sum(1 for r in runs if r.denied is not None)
+    of = (
+        f"{len(runs)} runs"
+        if read_ == len(runs)
+        else f"the {read_} runs whose traces were read (of {len(runs)})"
+    )
+    return [
+        f"{total} of {of} had a tool call refused by permissions ({denied['with']} with the "
+        f"skill, {denied['without']} without). They were graded on what they produced, so a "
+        "refusal, not the skill, may have moved their scores."
+    ]
 
 
 def read(

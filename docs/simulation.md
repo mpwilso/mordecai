@@ -43,7 +43,7 @@ skills check, run against real evals, is what tests the rules against that.
 
 ## Recalibration: the rules on runs that agree like real runs
 
-Written by `scripts/simulate.py` with the 0.2.0 rules (at least 5 cases, a
+Written by `scripts/simulate.py` with the 0.3.0 rules (at least 5 cases, a
 90% interval, a 10-point minimum effect), 200
 simulated suites per row, 3 runs per side per case. The table at the top of this file is kept
 as it was; its "rerun the script" note refers to the script at f43421b, and the independent
@@ -53,13 +53,13 @@ The planted skills check ([planted-skills-results.md](planted-skills-results.md)
 all three runs of a side agreed in 94% of case-and-side cells. Independent coin flips agree far
 less often. So this section runs both settings with the current rules:
 
-- **Independent runs**, as above, rerun with the 0.2.0 rules. Simulated agreement:
+- **Independent runs**, as above, rerun with the 0.3.0 rules. Simulated agreement:
   40%.
 - **94% agreement**: each case has one outcome per side, and each run repeats it, flipping with
   probability 0.0204. A placebo's two sides share the same outcome. Simulated agreement:
   94%.
 
-### Independent runs, 0.2.0 rules
+### Independent runs, 0.3.0 rules
 
 | True effect | Cases | Helps | Hurts | Inconclusive | Other |
 |---|---|---|---|---|---|
@@ -73,7 +73,7 @@ less often. So this section runs both settings with the current rules:
 | +40 points | 10 | 94% | 0% | 6% | 0% |
 | +40 points | 15 | 99% | 0% | 1% | 0% |
 
-### 94% run agreement, 0.2.0 rules
+### 94% run agreement, 0.3.0 rules
 
 | True effect | Cases | Helps | Hurts | Inconclusive | Other |
 |---|---|---|---|---|---|

@@ -12,6 +12,7 @@ The skill library: skills kept in Git, each with a base and named variants, each
 - `export --marketplace` writes a Claude Code plugin marketplace for managed settings, and `export --skills` writes plain skill folders. Exports always leave out Hurts, Invalid and broken copies.
 - `mordecai mcp`: a stdio MCP server with `list_skills`, `search_skills`, `get_skill`, `skill_history`, `check_updates`, `install_skill` and `uninstall_skill`. It can't override the install policy, and writes only inside configured targets.
 - A seeded library, examples of a three-source config and managed settings, and [docs/library-demo.md](docs/library-demo.md), a walk-through with no model calls.
+- A card warns when runs had a tool call refused by permissions, with how many on each side. The result JSON has no field for a refusal, so Mordecai reads it from each run's trace (`permission_denials`), when the trace is inside the current directory or `--skill`. The verdict doesn't change; see [open question 4](docs/open-questions.md#open-question-4-runs-that-say-nothing-about-the-skill).
 - The library and its MCP server need the optional extra: `uv sync --extra library`. `identify`, `check` and `lint` still need only the standard library.
 
 ## 0.2.0 (2026-10-06)

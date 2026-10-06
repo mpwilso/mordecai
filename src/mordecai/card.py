@@ -8,7 +8,9 @@ is written in, and the cases' root is relative to the skill directory.
 A result or a card may come from someone else, so a path read from one is used only if it
 leads inside an allowed root: the current directory, or a directory the caller named, such as
 --skill. A path that exists and leads anywhere else is a PathError, before anything is read.
-A path that doesn't exist is never read, so it is reported as missing, as before.
+A path that doesn't exist is never read, so it is reported as missing, as before. The runs'
+trace files are optional: a trace outside the allowed roots is skipped, not refused, and the
+card counts refused tool calls only in the traces it read.
 """
 
 import json
@@ -18,7 +20,7 @@ from pathlib import Path
 
 from mordecai import __version__
 from mordecai.provenance import PathError, hash_cases, hash_skill, sha256, skill_names, within
-from mordecai.result import Suite
+from mordecai.result import Suite, trace_denials
 from mordecai.verdict import DEFAULT_RULES, Reading, Rules, read
 
 CARD_VERSION = 1
@@ -82,6 +84,7 @@ def build(
     if root:
         root = _allowed(root, roots, "The result's suite root", "--skill")
     cases_root = root.resolve() if root and root.is_dir() else skill_dir
+    suite = _read_traces(suite, roots)
     reading = read(suite, names + ([plugin.name] if plugin else []), rules)
     cases_hash = hash_cases(cases_root, case_dirs) if cases_root and case_dirs else None
     missing = []
@@ -112,6 +115,31 @@ def build(
         case_dirs=tuple(case_dirs),
         rules=rules,
     )
+
+
+def _read_traces(suite: Suite, roots: list[Path]) -> Suite:
+    """The suite with each run's denied set from its trace, for traces inside roots."""
+
+    def denied(trace: str | None) -> bool | None:
+        if not trace:
+            return None
+        path = Path(trace)
+        try:
+            if not path.exists() or not any(within(path, x) for x in roots):
+                return None
+        except (OSError, ValueError):  # a name too long to look up, for one
+            return None
+        count = trace_denials(path)
+        return None if count is None else count > 0
+
+    def mark(runs):
+        return tuple(replace(r, denied=denied(r.trace)) for r in runs)
+
+    cases = tuple(
+        replace(c, with_runs=mark(c.with_runs), without_runs=mark(c.without_runs))
+        for c in suite.cases
+    )
+    return replace(suite, cases=cases)
 
 
 def _with_warning(reading: Reading, text: str) -> Reading:

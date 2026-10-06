@@ -65,6 +65,7 @@ BAD = {
         lambda d: d["suite"]["plugins"][0].update(path=1),
         "path should be a string",
     ),
+    "trace path a number": (lambda d: run0(d).update(tracePath=3), "tracePath should be a string"),
 }
 
 
@@ -123,3 +124,41 @@ def test_empty_and_zero_run_results_are_invalid_not_errors():
         r = read(parse(doc))
         assert r.verdict == "invalid"
         assert "nothing to compare" in r.reason
+
+
+def test_a_trace_lists_the_tool_calls_permissions_refused(tmp_path):
+    """tests/fixtures/denied-trace.jsonl is the final message of a real run's trace (suite 4,
+    with its local paths replaced). The result JSON has no field for refusals; the trace's
+    result message lists them in permission_denials."""
+    from conftest import FIXTURES
+
+    assert result.trace_denials(FIXTURES / "denied-trace.jsonl") == 2
+    line = {"type": "result", "subtype": "success", "permission_denials": []}
+    clean = tmp_path / "clean.jsonl"
+    clean.write_text(json.dumps({"type": "system"}) + "\n" + json.dumps(line) + "\n")
+    assert result.trace_denials(clean) == 0
+    # Suite 1 has a trace with two result messages: the run hit its turn limit with two
+    # refusals, then went on and ended with none. Every result message counts.
+    first = {"type": "result", "subtype": "error_max_turns", "permission_denials": [{}, {}]}
+    two = tmp_path / "two.jsonl"
+    two.write_text(json.dumps(first) + "\n" + json.dumps(line) + "\n")
+    assert result.trace_denials(two) == 2
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "",
+        "not json\n",
+        json.dumps({"type": "assistant", "permission_denials": [1]}) + "\n",
+        json.dumps({"type": "result", "permission_denials": "many"}) + "\n",
+        "[" * 100000 + "\n",
+    ],
+    ids=["empty", "not json", "not a result message", "denials not a list", "too deep"],
+)
+def test_a_trace_without_a_readable_result_message_says_nothing(tmp_path, text):
+    trace = tmp_path / "trace.jsonl"
+    trace.write_text(text)
+    assert result.trace_denials(trace) is None
+    assert result.trace_denials(tmp_path / "missing.jsonl") is None
+    assert result.trace_denials(tmp_path) is None

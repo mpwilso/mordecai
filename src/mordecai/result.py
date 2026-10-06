@@ -35,6 +35,10 @@ class Run:
     fired: bool | None
     # Did any "the skill must not fire" grader fail? None when the case has none.
     misfired: bool | None
+    # The run's trace file, as the result names it (tracePath).
+    trace: str | None = None
+    # Did the trace list a tool call that permissions refused? None until a trace is read.
+    denied: bool | None = None
 
 
 @dataclass(frozen=True)
@@ -138,6 +142,7 @@ def _run(raw: dict, fire: set[str], silent: set[str], arm: str, where: str) -> R
         turns=_number(raw, "turns", where),
         fired=fired,
         misfired=misfired,
+        trace=_get(raw, "tracePath", str, where),
     )
 
 
@@ -190,6 +195,38 @@ def parse(doc: dict) -> Suite:
         ),
         cases=tuple(_case(c) for c in _items(doc, "cases", top)),
     )
+
+
+def trace_denials(path: Path) -> int | None:
+    """How many tool calls permissions refused in a run, from the run's trace: the JSON Lines
+    stream Claude Code writes, where each message of type "result" lists the calls refused
+    since the one before it in permission_denials. A trace can hold more than one, as when a
+    run hits its turn limit and goes on, so they are added up. The result JSON itself has no
+    such field. None when the trace is missing, isn't a regular file, is over MAX_BYTES, or
+    has no readable result message."""
+    try:
+        if not path.is_file():
+            return None
+        with open(path, "rb") as f:
+            data = f.read(MAX_BYTES + 1)
+    except OSError:
+        return None
+    if len(data) > MAX_BYTES:
+        return None
+    found = None
+    for line in data.splitlines():
+        if b'"permission_denials"' not in line:
+            continue
+        try:
+            message = json.loads(line, parse_constant=_no_constant)
+        except (ValueError, RecursionError):
+            continue
+        if not isinstance(message, dict) or message.get("type") != "result":
+            continue
+        denials = message.get("permission_denials")
+        if isinstance(denials, list):
+            found = (found or 0) + len(denials)
+    return found
 
 
 def _no_constant(name: str):
