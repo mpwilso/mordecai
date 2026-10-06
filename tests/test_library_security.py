@@ -91,7 +91,7 @@ def test_lockfile_keys_that_escape_are_refused(setup, key):
     assert run(["library", "status", "--project", str(proj)])[0] == 2
 
 
-def test_a_lockfile_entry_for_a_folder_that_isnt_that_skill_is_never_touched(setup):
+def test_a_lockfile_entry_for_a_folder_that_isnt_that_skill_is_never_touched(setup, capsys):
     """Even with --force, update and uninstall leave alone a folder whose SKILL.md doesn't name
     the skill the lockfile says is there."""
     repo, proj, cfg = setup
@@ -100,7 +100,8 @@ def test_a_lockfile_entry_for_a_folder_that_isnt_that_skill_is_never_touched(set
     (victim / "todo.md").write_text("mine\n")
     write_lock(proj, {"notes/greeting": entry("greeting", hash_dir(victim))})
     args = ["--config", str(cfg), "--project", str(proj)]
-    assert run(["library", "uninstall", "greeting", "--force", *args])[0] == 2
+    code, _ = run(["library", "uninstall", "greeting", "--force", "--project", str(proj)])
+    assert code == 2 and "isn't a greeting skill folder" in capsys.readouterr().err
     code, text = run(["library", "update", "--yes", "--force", *args])
     assert "isn't a greeting skill folder" in text
     assert (victim / "todo.md").read_text() == "mine\n"

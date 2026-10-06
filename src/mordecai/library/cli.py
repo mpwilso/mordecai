@@ -21,78 +21,100 @@ from mordecai.library.store import check_copy, scan
 from mordecai.library.versions import BUMPS
 from mordecai.render import clean
 
+EXIT_CODES = """exit codes:
+  0  done, or nothing to report
+  1  what the command checks for: validate errors, status findings, a refused install, or an
+     update or replacement waiting for --yes
+  2  input Mordecai can't read or won't use, including a folder it won't touch"""
+
 
 def _parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
-        prog="mordecai library", description="Keep, release and install skills, with evidence."
+        prog="mordecai library",
+        description="Keep, release and install skills, with each version's verdict.",
+        epilog=EXIT_CODES,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     sub = p.add_subparsers(dest="command", required=True)
 
-    def consumer(name: str, help: str) -> argparse.ArgumentParser:
-        c = sub.add_parser(name, help=help)
-        c.add_argument("--config", type=Path, help="the library config (mordecai-library.toml)")
+    def command(name: str, help: str, config: bool = True) -> argparse.ArgumentParser:
+        c = sub.add_parser(
+            name,
+            help=help,
+            description=help[0].upper() + help[1:] + ".",
+            epilog=EXIT_CODES,
+            formatter_class=argparse.RawDescriptionHelpFormatter,
+        )
+        if config:
+            c.add_argument(
+                "--config", type=Path, help="the library config (default: mordecai-library.toml)"
+            )
         return c
 
-    def where(c: argparse.ArgumentParser) -> None:
-        c.add_argument("--project", type=Path, help="the project to install into (default: here)")
-        c.add_argument("--user", action="store_true", help="install under your home folder")
+    def where(c: argparse.ArgumentParser, verb: str) -> None:
+        c.add_argument(
+            "--project", type=Path, help=f"the project to {verb} (default: the current folder)"
+        )
+        c.add_argument(
+            "--user", action="store_true", help="use the skills folders under your home folder"
+        )
 
     def author(name: str, help: str) -> argparse.ArgumentParser:
-        c = sub.add_parser(name, help=help)
+        c = command(name, help, config=False)
         c.add_argument(
             "--library",
             type=Path,
             default=Path("library"),
-            help="the library folder (default: ./library)",
+            help="the library folder, in a Git repository (default: ./library)",
         )
         return c
 
+    def copy(c: argparse.ArgumentParser, variant_help: str = "a variant (default: the base)"):
+        c.add_argument("skill", help="the skill's name")
+        c.add_argument("--variant", help=variant_help)
+
+    json_help = "print JSON instead of text"
     author("validate", help="check every copy in a library folder")
-    c = consumer("list", help="every skill, its copies, versions and verdicts")
-    c.add_argument("--json", action="store_true")
-    for name, help in (
-        ("show", "one copy: its text, files, version and verdict"),
-        ("history", "one copy's releases, notes and verdicts"),
-    ):
-        c = consumer(name, help)
-        c.add_argument("skill")
-        c.add_argument("--variant")
-        if name == "show":
-            c.add_argument("--version")
-        c.add_argument("--json", action="store_true")
+    c = command("list", help="list every skill, its copies, versions and verdicts")
+    c.add_argument("--json", action="store_true", help=json_help)
+    c = command("show", help="show one copy: its text, files, version and verdict")
+    copy(c)
+    c.add_argument("--version", help="a released version (default: the newest)")
+    c.add_argument("--json", action="store_true", help=json_help)
+    c = command("history", help="show one copy's releases, notes and verdicts")
+    copy(c)
+    c.add_argument("--json", action="store_true", help=json_help)
     c = author("release", help="release a copy: changelog, commit and a local tag; never pushes")
-    c.add_argument("skill")
-    c.add_argument("--variant")
-    c.add_argument("--bump", required=True, choices=BUMPS)
+    copy(c, "the variant to release (default: the base)")
+    c.add_argument("--bump", required=True, choices=BUMPS, help="which part of X.Y.Z to raise")
     c.add_argument("--based-on", help="for a variant: the base release it is now based on")
     c.add_argument("--note", action="append", default=[], help="a changelog line (repeatable)")
     c.add_argument("--message", help="extra text for the release commit")
     c = author("fork", help="create a variant from the base's newest release")
-    c.add_argument("skill")
-    c.add_argument("--variant", required=True)
-    c = consumer(
+    c.add_argument("skill", help="the skill's name")
+    c.add_argument("--variant", required=True, help="the new variant's name")
+    c = command(
         "status",
-        help="variants behind base, unreleased changes, missing, stale, broken "
-        "or refused cards, and installs that changed",
+        help="report variants behind base, unreleased changes, missing, stale, broken or "
+        "refused cards, and installs that changed",
     )
-    where(c)
-    c.add_argument("--json", action="store_true")
-    c = consumer("install", help="copy a skill into a tool's skills folder and lock it")
-    c.add_argument("skill")
-    c.add_argument("--variant")
-    c.add_argument("--version")
+    where(c, "check")
+    c.add_argument("--json", action="store_true", help=json_help)
+    c = command("install", help="copy a skill into a tool's skills folder and lock it")
+    copy(c, "a variant (default: the config's default variant, or the base)")
+    c.add_argument("--version", help="a released version (default: the newest)")
     c.add_argument(
         "--target",
         action="append",
-        help="agents (default), claude, github, cursor, or a folder; repeatable",
+        help="agents (default), claude, github, cursor, or a folder in the project; repeatable",
     )
-    where(c)
+    where(c, "install into")
     c.add_argument(
         "--allow",
         action="append",
         default=[],
         metavar="VERDICT",
-        help="install even though the policy refuses this verdict or state",
+        help="install even though the policy refuses this verdict or state (repeatable)",
     )
     c.add_argument(
         "--force",
@@ -100,22 +122,32 @@ def _parser() -> argparse.ArgumentParser:
         help="replace a folder that changed since Mordecai installed it",
     )
     c.add_argument("--yes", action="store_true", help="replace an installed copy after the diff")
-    c = consumer("update", help="show what newer releases would change; apply with --yes")
-    c.add_argument("skill", nargs="?")
-    where(c)
-    c.add_argument("--yes", action="store_true")
-    c.add_argument("--force", action="store_true")
-    c = consumer("uninstall", help="remove an installed skill recorded in the lockfile")
-    c.add_argument("skill")
-    c.add_argument("--target", action="append")
-    where(c)
-    c.add_argument("--force", action="store_true")
-    c = consumer("export", help="write the resolved library as a marketplace or a skills folder")
+    c = command("update", help="show what newer releases would change, and apply them with --yes")
+    c.add_argument("skill", nargs="?", help="one skill (default: every installed skill)")
+    where(c, "update")
+    c.add_argument("--yes", action="store_true", help="apply the updates after the diff")
+    c.add_argument(
+        "--force",
+        action="store_true",
+        help="replace folders that changed since they were installed",
+    )
+    c = command("uninstall", "remove an installed skill recorded in the lockfile", config=False)
+    c.add_argument("skill", help="the skill's name")
+    c.add_argument(
+        "--target", action="append", help="only from this target (default: every one); repeatable"
+    )
+    where(c, "remove it from")
+    c.add_argument(
+        "--force", action="store_true", help="remove it even if it changed since it was installed"
+    )
+    c = command("export", help="write the resolved library as a marketplace or a skills folder")
     g = c.add_mutually_exclusive_group(required=True)
     g.add_argument("--marketplace", type=Path, help="write a Claude Code plugin marketplace here")
     g.add_argument("--skills", type=Path, help="write plain <skill>/ folders here")
-    c.add_argument("--name", default="skills", help="the marketplace's name")
-    c.add_argument("--owner", default="", help="the marketplace owner's name")
+    c.add_argument("--name", default="skills", help="the marketplace's name (default: skills)")
+    c.add_argument(
+        "--owner", default="", help="the marketplace owner's name (default: Mordecai library)"
+    )
     return p
 
 
@@ -142,18 +174,19 @@ def cmd_validate(args, out) -> int:
         return 2
     errors = list(problems)
     warnings = []
-    logs = {}
-    for c in copies:
-        if c.variant is None:
-            base = check_copy(root, c)
-            logs[c.skill] = base.log
-    for skill in sorted({c.skill for c in copies if c.variant} - set(logs)):
+    # Bases first, so each variant's lineage is checked against its base's changelog.
+    checks = {c.skill: check_copy(root, c) for c in copies if c.variant is None}
+    for skill in sorted({c.skill for c in copies if c.variant} - set(checks)):
         warnings.append(
             f"{skill}: no base in this library, so its variants' lineage is checked "
             "only against the base another source provides"
         )
     for c in copies:
-        checked = check_copy(root, c, logs.get(c.skill) if c.variant else None)
+        if c.variant is None:
+            checked = checks[c.skill]
+        else:
+            base = checks.get(c.skill)
+            checked = check_copy(root, c, base.log if base else None)
         errors += [f"{c.id}: {e}" for e in checked.all_errors]
         warnings += [f"{c.id}: {w}" for w in checked.report.warnings]
     _p(

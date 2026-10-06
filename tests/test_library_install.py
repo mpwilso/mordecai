@@ -217,9 +217,10 @@ def test_edited_installs_are_never_replaced_or_removed_silently(setup):
     assert "my edit" in md.read_text()
     code, text = run(["library", "status", *args])
     assert "install-changed" in text
-    assert run(["library", "uninstall", "greeting", *args])[0] == 2
+    at = ["--project", str(proj)]
+    assert run(["library", "uninstall", "greeting", *at])[0] == 2
     assert md.exists()
-    code, text = run(["library", "uninstall", "greeting", "--force", *args])
+    code, text = run(["library", "uninstall", "greeting", "--force", *at])
     assert code == 0 and not md.parent.exists()
     assert json.loads((proj / "mordecai-lock.json").read_text())["installed"] == {}
 

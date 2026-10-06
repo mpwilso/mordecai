@@ -76,6 +76,7 @@ uv run mordecai library uninstall <skill>
 - `mordecai-lock.json` in the project records each installed folder's source, ref, commit, tag, version, folder hash and verdict.
 - `update` prints a diff of every change and replaces nothing without `--yes`. Installing a different variant over an installed one works the same way.
 - Mordecai never replaces or removes a folder it didn't install, or one that changed since it did.
+- Every `mordecai library` command exits 0 when it's done or has nothing to report, 1 for what it checks for (validate errors, status findings, a refused install, or an update or replacement waiting for `--yes`), and 2 for input it can't read or won't use, including a folder it won't touch.
 - It never runs a skill's scripts. But a skill's scripts run with your permissions when your AI tool uses them, so install says when a skill has any. Read them first.
 
 **Why install rather than serve.** Claude Code, Codex, Cursor and Copilot all read each installed skill's name and description up front, and load the rest when the description matches the task. That is how a skill fires, and how it was measured. A skill served over MCP reaches the model only if the model first decides to call a tool. So install is the main path, and reading a skill over MCP is the fallback for clients without native skills.

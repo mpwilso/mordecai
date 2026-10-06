@@ -116,11 +116,15 @@ def show(lib: Library, skill: str, variant: str | None, version: str | None) -> 
         problems=report.errors,
         warnings=report.warnings,
         executable=report.executable,
-        text=(picked.folder / "SKILL.md").read_text(encoding="utf-8")
-        if not report.errors or "SKILL.md" in report.files
-        else "",
+        text=_text(picked.folder / "SKILL.md") if "SKILL.md" in report.files else "",
     )
     return out
+
+
+def _text(path) -> str:
+    """A file's text, with any bytes that aren't UTF-8 shown as replacement characters; the
+    problems list already says the file isn't UTF-8."""
+    return path.read_bytes().decode("utf-8", "replace")
 
 
 def history(lib: Library, skill: str, variant: str | None) -> dict:
@@ -212,13 +216,14 @@ def status(lib: Library, proj=None, lock: Lock | None = None) -> list[dict]:
                         r,
                         f"{r.copy.label} {sec.version} is in the changelog but has no tag",
                     )
-            if releases:
-                newest = lib.pick(r)
-                if hash_dir(newest.folder) != hash_dir(r.source.root / r.copy.folder):
-                    add("unreleased", r, f"{r.copy.label} has changes since {newest.version}")
             if "error" in s:
                 add("broken", r, s["error"])
                 continue
+            if releases:
+                newest = lib.pick(r)
+                here = r.source.root / r.copy.folder
+                if not here.is_dir() or hash_dir(newest.folder) != hash_dir(here):
+                    add("unreleased", r, f"{r.copy.label} has changes since {newest.version}")
             e = s["evidence"]
             refused = lib.config.refuse
             label = f"{r.copy.label} {s['version']}"
@@ -241,7 +246,6 @@ def status(lib: Library, proj=None, lock: Lock | None = None) -> list[dict]:
         for key, entry in sorted(lock.entries.items()):
             path = proj.root / key
             where = {
-                "kind": "",
                 "copy": entry["skill"] + (f".{entry['variant']}" if entry["variant"] else ""),
                 "installed": key,
             }
