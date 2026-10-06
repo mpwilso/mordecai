@@ -42,11 +42,13 @@ def test_a_card_goes_stale_when_the_skill_or_cases_change(tmp_path):
     d = probe_copy(tmp_path)
     suite, data = load(FIXTURES / "probe-result.json")
     doc = json.loads(to_json(build(suite, data, d)))
-    assert check(doc) == []
+    assert check(doc, roots=[tmp_path]) == []
     (d / "evals" / "goodbye" / "prompt.md").write_text("changed")
-    assert check(doc) == ["The eval cases changed since the card was written."]
+    assert check(doc, roots=[tmp_path]) == ["The eval cases changed since the card was written."]
     (d / "skills" / "team-signoff" / "SKILL.md").write_text("changed")
-    assert check(doc)[0] == "The skill's files changed since the card was written."
+    assert (
+        check(doc, roots=[tmp_path])[0] == "The skill's files changed since the card was written."
+    )
 
 
 def test_card_json_is_stable_and_complete(tmp_path):
@@ -139,12 +141,12 @@ def test_card_paths_are_relative_and_survive_a_move(tmp_path):
     assert str(tmp_path) not in text
     assert doc["paths"]["skill"] == "../../skills-under-test/probe"
     assert doc["paths"]["casesRoot"] == "."
-    assert check(doc, cards) == []
+    assert check(doc, cards, roots=[tree]) == []
     moved = tmp_path / "elsewhere"
     shutil.move(str(tree), str(moved))
-    assert check(doc, moved / "docs" / "cards") == []
+    assert check(doc, moved / "docs" / "cards", roots=[moved]) == []
     (moved / "skills-under-test" / "probe" / "skills" / "team-signoff" / "SKILL.md").write_text("x")
-    assert check(doc, moved / "docs" / "cards") == [
+    assert check(doc, moved / "docs" / "cards", roots=[moved]) == [
         "The skill's files changed since the card was written."
     ]
 
@@ -155,4 +157,4 @@ def test_an_old_card_with_absolute_paths_still_checks(tmp_path):
     doc = json.loads(to_json(build(suite, data, d)))
     doc["paths"]["skill"] = str(d)
     doc["paths"]["casesRoot"] = str(d)
-    assert check(doc, tmp_path / "anywhere") == []
+    assert check(doc, tmp_path / "anywhere", roots=[tmp_path]) == []

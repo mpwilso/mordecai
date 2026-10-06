@@ -54,7 +54,8 @@ def test_unreadable_result():
     assert code == 2
 
 
-def test_check(tmp_path):
+def test_check(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
     probe = tmp_path / "probe"
     shutil.copytree(FIXTURES / "probe", probe)
     card = tmp_path / "card.json"

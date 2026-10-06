@@ -3,7 +3,6 @@ mordecai check: say whether a card still matches the skill and cases it was meas
 """
 
 import argparse
-import json
 import os
 import sys
 import time
@@ -12,8 +11,9 @@ from pathlib import Path
 from mordecai import __version__
 from mordecai.card import CardError, build, check, to_json
 from mordecai.lint import lint
+from mordecai.provenance import PathError
 from mordecai.render import crawl, markdown, plain
-from mordecai.result import ResultError, load
+from mordecai.result import ResultError, load, read_json
 from mordecai.verdict import VERDICTS
 
 # A loot box opening, one line redrawn in place. Shown only in crawl mode, on a terminal.
@@ -80,14 +80,14 @@ def identify(args, out) -> int:
         return 2
     try:
         suite, data = load(args.result)
-    except ResultError as e:
+        card = build(suite, data, args.skill)
+        if args.card:
+            args.card.write_text(to_json(card, args.card.parent), encoding="utf-8", newline="\n")
+        if args.markdown:
+            args.markdown.write_text(markdown(card), encoding="utf-8", newline="\n")
+    except (ResultError, PathError, OSError) as e:
         print(f"mordecai: {e}", file=sys.stderr)
         return 2
-    card = build(suite, data, args.skill)
-    if args.card:
-        args.card.write_text(to_json(card, args.card.parent), encoding="utf-8", newline="\n")
-    if args.markdown:
-        args.markdown.write_text(markdown(card), encoding="utf-8", newline="\n")
     if args.crawl:
         color = _color_ok(out)
         if color:
@@ -100,10 +100,10 @@ def identify(args, out) -> int:
 
 def check_card(args, out) -> int:
     try:
-        doc = json.loads(args.card.read_text(encoding="utf-8"))
+        doc, _ = read_json(args.card, "a card")
         changes = check(doc, args.card.parent, args.skill, args.cases_root, args.model)
-    except (OSError, json.JSONDecodeError, CardError) as e:
-        print(f"mordecai: can't read {args.card}: {e}", file=sys.stderr)
+    except (ResultError, CardError, PathError, OSError) as e:
+        print(f"mordecai: can't check {args.card}: {e}", file=sys.stderr)
         return 2
     if not changes:
         out.write(f"Current: {args.card} matches the skill and cases it was measured on.\n")

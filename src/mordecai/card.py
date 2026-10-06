@@ -4,6 +4,11 @@ A card is written as JSON with sorted keys, so the same result always writes the
 Its paths are relative, so a card holds no local directory names and still checks after the
 repository is cloned somewhere else: the skill directory is relative to the directory the card
 is written in, and the cases' root is relative to the skill directory.
+
+A result or a card may come from someone else, so a path read from one is used only if it
+leads inside an allowed root: the current directory, or a directory the caller named, such as
+--skill. A path that exists and leads anywhere else is a PathError, before anything is read.
+A path that doesn't exist is never read, so it is reported as missing, as before.
 """
 
 import json
@@ -12,7 +17,7 @@ from dataclasses import asdict, dataclass, replace
 from pathlib import Path
 
 from mordecai import __version__
-from mordecai.provenance import hash_cases, hash_skill, sha256, skill_names
+from mordecai.provenance import PathError, hash_cases, hash_skill, sha256, skill_names, within
 from mordecai.result import Suite
 from mordecai.verdict import DEFAULT_RULES, Reading, Rules, read
 
@@ -42,18 +47,40 @@ class Card:
         return f"{self.plugin} {self.version}" if self.version else self.plugin
 
 
+def _allowed(path: Path, roots: list[Path], what: str, flag: str) -> Path:
+    """path, if it doesn't exist or leads inside one of roots."""
+    if path.exists() and not any(within(path, r) for r in roots):
+        raise PathError(
+            f"{what} {path} leads outside {roots[0]}. Mordecai reads only inside the current "
+            f"directory and directories you pass with {flag}."
+        )
+    return path
+
+
 def build(
-    suite: Suite, result_bytes: bytes, skill_dir: Path | None = None, rules: Rules = DEFAULT_RULES
+    suite: Suite,
+    result_bytes: bytes,
+    skill_dir: Path | None = None,
+    rules: Rules = DEFAULT_RULES,
+    roots: list[Path] | None = None,
 ) -> Card:
+    """The card for a suite. skill_dir is trusted; the plugin path and root that the result
+    names are used only inside roots (the current directory by default) or skill_dir."""
+    roots = [Path.cwd()] if roots is None else list(roots)
     plugin = suite.plugins[0] if suite.plugins else None
-    if skill_dir is None and plugin and plugin.path:
-        skill_dir = Path(plugin.path)
+    if skill_dir is not None:
+        roots.append(skill_dir)
+    elif plugin and plugin.path:
+        skill_dir = _allowed(Path(plugin.path), roots, "The result's plugin path", "--skill")
     case_dirs = [c.dir for c in suite.cases if c.dir]
     found = skill_dir is not None and skill_dir.is_dir()
     if found:
         skill_dir = skill_dir.resolve()
+        roots.append(skill_dir)
     names = skill_names(skill_dir) if found else []
     root = Path(suite.root) if suite.root else None
+    if root:
+        root = _allowed(root, roots, "The result's suite root", "--skill")
     cases_root = root.resolve() if root and root.is_dir() else skill_dir
     reading = read(suite, names + ([plugin.name] if plugin else []), rules)
     cases_hash = hash_cases(cases_root, case_dirs) if cases_root and case_dirs else None
@@ -145,23 +172,54 @@ class CardError(Exception):
     pass
 
 
+def _part(doc: dict, key: str) -> dict:
+    value = doc.get(key)
+    if value is None:
+        return {}
+    if not isinstance(value, dict):
+        raise CardError(f"{key} should be an object")
+    return value
+
+
+def _validate(doc) -> tuple[dict, dict, dict]:
+    if not isinstance(doc, dict) or doc.get("card") != CARD_VERSION:
+        raise CardError(f"not a Mordecai card, version {CARD_VERSION}")
+    hashes, paths, tested = _part(doc, "hashes"), _part(doc, "paths"), _part(doc, "tested")
+    fields = [("hashes", "skill"), ("hashes", "cases"), ("paths", "skill")]
+    fields += [("paths", "casesRoot"), ("tested", "model")]
+    parts = {"hashes": hashes, "paths": paths, "tested": tested}
+    for part, key in fields:
+        if parts[part].get(key) is not None and not isinstance(parts[part][key], str):
+            raise CardError(f"{part}.{key} should be a string")
+    dirs = paths.get("caseDirs")
+    if dirs is not None and not (isinstance(dirs, list) and all(isinstance(d, str) for d in dirs)):
+        raise CardError("paths.caseDirs should be a list of strings")
+    return hashes, paths, tested
+
+
 def check(
     doc: dict,
     card_dir: Path = Path("."),
     skill_dir: Path | None = None,
     cases_root: Path | None = None,
     model: str | None = None,
+    roots: list[Path] | None = None,
 ) -> list[str]:
     """What has changed since the card was written. An empty list means it's current.
     card_dir is the directory the card file is in; the card's paths are relative to it.
     Older cards with absolute paths still check, since joining an absolute path keeps it.
-    With model, a card measured on a different model is stale too."""
-    if not isinstance(doc, dict) or doc.get("card") != CARD_VERSION:
-        raise CardError(f"not a Mordecai card, version {CARD_VERSION}")
-    hashes, paths = doc.get("hashes") or {}, doc.get("paths") or {}
+    With model, a card measured on a different model is stale too.
+
+    The card's own paths must lead inside roots (the current directory by default) or a
+    directory passed as skill_dir or cases_root; skill_dir and cases_root are trusted."""
+    hashes, paths, tested_part = _validate(doc)
+    roots = [Path.cwd()] if roots is None else list(roots)
+    roots += [p for p in (skill_dir, cases_root) if p is not None]
     case_dirs = paths.get("caseDirs") or []
     changes = []
-    skill = skill_dir or (card_dir / paths["skill"] if paths.get("skill") else None)
+    skill = skill_dir
+    if skill is None and paths.get("skill"):
+        skill = _allowed(card_dir / paths["skill"], roots, "The card's skill path", "--skill")
     if not hashes.get("skill") or skill is None:
         changes.append("The card has no skill hash, so it can't be checked.")
     elif not skill.is_dir():
@@ -170,12 +228,12 @@ def check(
         changes.append("The skill's files changed since the card was written.")
     root = cases_root
     if root is None and paths.get("casesRoot") and skill is not None:
-        root = skill / paths["casesRoot"]
+        root = _allowed(skill / paths["casesRoot"], roots, "The card's cases root", "--cases-root")
     if not hashes.get("cases") or root is None:
         changes.append("The card has no cases hash, so it can't be checked.")
     elif hash_cases(root, case_dirs) != hashes["cases"]:
         changes.append("The eval cases changed since the card was written.")
-    tested = (doc.get("tested") or {}).get("model")
+    tested = tested_part.get("model")
     if model and tested != model:
         changes.append(f"The card was measured on {tested or 'an unrecorded model'}, not {model}.")
     return changes
