@@ -5,7 +5,9 @@
   </picture>
 </p>
 
-<p align="center"><b>Skill catalogs count downloads. Mordecai checks whether the skill helps.</b></p>
+<p align="center"><b>Reads a skill's eval results and says what the skill can honestly claim.</b></p>
+
+<p align="center"><a href="https://github.com/mpwilso/mordecai/actions/workflows/ci.yml"><img src="https://github.com/mpwilso/mordecai/actions/workflows/ci.yml/badge.svg" alt="CI status"></a></p>
 
 Status: A portfolio project, built to show how I design, test and judge an AI tool. Version 0.2.0. Its verdict rules have been checked on simulated skills and on 12 planted skill suites with real eval runs, almost all on one small model (Claude Haiku 4.5). Only the first set of five skills and two sealed holdouts were blind; on that first set, 3 of 5 got their predicted verdict. The later suites were designed after seeing those results. Every result is in [docs/planted-skills-results.md](docs/planted-skills-results.md), including the misses.
 
@@ -132,7 +134,7 @@ Two suites were rerun on Claude Sonnet 5.5 (`claude-sonnet-5-5`). Neither verdic
 
 ### Unit tests
 
-Each verdict and warning has a test on a constructed result, along with hashing, staleness, relative card paths, `lint`, `check --model` and the command line. One test is built from the real suite 3 result. `uv run pytest` runs 52 tests, and none call a model. CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs the tests, lint, the format check, `scripts/brand.py --check` and `scripts/planted.py --check` on Python 3.11, 3.12 and 3.13, on every push and pull request. Live eval runs are never part of CI: they call a model and cost money, and CI has no secrets. The result format comes from a real `claude plugin eval` run, not from the docs alone.
+Each verdict and warning has a test on a constructed result, along with hashing, staleness, relative card paths, `lint`, `check --model` and the command line. Others feed in hostile input: malformed results and cards, paths and links that lead outside the plugin, and names carrying terminal escapes or Markdown. One test is built from the real suite 3 result. `uv run pytest` runs 144 tests, and none call a model. CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs the tests, lint, the format check, `scripts/brand.py --check` and `scripts/planted.py --check` on Python 3.11, 3.12 and 3.13, on every push and pull request. Live eval runs are never part of CI: they call a model and cost money, and CI has no secrets. The result format comes from a real `claude plugin eval` run, not from the docs alone.
 
 ### What wasn't checked
 
@@ -152,6 +154,7 @@ Each verdict and warning has a test on a constructed result, along with hashing,
 - **Results come from one small model.** See [what wasn't checked](#what-wasnt-checked).
 - **Only one plugin per result.** Cards name the first plugin in the suite.
 - **Cost, not tokens.** The eval result reports each run's estimated cost at list price, not its tokens, so that's what the card compares.
+- **Links aren't followed.** A symbolic link in a skill is hashed as the path it points to, never opened, so a card doesn't go stale when the linked file's contents change. This keeps a skill under review from making Mordecai read files outside it.
 
 ## Setup
 
@@ -167,16 +170,19 @@ Check your cases, run your skill's eval with a pinned model, then read it:
 
 ```
 uv run mordecai lint path/to/plugin
-claude plugin eval path/to/plugin --model claude-sonnet-5-5 --json result.json --no-publish --max-cost-usd 5
+claude plugin eval path/to/plugin --trust-plugin --model claude-sonnet-5-5 --json result.json --no-publish --max-cost-usd 5
 uv run mordecai identify result.json --skill path/to/plugin --card card.json --markdown card.md
 uv run mordecai check card.json --model claude-sonnet-5-5
 ```
 
-- `lint` exits 1 if the case files would get any warning.
-- `identify` prints the card, and can write it as JSON and as Markdown for a pull request. `--fail-on hurts,invalid` makes it exit 1 on those verdicts, for CI.
-- `check` exits 1 when the skill or its cases have changed since the card was written. With `--model`, it also exits 1 when the card was measured on a different model.
+**`claude plugin eval` runs the plugin's code on your machine, as you.** Under `--json` it can't ask whether you trust the plugin directory, so it refuses to run unless you pass `--trust-plugin` or have already trusted the directory. Only pass it for a plugin you've reviewed and would run yourself. Mordecai itself never runs a plugin: it reads the result file and hashes the plugin's files.
 
-Cards store paths relative to where the card is written, so a card still checks after the repository is cloned somewhere else.
+- `lint` exits 1 if the case files would get any warning.
+- `identify` prints the card, and can write it as JSON and as Markdown for a pull request. `--fail-on hurts,invalid` makes it exit 1 on those verdicts, for CI. `--crawl` or `MORDECAI_MODE=crawl` prints crawl mode, and `--plain` overrides the variable.
+- `check` exits 1 when the skill or its cases have changed since the card was written. With `--model`, it also exits 1 when the card was measured on a different model.
+- Every command exits 2 when it can't read its input or won't use it, with one line saying why.
+
+Cards store paths relative to where the card is written, so a card still checks after the repository is cloned somewhere else. Run Mordecai from the repository root: it reads only inside the current directory and directories you pass with `--skill` or `--cases-root`, since a result or card may come from someone else.
 
 A worked example from the planted check: suite 2's Haiku card still matches its files, but it is stale for Sonnet.
 
@@ -188,7 +194,7 @@ Stale: docs/planted-results/2-commits.card.json
 
 ## What's next
 
-1. A way to report a skill that rarely fires, distinct from Inconclusive. A proposal and its effect on every recorded card are in [docs/open-questions.md](docs/open-questions.md); it isn't applied.
+1. A way to report a skill that rarely fires, distinct from Inconclusive (see [known limits](#known-limits)).
 2. A planted skill with a moderate effect, to check the simulation's +20 point finding on real runs.
 3. `mordecai measure`: run the eval with a pinned model and a cost cap, then write the card, in one step.
 4. A registry template: a Git repo that's also a Claude Code plugin marketplace, with a GitHub Action that posts each skill's card on its pull request and blocks the merge on Hurts, Invalid or a stale card.
