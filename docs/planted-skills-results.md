@@ -185,3 +185,9 @@ Both run once each on Haiku under the 0.2.0 rules (03d2619).
 | H1 h1-must-fire | Hurts | Hurts | Match | 0 / 0 / 9 | 0% / 100% | 27 of 27; 0 of 9 quiet | 24 of 24 cells | $1.24 | 2026-10-06 00:09 |
 
 **H1: Hurts, a match. The rules call Hurts when a harmful skill is actually opened.** The skill fired in all 27 runs that needed it, and every with-skill run followed it. Every baseline run passed. The interval collapsed to -100 to -100. [Card](planted-results/h1-must-fire.card.json). Predictions: [validation-skills.md](validation-skills.md), committed in 337397d. With suites 3 and V1, this shows that **Hurts detection depends on the skill being opened.** The rules found the harm when the skill fired every time (H1). They couldn't confirm it when it fired in 6 of 27 runs (suite 3) or 1 of 27 (V1).
+
+## Drift demo 2: suite 2 on Sonnet, prediction written before the run
+
+Suite 2's skill (Conventional Commits) came out Helps on Haiku 4.5: 96% with the skill, 19% without, +78 points (interval +59 to +96). That card is recorded above. The same suite, unchanged, now runs once on `claude-sonnet-5-5` with a $3 cap.
+
+**Predicted Sonnet verdict: Helps, with a higher baseline and a smaller change than on Haiku.** A larger model may use a type prefix unprompted more often than Haiku's 5 of 27. Unless it does so in at least 90% of runs, the skill still has room to help, and Helps stays the likely verdict. If Sonnet's baseline reaches 90% or more and the interval rules out a 10-point gain or loss, the verdict moves to Already handled. That would be the drift this demo looks for. I don't expect it, but it would not be surprising.
