@@ -23,7 +23,7 @@ Many skills don't measurably help, and the usual tools don't flag it:
 
 - In SWE-Skills-Bench, 39 of 49 skills gave no gain in pass rate, and 24 of them passed every task without the skill. Token use moved between -78% and +451% with the results unchanged.
 - In SkillsBench, skills written by people added about 16 points on average, skills written by models about -1, and 16 of 84 tasks did worse with a skill.
-- `claude plugin eval` reports the change with and without a plugin, but its docs say that change never affects the exit code. CI gates on the score alone, so a skill that passes everything with or without it passes the gate. A run that hits a rate limit usually scores 0 without marking the suite partial.
+- `claude plugin eval` reports the change with and without a plugin, but its docs say "the with-minus-without delta is reported but never changes the exit code" ([Run evals in CI](https://code.claude.com/docs/en/plugin-evals#run-evals-in-ci)). The exit code depends on each case's score with the plugin against `--threshold`, so a skill that passes everything with or without it passes the gate. The same docs say a run that hits a usage or rate limit "usually scores 0", and the suite "isn't marked `partial`" ([Runs fail with a usage-limit or rate-limit error partway through](https://code.claude.com/docs/en/plugin-evals#runs-fail-with-a-usage-limit-or-rate-limit-error-partway-through)).
 
 ## What a card looks like
 
