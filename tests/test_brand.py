@@ -36,7 +36,7 @@ def test_the_still_frame_is_the_finished_picture():
         assert f"0%,94%,100%{{transform:translateY({brand.DRAINED}px)}}" in svg
         assert brand.LEVEL_Y + brand.DRAINED > brand.BASELINE_Y > brand.LEVEL_Y
         assert "infinite" in svg
-    assert f'<g class="lid" transform="rotate({brand.LID_OPEN} ' in brand.crawl_card()
+    assert '<g class="lid" opacity="0">' in brand.crawl_card()  # the open lid shows instead
 
 
 def test_the_crawl_card_is_what_the_tool_prints():
@@ -195,8 +195,8 @@ def test_the_potion_is_drawn_behind_the_chest_body_and_in_front_of_the_lid():
         g for g in ET.fromstring(brand.crawl_card()).iter(SVG_NS + "g") if g.get("class") == "chest"
     )
     order = [c.get("class") or c.get("clip-path") or c.tag[len(SVG_NS) :] for c in chest]
-    assert order[:2] == ["lid", "url(#rim)"] and set(order[2:]) == {"rect"}
-    assert chest[1][0].get("class") == "potion"
+    assert order[:3] == ["lid", "open", "url(#rim)"] and set(order[3:]) == {"rect"}
+    assert chest[2][0].get("class") == "potion"
 
 
 def test_the_social_preview_is_drawn_from_the_current_lockup():
@@ -211,3 +211,46 @@ def test_a_stamp_is_read_back():
     png = brand.PREVIEW.read_bytes()
     restamped = brand.stamp(png[:33] + png[33 + 12 + len(b"Source\0") + 64 :], "abc")
     assert brand.png_source(restamped) == ((1280, 640), "abc")
+
+
+def _opacity_frames(svg: str) -> dict[str, list[tuple[float, float]]]:
+    """Each stepped animation's opacity keyframes, by the class it runs on."""
+    names = dict(re.findall(r"\.(\w+)\{animation:(\w+) 6s steps\(1\) infinite\}", svg))
+    frames = {}
+    for cls, name in names.items():
+        body = re.search(r"@keyframes " + name + r"\{((?:[^{}]*\{[^{}]*\})*)\}", svg).group(1)
+        steps = []
+        for sel, decl in re.findall(r"([^{}]+)\{([^{}]*)\}", body):
+            o = re.search(r"opacity:([\d.]+)", decl)
+            if o:
+                steps += [(float(p.strip().rstrip("%")), float(o.group(1))) for p in sel.split(",")]
+        frames[cls] = sorted(steps)
+    return frames
+
+
+def test_the_crawl_art_stays_on_its_pixel_grid():
+    """Pixel art only looks right whole pixels at a time: at the still frame and at every
+    keyframe, every pixel of the chest, lid, potion and rays sits on the chest's PX grid. A
+    rotated lid or a shake of less than a pixel breaks that."""
+    svg = brand.crawl_card()
+    chest = next(g for g in ET.fromstring(svg).iter(SVG_NS + "g") if g.get("class") == "chest")
+    body = chest.findall(SVG_NS + "rect")
+    x0 = min(float(r.get("x")) for r in body)
+    y0 = min(float(r.get("y")) for r in body)
+    pcts = sorted({p for steps in _keyframes(svg).values() for p, _ in steps})
+    for pct in [None, *pcts]:
+        where = "still frame" if pct is None else f"{pct}%"
+        for owner, _, (a, b, c, d) in _art_boxes(svg, pct):
+            for v in ((a - x0), (b - y0), (c - a), (d - b)):
+                assert abs(v / brand.PX - round(v / brand.PX)) < 1e-6, (where, owner, v)
+
+
+def test_one_lid_shows_at_a_time_and_the_still_frame_is_open():
+    svg = brand.crawl_card()
+    frames = _opacity_frames(svg)
+    closed, opened = frames["lid"], frames["open"]
+    assert [p for p, _ in closed] == [p for p, _ in opened]
+    assert all(a + b == 1 for (_, a), (_, b) in zip(closed, opened, strict=True))
+    assert '<g class="lid" opacity="0">' in svg and '<g class="open">' in svg
+    # Open while the potion is out: from the lid's opening to its closing.
+    assert dict(opened)[26] == 1 and dict(opened)[82] == 1 and dict(opened)[84] == 0

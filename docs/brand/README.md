@@ -17,7 +17,7 @@ The mark and the word MORDECAI. Use [lockup-light.svg](lockup-light.svg) on ligh
 
 ## The crawl card
 
-[crawl-card.svg](crawl-card.svg) is crawl mode, for the README. A pixel chest shakes, opens and lifts out a potion, and the card's lines arrive one by one. The potion is drawn behind the chest's front and clipped at its rim, so it only shows above the chest, and the lid turns about the body's corner so it stays joined. `tests/test_brand.py` checks that, at every keyframe, the art stays at least 8px inside the border and clear of the text. The text is the output of `mordecai identify --crawl` for a demo skill with simulated results, printed by the tool's own code when the script runs. With reduced motion, the chest is shown open with the potion out.
+[crawl-card.svg](crawl-card.svg) is crawl mode, for the README. A pixel chest shakes, opens and lifts out a potion, and the card's lines arrive one by one. The potion is drawn behind the chest's front and clipped at its rim, so it only shows above the chest, and the lid opens by swapping to a second sprite, the lid swung back over the chest's dark mouth, rather than by rotating, since rotated pixel art leaves its grid. `tests/test_brand.py` checks that, at every keyframe, the art stays at least 8px inside the border and clear of the text, every pixel stays on the art's grid, and exactly one lid shows. The text is the output of `mordecai identify --crawl` for a demo skill with simulated results, printed by the tool's own code when the script runs. With reduced motion, the chest is shown open with the potion out.
 
 ## The social preview
 

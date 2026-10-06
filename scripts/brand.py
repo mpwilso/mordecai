@@ -193,7 +193,7 @@ CARD = {
     "rose": "#FB7185",
 }
 # Pixel art, one character per pixel. O outline, W wood, G gold band, L lock, K keyhole,
-# C cork, S glass, R potion, Y ray.
+# I the lid's inside, D the open chest's dark mouth, C cork, S glass, R potion, Y ray.
 LID = (
     "..OOOOOOOOOOOO..",
     ".OWWWWWWWWWWWWO.",
@@ -201,6 +201,18 @@ LID = (
     "OGGGGGGGGGGGGGGO",
     "OWWWWWWWWWWWWWWO",
     "OGGGGGGLLGGGGGGO",
+)
+# The lid swung back, seen from the front: its inside face over the chest's open mouth. It is
+# its own sprite rather than the closed lid rotated, since rotated pixel art leaves the grid.
+OPEN_LID = (
+    "...OOOOOOOOOO...",
+    "..OGGGGGGGGGGO..",
+    "..OIIIIIIIIIIO..",
+    ".OIIIIIIIIIIIIO.",
+    ".OGGGGGGGGGGGGO.",
+    "OOOOOOOOOOOOOOOO",
+    "ODDDDDDDDDDDDDDO",
+    "ODDDDDDDDDDDDDDO",
 )
 BODY = (
     "OWWWWWWLLWWWWWWO",
@@ -234,13 +246,14 @@ PIXEL = {
     "G": "#F59E0B",
     "L": "#FDE68A",
     "K": "#1A0B07",
+    "I": "#7C2D12",
+    "D": "#2B0F07",
     "C": "#A16207",
     "S": "#FECDD3",
     "R": "#E11D48",
     "Y": "#FDE68A",
 }
-PX = 6  # screen pixels per art pixel
-LID_OPEN = -20  # degrees the lid turns to open
+PX = 6  # screen pixels per art pixel; every move is a whole number of these
 
 
 def pixels(grid, x0: int, y0: int) -> str:
@@ -297,17 +310,11 @@ def crawl_card() -> str:
     width = text_x + math.ceil(max(len(line) for line in lines) * 7.6) + 28
     chest_x, chest_y = 34, height - 34 - len(BODY) * PX
     lid_y = chest_y - len(LID) * PX
+    open_y = chest_y - len(OPEN_LID) * PX
     potion_x = chest_x + (16 - 8) // 2 * PX
-    potion_y = chest_y - len(POTION) * PX - 4
+    potion_y = chest_y - len(POTION) * PX
     # Far enough down that the whole potion is below the rim, where the clip hides it.
-    sunk = math.ceil((chest_y - potion_y) / PX) * PX
-    # The lid turns about the body's top left corner, so it stays joined to the body. The pivot
-    # is written into the transform rather than set with transform-origin, which would also
-    # move the still frame's transform.
-    open_css = (
-        f"translate({chest_x}px,{chest_y}px) rotate({LID_OPEN}deg) "
-        f"translate({-chest_x}px,{-chest_y}px)"
-    )
+    sunk = len(POTION) * PX
     style = (
         f".t{{font-family:{MONO};font-size:12.5px;fill:{CARD['text']};white-space:pre}}"
         f".d{{fill:{CARD['dim']}}}.g{{fill:{CARD['gold']};font-weight:700}}"
@@ -317,12 +324,14 @@ def crawl_card() -> str:
         "@keyframes in{from{opacity:0;transform:translateX(-6px)}to{opacity:1}}"
         # The chest loops: still, shake, open, potion up, potion bobs, close.
         ".chest{animation:shake 6s steps(1) infinite}"
-        "@keyframes shake{0%,12%{transform:none}14%{transform:translateX(-4px)}"
-        "16%{transform:translateX(4px)}18%{transform:translateX(-4px)}"
-        "20%{transform:translateX(4px)}22%,100%{transform:none}}"
+        f"@keyframes shake{{0%,12%{{transform:none}}14%{{transform:translateX(-{PX}px)}}"
+        f"16%{{transform:translateX({PX}px)}}18%{{transform:translateX(-{PX}px)}}"
+        f"20%{{transform:translateX({PX}px)}}22%,100%{{transform:none}}}}"
+        # The lid opens by swapping the closed sprite for the open one, and back.
         ".lid{animation:lid 6s steps(1) infinite}"
-        f"@keyframes lid{{0%,24%{{transform:none}}26%,82%{{transform:{open_css}}}"
-        "84%,100%{transform:none}}"
+        "@keyframes lid{0%,24%{opacity:1}26%,82%{opacity:0}84%,100%{opacity:1}}"
+        ".open{animation:open 6s steps(1) infinite}"
+        "@keyframes open{0%,24%{opacity:0}26%,82%{opacity:1}84%,100%{opacity:0}}"
         # The potion rises out of the chest a pixel row at a time, bobs, and sinks back in. It
         # sits behind the body and is clipped at the rim, so it only shows above the chest.
         ".potion{animation:rise 6s steps(1) infinite}"
@@ -358,16 +367,16 @@ def crawl_card() -> str:
             cls = "t"
         texts.append(f'<text class="{cls}" x="{text_x}" y="{y}"{delay}>{ascii_xml(line)}</text>')
     # The finished picture, for renderers without CSS animation, is the chest open with the
-    # potion out: the lid's open transform and the potion's place are in the file itself.
-    # Drawn back to front: rays, lid, potion, then the body in front of the potion.
+    # potion out: the closed lid's opacity="0" and the potion's place are in the file itself.
+    # Drawn back to front: rays, the two lids, potion, then the body in front of the potion.
     rim = (
         f'<defs><clipPath id="rim"><rect x="{chest_x + PX}" y="0" width="{14 * PX}" '
         f'height="{chest_y}"/></clipPath></defs>'
     )
     art = (
         f'<g class="rays">{pixels(RAYS, chest_x, potion_y - 5 * PX)}</g>'
-        f'<g class="chest"><g class="lid" transform="rotate({LID_OPEN} {chest_x} {chest_y})">'
-        f"{pixels(LID, chest_x, lid_y)}</g>"
+        f'<g class="chest"><g class="lid" opacity="0">{pixels(LID, chest_x, lid_y)}</g>'
+        f'<g class="open">{pixels(OPEN_LID, chest_x, open_y)}</g>'
         f'<g clip-path="url(#rim)"><g class="potion">{pixels(POTION, potion_x, potion_y)}</g></g>'
         f"{pixels(BODY, chest_x, chest_y)}</g>"
     )
