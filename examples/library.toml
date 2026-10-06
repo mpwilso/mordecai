@@ -1,0 +1,41 @@
+# Three sources, listed broad to narrow: the organization, a team, and one person.
+#
+# For each copy of a skill (its base, or one named variant), the source listed last wins.
+# Here the org provides every base and most variants, the team adds a payments variant of
+# pr-description, and the personal library replaces the org's mobile variant with its own copy.
+# A shadowed copy is never installed; `mordecai library list` and `status` show it.
+#
+# All three point at this repository so the demo runs offline. In real use each would be its
+# own repository, for example:
+#
+#   [[source]]
+#   name = "org"
+#   github = "your-org/skills"
+#   ref = "main"
+
+[[source]]
+name = "org"
+path = ".."
+
+[[source]]
+name = "team"
+path = ".."
+library = "examples/team/library"
+
+[[source]]
+name = "personal"
+path = ".."
+library = "examples/personal/library"
+
+# The variant install picks when --variant isn't given.
+[variants]
+pr-description = "payments"
+ferry-workflow = "qrx"
+
+# Verdicts and evidence states install refuses. These are the defaults.
+[policy]
+refuse = ["hurts", "invalid", "broken"]
+
+# Where the MCP server may install.
+[install]
+targets = ["agents", "claude"]

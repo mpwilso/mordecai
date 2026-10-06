@@ -1,0 +1,16 @@
+{
+  "strictKnownMarketplaces": [
+    { "source": "github", "repo": "example-org/skills-marketplace" }
+  ],
+  "extraKnownMarketplaces": {
+    "example-org-skills": {
+      "source": { "source": "github", "repo": "example-org/skills-marketplace" },
+      "autoUpdate": true
+    }
+  },
+  "enabledPlugins": {
+    "pr-description@example-org-skills": true,
+    "ferry-workflow@example-org-skills": true,
+    "branch-naming@example-org-skills": true
+  }
+}
