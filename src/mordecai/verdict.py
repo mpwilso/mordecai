@@ -169,7 +169,7 @@ def case_warnings(
     return warnings
 
 
-def _warnings(suite: Suite, effect: list[Case], skill_names: list[str], rules: Rules):
+def _warnings(suite: Suite, effect: list[Case], skill_names: list[str]) -> list[str]:
     warnings = []
     model = suite.model or ""
     if not model.startswith("claude-"):
@@ -219,7 +219,7 @@ def read(
         cost_without=_mean(r.cost_usd for r in without_runs),
         turns_with=_mean(r.turns for r in with_runs),
         turns_without=_mean(r.turns for r in without_runs),
-        warnings=tuple(_warnings(suite, effect, skill_names or [], rules)),
+        warnings=tuple(_warnings(suite, effect, skill_names or [])),
     )
 
     def verdict(name, reason, iv=None):

@@ -1,5 +1,9 @@
 """mordecai identify: read an eval result and print the card.
 mordecai check: say whether a card still matches the skill and cases it was measured on.
+mordecai lint: run the case-quality warnings on a plugin's eval cases before an eval.
+
+Exit codes: 0 for a clean result, 1 for what the command checks for (a --fail-on verdict, a
+stale card, lint warnings), and 2 for input Mordecai can't read or won't use.
 """
 
 import argparse
