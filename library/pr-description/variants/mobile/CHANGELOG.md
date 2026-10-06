@@ -4,6 +4,12 @@
 
 Based on base 1.0.0.
 
+## 1.0.1 - 2026-10-06
+
+Based on base 1.0.0.
+
+- Screenshots cover any change to what a user sees, not only whole screens.
+
 ## 1.0.0 - 2026-10-06
 
 Based on base 1.0.0.
