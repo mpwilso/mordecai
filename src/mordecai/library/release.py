@@ -25,6 +25,7 @@ class Released:
     tag: str
     commit: str
     version: str
+    note: str | None = None
 
 
 def _repo_and_library(library_dir: Path) -> tuple[Path, str]:
@@ -95,11 +96,21 @@ def release(
         raise LibraryError(f"the tag {tag} already exists")
     lineage = None
     base_log = None
+    unchecked = None
     if variant is not None:
-        base_log = read_changelog(repo, Copy(skill, None, copy_path(library, skill, None)))
         lineage = parse_version(based_on) if based_on else log.based_on
-        if lineage is None or base_log.release(lineage) is None:
-            raise LibraryError(f"base {skill} has no release {lineage}; pass --based-on")
+        base = Copy(skill, None, copy_path(library, skill, None))
+        if (repo / base.path).is_dir():
+            base_log = read_changelog(repo, base)
+            if lineage is None or base_log.release(lineage) is None:
+                raise LibraryError(f"base {skill} has no release {lineage}; pass --based-on")
+        elif lineage is None:
+            raise LibraryError(f"{copy.id} doesn't say what base it is based on; pass --based-on")
+        else:
+            unchecked = (
+                f"This library has no base for {skill}, so base {lineage} wasn't checked; "
+                "the source that provides the base must have released it."
+            )
     date = (today or datetime.date.today()).isoformat()
     new_log = cl.cut_release(log, version, date, lineage, notes or [])
     log_path = repo / copy.path / "CHANGELOG.md"
@@ -132,7 +143,7 @@ def release(
     gitio.git(repo, *args, "--", copy.path)
     commit = gitio.resolve(repo, "HEAD")
     gitio.git(repo, "tag", "-a", tag, "-m", f"{copy.id} {version}\n\n{body}", commit)
-    return Released(tag, commit, str(version))
+    return Released(tag, commit, str(version), unchecked)
 
 
 def fork(library_dir: Path, skill: str, variant: str) -> Path:

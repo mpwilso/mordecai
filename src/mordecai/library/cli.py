@@ -263,6 +263,8 @@ def cmd_release(args, out) -> int:
         args.library, args.skill, args.variant, args.bump, args.based_on, args.note, args.message
     )
     _p(out, f"Released {r.tag} at {r.commit[:12]}. The tag is local; nothing was pushed.")
+    if r.note:
+        _p(out, f"warning: {r.note}")
     return 0
 
 

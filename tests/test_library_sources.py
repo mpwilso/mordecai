@@ -319,3 +319,18 @@ def test_two_libraries_in_one_repository_keep_their_own_tags(gitenv, monkeypatch
         assert "Personal formal." in (picked.folder / "SKILL.md").read_text()
     code, text = run(["library", "validate", "--library", "personal"], repo, monkeypatch)
     assert code == 0 and "no base in this library" in text
+
+
+def test_a_variant_only_library_can_release_with_an_unchecked_lineage(gitenv):
+    repo = init(gitenv / "team")
+    write_copy(repo, "greeting", "payments", based_on="2.0.0")
+    commit(repo)
+    r = release(repo / "library", "greeting", "payments", "major")
+    assert r.tag == "skill/greeting.payments@1.0.0"
+    assert "wasn't checked" in r.note
+    write_copy(repo, "other", "x", based_on=None, notes=("- x",))
+    log = repo / "library/other/variants/x/CHANGELOG.md"
+    log.write_text("# Changelog\n\n## Unreleased\n\n- x\n")
+    commit(repo)
+    with pytest.raises(LibraryError):
+        release(repo / "library", "other", "x", "major")
