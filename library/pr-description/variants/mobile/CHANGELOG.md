@@ -4,6 +4,12 @@
 
 Based on base 1.0.0.
 
+## 1.1.0 - 2026-10-06
+
+Based on base 1.0.0.
+
+- Testing also names the devices or simulators used.
+
 ## 1.0.1 - 2026-10-06
 
 Based on base 1.0.0.
