@@ -20,7 +20,7 @@ from mordecai.library import LibraryError, gitio
 from mordecai.library import changelog as cl
 from mordecai.library.evidence import DEFAULT_REFUSE, STATES, Evidence, assess, cases_dir
 from mordecai.library.store import Copy, read_changelog, scan
-from mordecai.library.versions import Version, check_name, parse_tag, tag_name
+from mordecai.library.versions import TAG_PREFIX, Version, check_name, parse_tag, tag_name
 from mordecai.provenance import within
 from mordecai.verdict import VERDICTS
 
@@ -193,6 +193,7 @@ class Snapshot:
         self.prefix = ""
         self._done: set[str] = set()
         self._versions: dict[str, Path] = {}
+        self._releases: dict[str, list[Release]] = {}
         if spec.github:
             self.repo, self.sha = gitio.fetch_github(spec.github, spec.ref)
         else:
@@ -246,7 +247,15 @@ class Snapshot:
         return out
 
     def releases(self, copy: Copy) -> list[Release]:
-        return self.tags.get(f"skill/{copy.id}", [])
+        """The copy's release tags, newest first. A tag counts only if its commit has this copy's
+        changelog, since two libraries in one repository share one set of tags."""
+        if copy.id not in self._releases:
+            self._releases[copy.id] = [
+                r
+                for r in self.tags.get(f"{TAG_PREFIX}{copy.id}", [])
+                if gitio.has_path(self.repo, r.commit, f"{copy.path}/CHANGELOG.md")
+            ]
+        return self._releases[copy.id]
 
     def at(self, commit: str, copy: Copy) -> Path:
         """A root holding copy.path as it is in commit."""

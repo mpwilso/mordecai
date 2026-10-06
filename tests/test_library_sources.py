@@ -152,7 +152,6 @@ def test_later_sources_win_per_copy_and_shadowed_copies_are_reported(gitenv, mon
         assert lib.get("greeting", "team-only").source.spec.name == "team"
         found = catalog.status(lib)
         assert any(f["kind"] == "shadowed" and f["copy"] == "greeting.formal" for f in found)
-        assert any(f["kind"] == "layout" and "team" in f["message"] for f in found)
         with pytest.raises(LibraryError, match="has no variant 'nope'"):
             lib.get("greeting", "nope")
         with pytest.raises(LibraryError, match="no source has"):
@@ -293,3 +292,30 @@ def test_history_lists_releases_notes_and_lineage(gitenv, monkeypatch):
     assert d["versions"][0]["notes"] == ["- Warmer."]
     code, text = run(["library", "history", "greeting", "--variant", "formal"], repo, monkeypatch)
     assert "based on base 1.0.0" in text
+
+
+def test_two_libraries_in_one_repository_keep_their_own_tags(gitenv, monkeypatch):
+    repo = greeting_library(gitenv / "lib")
+    write_copy(
+        repo, "greeting", "formal", body="Personal formal.", based_on="1.1.0", library="personal"
+    )
+    commit(repo, "a personal copy with the same name")
+    cfg = parse_config(
+        {
+            "source": [
+                {"name": "org", "path": str(repo)},
+                {"name": "me", "path": str(repo), "library": "personal"},
+            ]
+        },
+        None,
+        gitenv,
+    )
+    with Library(cfg) as lib:
+        mine = lib.get("greeting", "formal")
+        assert mine.source.spec.name == "me" and mine.shadowed == ["org"]
+        assert mine.source.releases(mine.copy) == []  # the org's formal tag isn't its own
+        picked = lib.pick(mine)
+        assert picked.tag is None
+        assert "Personal formal." in (picked.folder / "SKILL.md").read_text()
+    code, text = run(["library", "validate", "--library", "personal"], repo, monkeypatch)
+    assert code == 0 and "no base in this library" in text

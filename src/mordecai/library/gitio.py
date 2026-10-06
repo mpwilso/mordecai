@@ -133,6 +133,16 @@ def library_tags(repo: Path, within: str | None = None) -> list[Tag]:
     return tags
 
 
+def has_path(repo: Path, commit: str, path: str) -> bool:
+    done = subprocess.run(
+        ["git", *SAFE, "-C", str(repo), "cat-file", "-e", f"{commit}:{path}"],
+        capture_output=True,
+        env=_env(False),
+        check=False,
+    )
+    return done.returncode == 0
+
+
 @dataclass(frozen=True)
 class Entry:
     mode: str

@@ -147,6 +147,11 @@ def cmd_validate(args, out) -> int:
         if c.variant is None:
             base = check_copy(root, c)
             logs[c.skill] = base.log
+    for skill in sorted({c.skill for c in copies if c.variant} - set(logs)):
+        warnings.append(
+            f"{skill}: no base in this library, so its variants' lineage is checked "
+            "only against the base another source provides"
+        )
     for c in copies:
         checked = check_copy(root, c, logs.get(c.skill) if c.variant else None)
         errors += [f"{c.id}: {e}" for e in checked.all_errors]

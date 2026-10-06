@@ -55,7 +55,8 @@ def _dirs(path: Path) -> list[str]:
 
 
 def scan(root: Path, library: str = "library") -> tuple[list[Copy], list[str]]:
-    """Every copy under root/library, and the problems with the layout itself."""
+    """Every copy under root/library, and the problems with the layout itself. A skill may have
+    variants and no base here: a team library can hold variants of an org's skill."""
     lib = root / library
     problems: list[str] = []
     copies: list[Copy] = []
@@ -69,8 +70,6 @@ def scan(root: Path, library: str = "library") -> tuple[list[Copy], list[str]]:
         found = set(_dirs(lib / skill))
         if "base" in found:
             copies.append(Copy(skill, None, copy_path(library, skill, None)))
-        else:
-            problems.append(f"{where}: has no base/ folder")
         for variant in _dirs(lib / skill / "variants"):
             if not valid_name(variant) or variant in RESERVED_VARIANTS:
                 problems.append(f"{where}/variants: {variant!r} isn't a valid variant name")
