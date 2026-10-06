@@ -9,12 +9,14 @@ There is no task-list tool in this session, so the steps are tracked here instea
 | Step | State |
 |---|---|
 | 0. Research: docs/research.md | done |
-| 1. Design: docs/library-design.md, committed before library code | in progress |
-| 2. Library commands | not started |
-| 3. MCP server | not started |
+| 1. Design: docs/library-design.md, committed before library code | done (5093d21) |
+| 2. Library commands | done (8a982fb): 258 tests with the extra |
+| 3. MCP server | in progress |
 | 4. Seed library and demo | not started |
 | 5. README and release prep, fresh-clone check | not started |
 
 ## Notes
 
 - 2026-10-06: started. Four research agents (spec and Claude Code docs, client tools, npx skills and APM, skill MCP servers and the author's public repos) read public pages only.
+- Step 2: commands work end to end on a scratch library. The hook in this environment allows one git write per shell command, so commits and tags are run one at a time.
+- CI now checks out the full history (`fetch-depth: 0`) so tests/test_docs_commits.py can run; it skips on a shallow clone.

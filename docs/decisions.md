@@ -71,3 +71,17 @@ Reversible decisions made during the library build, each with the options consid
 - **Options:** create variant folders by hand.
 - **Why:** the brief requires each variant to record the base version it came from. A command gets that right every time; by hand it's easy to fork from an unreleased working copy.
 - **Reverse:** remove the subcommand; `validate` still checks hand-made variants.
+
+## D11. The MCP server can't override the install policy
+
+- **Decision:** `install_skill` has no `allow` argument. Installing a refused version takes `mordecai library install --allow` at the command line.
+- **Options:** expose `allow` like the command line does.
+- **Why:** a model calling the tool could pass `allow` itself, and the user would see only a request to install. An override should be something a person types.
+- **Reverse:** add an `allow: list[str]` argument to `install_skill` and pass it to `plan()`.
+
+## D12. Replacing an installed copy over MCP takes two calls
+
+- **Decision:** when `install_skill` would replace an installed copy (an update, or another variant), it writes nothing and returns the diff with `needsConfirmation`. The client calls again with `confirm_replace: true`.
+- **Options:** a separate `update_skill` tool; replace without asking.
+- **Why:** the brief asks for the diff before an update replaces an installed skill. Two calls put the diff in front of the client before anything changes, and keep the tool list to the seven the brief names.
+- **Reverse:** drop the `needsConfirmation` branch in `server.py`.
