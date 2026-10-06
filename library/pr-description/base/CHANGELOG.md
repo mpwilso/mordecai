@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.2.0 - 2026-10-06
+
+- Title rules: imperative mood, under 72 characters, no ticket number.
+
 ## 1.1.0 - 2026-10-06
 
 - A Risk section: what could break, and how to roll it back.
