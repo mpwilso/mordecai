@@ -4,7 +4,7 @@ Every SVG here is drawn by `scripts/brand.py`. To change one, edit the script an
 
 ## The mark
 
-A potion flask on a round badge, in the family's shape: a face, a rim, and one idea inside. The dashed line across the bulb is how the model scores without the skill. The potion is how it scores with it. It fills above the line once when the image loads. Viewers who ask for reduced motion, and renderers without CSS animation, see the full flask.
+A potion flask on a round badge, in the family's shape: a face, a rim, and one idea inside. The dashed line across the bulb is how the model scores without the skill. The potion is how it scores with it. On a 7-second loop it starts below the line, fills above it, holds for about four seconds, and drains again. Viewers who ask for reduced motion, and renderers without CSS animation, see the full flask.
 
 ## The lockup
 

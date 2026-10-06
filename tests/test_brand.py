@@ -28,7 +28,12 @@ def test_the_still_frame_is_the_finished_picture():
     """Without animation the flask is full and the chest is open, because those states are in
     the file itself rather than only in the animation."""
     for theme in ("light", "dark"):
-        assert f'y="{brand.LEVEL_Y}"' in brand.lockup(theme)
+        svg = brand.lockup(theme)
+        assert f'<rect class="fill" x="28" y="{brand.LEVEL_Y}"' in svg
+        # The loop starts below the dashed line and fills above it.
+        assert f"0%,94%,100%{{transform:translateY({brand.DRAINED}px)}}" in svg
+        assert brand.LEVEL_Y + brand.DRAINED > brand.BASELINE_Y > brand.LEVEL_Y
+        assert "infinite" in svg
     assert '<g class="lid" transform="translate(-8 -16) rotate(-10' in brand.crawl_card()
 
 

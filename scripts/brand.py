@@ -52,6 +52,8 @@ SANS = 'ui-sans-serif,system-ui,"Segoe UI",Helvetica,Arial,sans-serif'
 MONO = "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace"
 BASELINE_Y = 60  # the dashed line, through the bulb's middle
 LEVEL_Y = 46  # the potion's surface, above the line
+DRAINED = 24  # how far the loop drains it: to y=70, below the line
+FILL_S = 7  # the loop's length in seconds
 LOCKUP_ALT = "Mordecai: a potion flask on a round badge, filled above a dashed line across the bulb"
 
 
@@ -60,16 +62,19 @@ def ascii_xml(text: str) -> str:
     return "".join(c if ord(c) < 128 else f"&#{ord(c)};" for c in escape(text, quote=True))
 
 
-def lockup(theme: str) -> str:
+def lockup(theme: str, motion: bool = True) -> str:
     c = PALETTE[theme]
     style = (
-        # The rect's place in the file is the finished mark, for renderers without CSS
-        # animation. The animation starts it low and fills the flask once.
-        ".fill{animation:fill 1.8s cubic-bezier(.2,.7,.3,1)}"
-        "@keyframes fill{from{transform:translateY(34px)}to{transform:translateY(0)}}"
+        # The rect's place in the file is the full flask, for renderers without CSS animation.
+        # The loop starts it below the dashed line, fills it above, holds, and drains again:
+        # the score without the skill, then with it.
+        f".fill{{animation:fill {FILL_S}s cubic-bezier(.45,0,.55,1) infinite}}"
+        f"@keyframes fill{{0%,94%,100%{{transform:translateY({DRAINED}px)}}"
+        "20%,78%{transform:translateY(0)}}"
         "@media (prefers-reduced-motion: reduce){*{animation:none!important}}"
-        f".word{{font-family:{SANS};font-weight:800;letter-spacing:3px}}"
-    )
+        if motion
+        else ""
+    ) + f".word{{font-family:{SANS};font-weight:800;letter-spacing:3px}}"
     flask = "M44 25 V39.88 A21 21 0 1 0 56 39.88 V25"
     return (
         '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 410 100" width="410" height="100" '
