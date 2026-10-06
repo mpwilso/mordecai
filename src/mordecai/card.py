@@ -150,10 +150,12 @@ def check(
     card_dir: Path = Path("."),
     skill_dir: Path | None = None,
     cases_root: Path | None = None,
+    model: str | None = None,
 ) -> list[str]:
     """What has changed since the card was written. An empty list means it's current.
     card_dir is the directory the card file is in; the card's paths are relative to it.
-    Older cards with absolute paths still check, since joining an absolute path keeps it."""
+    Older cards with absolute paths still check, since joining an absolute path keeps it.
+    With model, a card measured on a different model is stale too."""
     if not isinstance(doc, dict) or doc.get("card") != CARD_VERSION:
         raise CardError(f"not a Mordecai card, version {CARD_VERSION}")
     hashes, paths = doc.get("hashes") or {}, doc.get("paths") or {}
@@ -173,4 +175,7 @@ def check(
         changes.append("The card has no cases hash, so it can't be checked.")
     elif hash_cases(root, case_dirs) != hashes["cases"]:
         changes.append("The eval cases changed since the card was written.")
+    tested = (doc.get("tested") or {}).get("model")
+    if model and tested != model:
+        changes.append(f"The card was measured on {tested or 'an unrecorded model'}, not {model}.")
     return changes

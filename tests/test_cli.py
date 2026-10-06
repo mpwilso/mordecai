@@ -74,3 +74,17 @@ def test_check(tmp_path):
     assert code == 1
     assert "The skill's files changed" in text
     assert run(["check", str(tmp_path / "missing.json")])[0] == 2
+
+
+def test_check_model_on_the_suite_2_pair():
+    """The worked example: suite 2's skill measured on Haiku 4.5 and on Sonnet 5.5. Both cards
+    match the files, so only --model can tell them apart."""
+    cards = ROOT / "docs" / "planted-results"
+    haiku, sonnet = cards / "2-commits.card.json", cards / "2-commits-sonnet.card.json"
+    assert run(["check", str(haiku)])[0] == 0
+    assert run(["check", str(sonnet)])[0] == 0
+    code, text = run(["check", str(haiku), "--model", "claude-sonnet-5-5"])
+    assert code == 1
+    assert "The card was measured on claude-haiku-4-5-20251001, not claude-sonnet-5-5." in text
+    assert run(["check", str(sonnet), "--model", "claude-sonnet-5-5"])[0] == 0
+    assert run(["check", str(haiku), "--model", "claude-haiku-4-5-20251001"])[0] == 0

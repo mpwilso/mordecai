@@ -49,6 +49,9 @@ def _parser() -> argparse.ArgumentParser:
     c.add_argument("card", type=Path)
     c.add_argument("--skill", type=Path, help="the plugin directory, if it has moved")
     c.add_argument("--cases-root", type=Path, help="the directory holding the cases, if moved")
+    c.add_argument(
+        "--model", help="the model you use now; a card measured on another model is stale"
+    )
     lt = sub.add_parser("lint", help="run the case-quality warnings on a plugin's eval cases")
     lt.add_argument("plugin", type=Path, nargs="+", help="plugin directories")
     return p
@@ -98,7 +101,7 @@ def identify(args, out) -> int:
 def check_card(args, out) -> int:
     try:
         doc = json.loads(args.card.read_text(encoding="utf-8"))
-        changes = check(doc, args.card.parent, args.skill, args.cases_root)
+        changes = check(doc, args.card.parent, args.skill, args.cases_root, args.model)
     except (OSError, json.JSONDecodeError, CardError) as e:
         print(f"mordecai: can't read {args.card}: {e}", file=sys.stderr)
         return 2
