@@ -13,9 +13,9 @@ pytest.importorskip("strictyaml")
 from mordecai.card import check  # noqa: E402
 from mordecai.cli import main  # noqa: E402
 from mordecai.library import install as inst  # noqa: E402
-from mordecai.library.export import EXPORT_NAME, export_skills  # noqa: E402
+from mordecai.library.export import EXPORT_NAME, export_marketplace, export_skills  # noqa: E402
 from mordecai.library.lock import Lock  # noqa: E402
-from mordecai.library.sources import Library, load_config  # noqa: E402
+from mordecai.library.sources import Library, load_config, parse_config  # noqa: E402
 from mordecai.provenance import hash_dir  # noqa: E402
 from mordecai.result import read_json  # noqa: E402
 
@@ -49,13 +49,13 @@ def test_every_library_validates(monkeypatch):
         out = io.StringIO()
         assert main(["library", "validate", "--library", lib], out=out) == 0, out.getvalue()
         assert " 0 error(s)" in out.getvalue()
-    assert len(stored_copies()) == 9
+    assert len(stored_copies()) == 10
 
 
 def test_the_reference_validator_accepts_every_stored_and_published_copy():
     validator = pytest.importorskip("skills_ref.validator")
     folders = stored_copies() + sorted(p for p in (ROOT / "skills").iterdir() if p.is_dir())
-    assert len(folders) == 12
+    assert len(folders) == 11
     for folder in folders:
         assert validator.validate(folder) == [], folder
 
@@ -121,15 +121,17 @@ def test_every_seeded_copy_installs_byte_for_byte(tmp_path, monkeypatch):
 
 
 def test_skills_folder_is_what_export_writes(tmp_path, monkeypatch):
-    """skills/ is the published view for npx skills and APM: one copy per name."""
+    """skills/ is the published view for npx skills and APM: only the skills the root config's
+    [export] lists."""
     monkeypatch.chdir(ROOT)
     out = tmp_path / "skills"
-    with Library(load_config(ROOT / "mordecai-library.toml")) as lib:
+    config = load_config(ROOT / "mordecai-library.toml")
+    with Library(config) as lib:
         export_skills(lib, out)
         tagged = bool(lib.snapshots[0].tags)
-        names = set(lib.skills())
     published = ROOT / "skills"
-    assert {p.name for p in published.iterdir() if p.is_dir()} == names
+    names = {p.name for p in published.iterdir() if p.is_dir()}
+    assert names == set(config.export) == {"mordecai"}
     for name in names:
         assert hash_dir(published / name) == hash_dir(out / name), name
     manifest = json.loads((published / EXPORT_NAME).read_text())
@@ -138,8 +140,24 @@ def test_skills_folder_is_what_export_writes(tmp_path, monkeypatch):
         assert (published / EXPORT_NAME).read_text() == (out / EXPORT_NAME).read_text()
 
 
-def test_npx_skills_finds_one_copy_per_name_first():
-    """npx skills reads skills/ before anything else and keeps the first copy of each name, so
-    every library skill resolves to its published copy, never to another base or variant."""
-    for folder in stored_copies():
-        assert (ROOT / "skills" / folder.name / "SKILL.md").is_file(), folder
+def test_nothing_the_default_policy_refuses_is_ever_published(tmp_path, monkeypatch):
+    """The Hurts variant is deliberately harmful: export leaves it out even when asked for it
+    by name and the config's policy refuses nothing."""
+    monkeypatch.chdir(ROOT)
+    doc = {
+        "source": [{"name": "mordecai", "path": str(ROOT)}],
+        "variants": {"branch-naming": "camelcase"},
+        "policy": {"refuse": []},
+        "export": {"skills": ["branch-naming"]},
+    }
+    with Library(parse_config(doc, None, ROOT)) as lib:
+        r = export_skills(lib, tmp_path / "flat")
+        m = export_marketplace(lib, tmp_path / "market", "demo", "Demo")
+    assert r.written == [] == m.written
+    assert "hurts" in r.skipped[0]
+    camel = ROOT / "library/branch-naming/variants/camelcase/branch-naming"
+    for published in (ROOT / "skills").iterdir():
+        if published.is_dir():
+            assert hash_dir(published) != hash_dir(camel)
+    manifest = json.loads((ROOT / "skills" / EXPORT_NAME).read_text())
+    assert all(row["verdict"] not in ("hurts", "invalid", "broken") for row in manifest["skills"])

@@ -88,7 +88,9 @@ uv run mordecai library export --marketplace <dir> --name <marketplace> --owner 
 
 This writes the resolved library as a Claude Code plugin marketplace: one plugin per skill, holding the copy install would pick, byte for byte, with its verdict in the description. Refused copies are left out. An organization commits the folder to a repository, and its managed settings restrict users to that marketplace (`strictKnownMarketplaces`), register it (`extraKnownMarketplaces`) and install each plugin for everyone (`enabledPlugins`). [examples/managed-settings.json](examples/managed-settings.json) is an example, explained in [examples/README.md](examples/README.md).
 
-`export --skills <dir>` writes the same copies as plain `<skill>/` folders. This repository keeps that output in [skills/](skills/), so `npx skills add mpwilso/mordecai` and APM find one copy of each skill there, instead of searching the repository and picking an arbitrary one of its several same-named copies.
+`export --skills <dir>` writes the same copies as plain `<skill>/` folders, the layout npx skills and APM read. An export goes to tools that don't run Mordecai's gate, so it always leaves out Hurts, Invalid and broken copies, whatever the config's policy says. To publish your own library, run `uv run mordecai library export --skills skills` in it, with `[export] skills` in its `mordecai-library.toml` listing what to publish.
+
+This repository publishes only one skill at its root, in [skills/](skills/): `mordecai`, which tells an agent how to run Mordecai. The seeded library is demo content (made-up conventions, and one deliberately harmful variant), so none of it is published. Something has to be in `skills/`, though: with nothing there, `npx skills add mpwilso/mordecai` would search the whole repository and could install any of its same-named copies.
 
 ### Library setup
 
@@ -189,6 +191,8 @@ Mordecai has no dependency on any of them.
 - **Version stamps in frontmatter are optional.** The changelog is the record of versions and lineage. A skill measured before it joined the library, like the planted suites, can't carry stamps without changing the bytes its card measured. [docs/decisions.md](docs/decisions.md) has the reasoning.
 - **Mordecai isn't a general package manager.** It installs only skills, only from Mordecai library layouts, and keeps its own lockfile. It never reads or writes npx skills' or APM's lockfiles or folders, and coexists with both. If npx skills replaces a folder Mordecai installed, Mordecai reports it rather than acting on it.
 - **The release tags in this repository are local** until they're pushed. A clone without them reads every copy as untagged.
+- **The Hurts example is deliberately harmful.** `branch-naming`'s `camelcase` variant is planted suite H1, built so the repository's own checks fail; it is never published, and every export refuses it.
+- **`npx skills add --full-depth` searches the whole repository,** including the planted suites, several of which are deliberately harmful skills. Don't use it on this repository; `skills/` is the only part meant to be installed that way.
 - **Tested offline only.** Fetching from GitHub was tested against a local Git repository standing in for github.com, never against github.com itself, and the exported marketplace hasn't been tried in a managed Claude Code install.
 
 ## Why it exists

@@ -51,7 +51,7 @@ Reversible decisions made during the library build, each with the options consid
 - **Why:** a card whose result is missing, has another hash, or gives another verdict when the engine reruns it is evidence that someone edited the card. Treating it as unmeasured would let an edited Hurts card through with only a warning.
 - **Reverse:** remove `broken` from `DEFAULT_REFUSE` in `src/mordecai/library/evidence.py`, or from `[policy] refuse` in a config.
 
-## D8. A root `skills/` folder publishes one resolved copy per name
+## D8. A root `skills/` folder publishes one resolved copy per name (replaced by D15)
 
 - **Decision:** `export --skills <dir>` writes the resolved copies as plain folders, and this repository keeps the output in `skills/`, checked by a test.
 - **Options:** mark library copies `metadata.internal: true`; document the problem only; tell users to use `/tree/<ref>/<path>` URLs.
@@ -99,3 +99,10 @@ Reversible decisions made during the library build, each with the options consid
 - **Options:** the resolved absolute path.
 - **Why:** lockfiles are committed with projects, and an absolute path names one machine's folders. The commit SHA already pins what was installed.
 - **Reverse:** `SourceSpec.describe()` in `sources.py`.
+
+## D15. The root publishes only the mordecai skill, and exports always refuse the defaults
+
+- **Decision:** `skills/` holds only `mordecai`, a short skill on running Mordecai, chosen by `[export] skills` in `mordecai-library.toml`. Every export, `--skills` or `--marketplace`, refuses Hurts, Invalid and broken copies whatever the config's policy says. This replaces D8's "one resolved copy per name".
+- **Options:** keep publishing the seeded skills (D8); publish nothing at the root.
+- **Why:** the seeded skills are demo content, made-up conventions that would do harm in a real project, and one is deliberately harmful. Publishing nothing makes npx skills search the whole repository, which reaches the planted suites' deliberately harmful skills. One harmless real skill stops that search. Exports reach tools that don't run the gate, so their refusals can't be loosened.
+- **Reverse:** remove `[export]` from `mordecai-library.toml` and rerun the export; the default refusals are `DEFAULT_REFUSE` in `export.py`.

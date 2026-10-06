@@ -8,3 +8,10 @@ path = "."
 # ferry-workflow's qrx variant is the one measured Helps (planted suite 1).
 [variants]
 ferry-workflow = "qrx"
+
+# What skills/ publishes, for npx skills and APM. Only the mordecai skill: the other skills here
+# are demo content (made-up conventions, and one deliberately harmful variant), and installing
+# them into a real project would do harm. A skill must still be here, so that npx skills reads
+# skills/ and doesn't search the rest of the repository.
+[export]
+skills = ["mordecai"]

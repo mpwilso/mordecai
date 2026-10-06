@@ -3,40 +3,16 @@
   "mordecaiExport": 1,
   "skills": [
     {
-      "commit": "e477a3ec7b5d2197b37e49514c54e68b12276206",
+      "commit": "a886c5878a5a251bfab00e1847f9d7608376c9ba",
       "evidence": "unmeasured",
-      "hash": "sha256:72d864a31086cce3e00a26db915aa5bc89a1614602c1eab7b661d6edbe8482d4",
-      "path": "branch-naming",
-      "skill": "branch-naming",
+      "hash": "sha256:0abc0f9bb7f4e5c364493396398b303116fde19138537bafd6d72e4f361112eb",
+      "path": "mordecai",
+      "skill": "mordecai",
       "source": "mordecai",
-      "tag": "skill/branch-naming@1.0.0",
+      "tag": "skill/mordecai@1.0.0",
       "variant": null,
       "verdict": "unmeasured",
       "version": "1.0.0"
-    },
-    {
-      "commit": "9fa950b9a9b08fd20077f62f63dae30154f5c97e",
-      "evidence": "current",
-      "hash": "sha256:6f05f0dadc4921f984f206d238ba8edfb6bea341a3253f5abb2e24f04e4ab64b",
-      "path": "ferry-workflow",
-      "skill": "ferry-workflow",
-      "source": "mordecai",
-      "tag": "skill/ferry-workflow.qrx@1.0.0",
-      "variant": "qrx",
-      "verdict": "helps",
-      "version": "1.0.0"
-    },
-    {
-      "commit": "c52b58a6952607a819f111b422793870672af31c",
-      "evidence": "unmeasured",
-      "hash": "sha256:fa67ea48b6b9c76864e6f7c896d5b80f7bb85d693f744da92273eb90c08345f4",
-      "path": "pr-description",
-      "skill": "pr-description",
-      "source": "mordecai",
-      "tag": "skill/pr-description@2.0.0",
-      "variant": null,
-      "verdict": "unmeasured",
-      "version": "2.0.0"
     }
   ],
   "skipped": []

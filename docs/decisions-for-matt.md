@@ -31,11 +31,12 @@ Questions from the library build that need the author's judgment. Each has a rec
 - **Why:** without it, a skill whose name starts with `v` would match `v*` release triggers.
 - **Cost of dropping it:** rename the 15 tags, change one constant.
 
-## 6. This repository now publishes skills at its root
+## 6. What this repository publishes at its root
 
-- **Recommendation:** keep `skills/` and `mordecai-library.toml` (decision D8).
-- **Why:** `npx skills add mpwilso/mordecai` used to fall back to a recursive search and find the planted suites. With the library, it would find several same-named copies and pick one arbitrarily. `skills/` gives it one copy per name: the org bases, and `ferry-workflow`'s measured Helps variant.
-- **Cost:** someone who runs `npx skills add mpwilso/mordecai` now gets three made-up example skills. If you'd rather it found nothing, the alternative is an empty-looking repository for npx skills, which isn't possible without moving the library and the planted suites out of its reach.
+- **Done; reverse it if you disagree.** `skills/` now holds only one skill, `mordecai`, which tells an agent how to run Mordecai's commands. The seeded library's skills are demo content and are no longer published (decision D15).
+- **Why not publish nothing:** with no skill in a standard folder, `npx skills add mpwilso/mordecai` searches the whole repository. That reaches the planted suites, including deliberately harmful ones (H1, V2, the outdated-rule suites), and the library's refused variant, and with several copies of a name it installs whichever it lists first. One harmless published skill stops that search.
+- **What's left:** `npx skills add --full-depth` still searches everything; the README says not to use it here. Closing that fully would mean marking the planted skills `metadata.internal`, which changes the bytes their cards measured, or moving the suites, which changes paths the docs cite.
+- **Cost of publishing nothing instead:** the risk above. Cost of the current choice: one more skill to keep accurate, unmeasured.
 
 ## 7. `release` commits in the library's repository
 
