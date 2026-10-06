@@ -27,9 +27,29 @@ Many skills don't measurably help, and the usual tools don't flag it:
 
 ## What a card looks like
 
-This is the card for a real result: a one-case eval of a tiny skill, run once while building Mordecai to capture the result format. Its result is [tests/fixtures/probe-result.json](tests/fixtures/probe-result.json), and the skill and case are in [tests/fixtures/probe/](tests/fixtures/probe/).
+This is suite 1 from the planted check, a made-up branch and pull request convention that Claude Haiku 4.5 can't know without the skill, printed by `mordecai identify` from its real eval result ([recorded card](docs/planted-results/1-convention.card.json)).
 
 ```
+$ uv run mordecai identify tests/fixtures/suite1-result.json --skill evals/planted/1-convention
+planted-convention 1.0.0: Helps
+The skill raised the score: 90% interval +100 to +100 points.
+
+  With 100% · Without 0% · Change +100 pts (90% interval +100 to +100)
+  Cases 9: 9 better, 0 same, 0 worse
+  Fired in 27 of 27 runs that needed it, fired in 0 of 9 runs that didn't
+  Cost per run $0.019 with, $0.025 without (-23%) · Turns 3.0 with, 2.0 without
+  Tested on claude-haiku-4-5-20251001 · judge claude-haiku-4-5-20251001 · Claude Code 2.1.289 · 2026-10-05
+  Skill sha256:f35f631cd4d5 · Cases sha256:417d28c8319e · Result sha256:d704ea283576
+
+Next: Keep it.
+```
+
+The fixture is the raw result with local paths replaced, so its result hash differs from the one in the recorded card (`sha256:06cf8a473864`). The verdict, the numbers and the other two hashes are the same.
+
+The second example shows that one case is not evidence. It's a one-case eval of a tiny skill, run once while building Mordecai to capture the result format ([tests/fixtures/probe-result.json](tests/fixtures/probe-result.json), skill and case in [tests/fixtures/probe/](tests/fixtures/probe/)). The skill went from 0% to 100%, and the card still won't call it Helps. Its warnings are cut here.
+
+```
+$ uv run mordecai identify tests/fixtures/probe-result.json --skill tests/fixtures/probe
 schema-probe 0.0.1: Inconclusive
 Only 1 case(s) were compared; the rules need at least 5.
 
@@ -39,16 +59,7 @@ Only 1 case(s) were compared; the rules need at least 5.
   Cost per run $0.019 with, $0.015 without (+23%) · Turns 3.0 with, 1.0 without
   Tested on haiku · judge haiku · Claude Code 2.1.289 · 2026-10-05
   Skill sha256:c9b400d7538f · Cases sha256:a5b22319b5ee · Result sha256:997d5873c70a
-
-Warnings
-  - The model was haiku, not a pinned model ID, so a later model can change this result without anything in the card changing. Pass --model with a full ID.
-  - Some cases ran 2 time(s) per side. The interval leans on repeat runs; use at least 3.
-  - No case checks that the skill stays quiet when it isn't needed. Add one with a tool_used Skill grader, min: 0, max: 0 and arm: both.
-
-Next: Add cases or runs, then measure again.
 ```
-
-The skill went from 0% to 100%, and the card still won't call it Helps. One case is not evidence.
 
 ## The verdicts
 
@@ -134,7 +145,7 @@ Two suites were rerun on Claude Sonnet 5.5 (`claude-sonnet-5-5`). Neither verdic
 
 ### Unit tests
 
-Each verdict and warning has a test on a constructed result, along with hashing, staleness, relative card paths, `lint`, `check --model` and the command line. Others feed in hostile input: malformed results and cards, paths and links that lead outside the plugin, and names carrying terminal escapes or Markdown. One test is built from the real suite 3 result. `uv run pytest` runs 144 tests, and none call a model. CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs the tests, lint, the format check, `scripts/brand.py --check` and `scripts/planted.py --check` on Python 3.11, 3.12 and 3.13, on every push and pull request. Live eval runs are never part of CI: they call a model and cost money, and CI has no secrets. The result format comes from a real `claude plugin eval` run, not from the docs alone.
+Each verdict and warning has a test on a constructed result, along with hashing, staleness, relative card paths, `lint`, `check --model` and the command line. Others feed in hostile input: malformed results and cards, paths and links that lead outside the plugin, and names carrying terminal escapes or Markdown. One test is built from the real suite 3 result, and others check that the README's example cards are what the tool prints. `uv run pytest` runs 151 tests, and none call a model. CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs the tests, lint, the format check, `scripts/brand.py --check` and `scripts/planted.py --check` on Python 3.11, 3.12 and 3.13, on every push and pull request. Live eval runs are never part of CI: they call a model and cost money, and CI has no secrets. The result format comes from a real `claude plugin eval` run, not from the docs alone.
 
 ### What wasn't checked
 
