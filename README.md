@@ -147,7 +147,7 @@ Each verdict and warning has a test on a constructed result, along with hashing,
 ## Known limits
 
 - **Hurts needs the skill to be opened.** A harmful skill that fires rarely gets Inconclusive, or Already handled under the 0.1.0 rules, not Hurts. Check the card's "Fired in" line.
-- **A skill that rarely fires is reported as Inconclusive.** V1's skill fired in 1 of 27 runs, and its card says Inconclusive, the same word used for a wide interval. A fix is proposed in [docs/review-queue.md](docs/review-queue.md): a Rarely fired verdict under a 10% fire rate, and a warning under 50%. It isn't applied.
+- **A skill that rarely fires is reported as Inconclusive.** V1's skill fired in 1 of 27 runs, and its card says Inconclusive, the same word used for a wide interval. A fix is proposed in [docs/open-questions.md](docs/open-questions.md): a Rarely fired verdict under a 10% fire rate, and a warning under 50%. It isn't applied.
 - **The bootstrap is optimistic when runs agree.** In 8 of the 13 planted cards that have an interval, it collapsed to a single point, such as +100 to +100.
 - **Results come from one small model.** See [what wasn't checked](#what-wasnt-checked).
 - **Only one plugin per result.** Cards name the first plugin in the suite.
@@ -188,7 +188,7 @@ Stale: docs/planted-results/2-commits.card.json
 
 ## What's next
 
-1. A way to report a skill that rarely fires, distinct from Inconclusive. A proposal and its effect on every recorded card are in [docs/review-queue.md](docs/review-queue.md); it isn't applied.
+1. A way to report a skill that rarely fires, distinct from Inconclusive. A proposal and its effect on every recorded card are in [docs/open-questions.md](docs/open-questions.md); it isn't applied.
 2. A planted skill with a moderate effect, to check the simulation's +20 point finding on real runs.
 3. `mordecai measure`: run the eval with a pinned model and a cost cap, then write the card, in one step.
 4. A registry template: a Git repo that's also a Claude Code plugin marketplace, with a GitHub Action that posts each skill's card on its pull request and blocks the merge on Hurts, Invalid or a stale card.
