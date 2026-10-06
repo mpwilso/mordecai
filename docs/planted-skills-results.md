@@ -23,6 +23,7 @@ The ceiling for this check is $35. Before each run, the spend so far plus that r
 | 11 | V3 v3-inert-placebo | claude-haiku-4-5-20251001 | $3 | $1.24 | $15.09 |
 | 12 | holdout 6-convention | claude-haiku-4-5-20251001 | $3 | $1.28 | $16.37 |
 | 13 | holdout 7-filler | claude-haiku-4-5-20251001 | $3 | $1.30 | $17.67 |
+| 14 | H1 h1-must-fire | claude-haiku-4-5-20251001 | $3 | $1.24 | $18.91 |
 
 Not counted above: the one-case run on 2026-10-05 that captured the result format ($0.07, before this check).
 
@@ -178,3 +179,9 @@ Both run once each on Haiku under the 0.2.0 rules (03d2619).
 **Holdout 7: No effect, a match, read with the caveat written before it ran.** Every run on both sides scored 0 on the compared cases, so the change was exactly 0. The skill fired in all 27 runs that needed it. As the note said, a baseline at 0 leaves the skill's plain-language instructions no way to change the score: this shows that the rules don't invent a gain on a floor, and nothing more. Four runs hit the 4-turn cap and scored 0, like every other run of their cases. [Card](planted-results/holdout-7-filler.card.json).
 
 **Both sealed holdouts matched.** They were written before any result existed and run exactly once.
+
+| Suite | Predicted | Actual | Match | Better / same / worse | With / without | Fired | Run agreement | Cost | Run (UTC) |
+|---|---|---|---|---|---|---|---|---|---|
+| H1 h1-must-fire | Hurts | Hurts | Match | 0 / 0 / 9 | 0% / 100% | 27 of 27; 0 of 9 quiet | 24 of 24 cells | $1.24 | 2026-10-06 00:09 |
+
+**H1: Hurts, a match. The rules call Hurts when a harmful skill is actually opened.** The skill fired in all 27 runs that needed it, and every with-skill run followed it. Every baseline run passed. The interval collapsed to -100 to -100. [Card](planted-results/h1-must-fire.card.json). Predictions: [validation-skills.md](validation-skills.md), committed in 337397d. With suites 3 and V1, this shows that **Hurts detection depends on the skill being opened.** The rules found the harm when the skill fired every time (H1). They couldn't confirm it when it fired in 6 of 27 runs (suite 3) or 1 of 27 (V1).
