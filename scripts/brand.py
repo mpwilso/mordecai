@@ -158,6 +158,8 @@ PIXEL = {
     "Y": "#FDE68A",
 }
 PX = 6  # screen pixels per art pixel
+LID_OPEN = -20  # degrees the lid turns to open
+LID_OPEN = -20  # degrees the lid turns to open
 
 
 def pixels(grid, x0: int, y0: int) -> str:
@@ -208,8 +210,15 @@ def crawl_card() -> str:
     width = text_x + math.ceil(max(len(line) for line in lines) * 7.6) + 28
     chest_x, chest_y = 34, height - 34 - len(BODY) * PX
     lid_y = chest_y - len(LID) * PX
+    potion_x = chest_x + (16 - 8) // 2 * PX
+    potion_y = chest_y - len(POTION) * PX - 4
+    # Far enough down that the whole potion is below the rim, where the clip hides it.
+    sunk = math.ceil((chest_y - potion_y) / PX) * PX
+    # The lid turns about the body's top left corner, so it stays joined to the body. The pivot
+    # is written into the transform rather than set with transform-origin, which would also
+    # move the still frame's transform.
     open_css = (
-        f"translate(-8px,-16px) translate({chest_x}px,{chest_y}px) rotate(-10deg) "
+        f"translate({chest_x}px,{chest_y}px) rotate({LID_OPEN}deg) "
         f"translate({-chest_x}px,{-chest_y}px)"
     )
     style = (
@@ -224,20 +233,19 @@ def crawl_card() -> str:
         "@keyframes shake{0%,12%{transform:none}14%{transform:translateX(-4px)}"
         "16%{transform:translateX(4px)}18%{transform:translateX(-4px)}"
         "20%{transform:translateX(4px)}22%,100%{transform:none}}"
-        # The lid turns about its back hinge. The pivot is written into the transform rather
-        # than set with transform-origin, which would also move the still frame's transform.
         ".lid{animation:lid 6s steps(1) infinite}"
-        f"@keyframes lid{{0%,24%{{transform:none}}26%,84%{{transform:{open_css}}}"
-        "86%,100%{transform:none}}"
+        f"@keyframes lid{{0%,24%{{transform:none}}26%,82%{{transform:{open_css}}}"
+        "84%,100%{transform:none}}"
+        # The potion rises out of the chest a pixel row at a time, bobs, and sinks back in. It
+        # sits behind the body and is clipped at the rim, so it only shows above the chest.
         ".potion{animation:rise 6s steps(1) infinite}"
-        "@keyframes rise{0%,26%{opacity:0;transform:translateY(42px)}"
-        "28%{opacity:1;transform:translateY(30px)}30%{transform:translateY(18px)}"
-        "32%{transform:translateY(6px)}34%,46%,58%,70%{transform:translateY(0)}"
-        "40%,52%,64%,76%{transform:translateY(-6px)}82%{opacity:1;transform:translateY(0)}"
-        "84%,100%{opacity:0;transform:translateY(42px)}}"
+        f"@keyframes rise{{0%,26%,82%,100%{{transform:translateY({sunk}px)}}"
+        "28%,80%{transform:translateY(42px)}30%,78%{transform:translateY(24px)}"
+        "32%,76%{transform:translateY(6px)}34%,46%,58%,70%{transform:translateY(0)}"
+        "40%,52%,64%{transform:translateY(-6px)}}"
         ".rays{animation:rays 6s steps(1) infinite}"
-        "@keyframes rays{0%,26%{opacity:0}28%,36%,44%,52%,60%,68%,76%{opacity:1}"
-        "32%,40%,48%,56%,64%,72%{opacity:.35}82%,100%{opacity:0}}"
+        "@keyframes rays{0%,26%{opacity:0}28%,36%,44%,52%,60%,68%{opacity:1}"
+        "32%,40%,48%,56%,64%,72%{opacity:.35}76%,100%{opacity:0}}"
         ".loot{animation:shine 2.4s ease-in-out infinite}"
         f"@keyframes shine{{0%,100%{{fill:{CARD['gold']}}}50%{{fill:#FFF7D6}}}}"
         "@media (prefers-reduced-motion: reduce){*{animation:none!important}}"
@@ -262,23 +270,26 @@ def crawl_card() -> str:
         else:
             cls = "t"
         texts.append(f'<text class="{cls}" x="{text_x}" y="{y}"{delay}>{ascii_xml(line)}</text>')
-    potion_x = chest_x + (16 - 8) // 2 * PX
-    potion_y = chest_y - len(POTION) * PX - 4
     # The finished picture, for renderers without CSS animation, is the chest open with the
     # potion out: the lid's open transform and the potion's place are in the file itself.
+    # Drawn back to front: rays, lid, potion, then the body in front of the potion.
+    rim = (
+        f'<defs><clipPath id="rim"><rect x="{chest_x + PX}" y="0" width="{14 * PX}" '
+        f'height="{chest_y}"/></clipPath></defs>'
+    )
     art = (
-        f'<g class="rays">{pixels(RAYS, chest_x, lid_y - 3 * PX - 22)}</g>'
-        f'<g class="chest"><g class="lid" transform="translate(-8 -16) '
-        f'rotate(-10 {chest_x} {chest_y})">{pixels(LID, chest_x, lid_y)}</g>'
+        f'<g class="rays">{pixels(RAYS, chest_x, potion_y - 5 * PX)}</g>'
+        f'<g class="chest"><g class="lid" transform="rotate({LID_OPEN} {chest_x} {chest_y})">'
+        f"{pixels(LID, chest_x, lid_y)}</g>"
+        f'<g clip-path="url(#rim)"><g class="potion">{pixels(POTION, potion_x, potion_y)}</g></g>'
         f"{pixels(BODY, chest_x, chest_y)}</g>"
-        f'<g class="potion">{pixels(POTION, potion_x, potion_y)}</g>'
     )
     return (
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" '
         f'height="{height}" shape-rendering="crispEdges" role="img" aria-label="{CARD_ALT}">'
         f"<title>{CARD_ALT}</title><style>{style}</style>"
         f'<rect x="1" y="1" width="{width - 2}" height="{height - 2}" rx="10" fill="{CARD["bg"]}" '
-        f'stroke="{CARD["edge"]}" stroke-width="2"/>' + art + "".join(texts) + "</svg>\n"
+        f'stroke="{CARD["edge"]}" stroke-width="2"/>' + rim + art + "".join(texts) + "</svg>\n"
     )
 
 

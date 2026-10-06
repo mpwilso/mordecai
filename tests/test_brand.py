@@ -2,7 +2,9 @@
 ASCII and labelled for screen readers."""
 
 import importlib.util
+import math
 import re
+import xml.etree.ElementTree as ET
 
 from conftest import ROOT
 
@@ -34,7 +36,7 @@ def test_the_still_frame_is_the_finished_picture():
         assert f"0%,94%,100%{{transform:translateY({brand.DRAINED}px)}}" in svg
         assert brand.LEVEL_Y + brand.DRAINED > brand.BASELINE_Y > brand.LEVEL_Y
         assert "infinite" in svg
-    assert '<g class="lid" transform="translate(-8 -16) rotate(-10' in brand.crawl_card()
+    assert f'<g class="lid" transform="rotate({brand.LID_OPEN} ' in brand.crawl_card()
 
 
 def test_the_crawl_card_is_what_the_tool_prints():
@@ -42,3 +44,156 @@ def test_the_crawl_card_is_what_the_tool_prints():
     for line in brand.demo_text().splitlines():
         if line.strip() and not line.startswith("  release-notes"):
             assert brand.ascii_xml(line) in card, line
+
+
+# The crawl card's art, frame by frame ------------------------------------------------------
+
+SVG_NS = "{http://www.w3.org/2000/svg}"
+
+
+def _matrix(text: str):
+    """A CSS or SVG transform list as an affine matrix (a, b, c, d, e, f)."""
+    m = (1.0, 0.0, 0.0, 1.0, 0.0, 0.0)
+    for fn, args in re.findall(r"(\w+)\(([^)]*)\)", text or ""):
+        v = [float(x) for x in re.findall(r"-?[\d.]+", args)]
+        if fn == "translateX":
+            step = [(1, 0, 0, 1, v[0], 0)]
+        elif fn == "translateY":
+            step = [(1, 0, 0, 1, 0, v[0])]
+        elif fn == "translate":
+            step = [(1, 0, 0, 1, v[0], v[1] if len(v) > 1 else 0)]
+        elif fn == "rotate":
+            r = math.radians(v[0])
+            turn = (math.cos(r), math.sin(r), -math.sin(r), math.cos(r), 0, 0)
+            cx, cy = (v[1], v[2]) if len(v) == 3 else (0, 0)
+            step = [(1, 0, 0, 1, cx, cy), turn, (1, 0, 0, 1, -cx, -cy)]
+        else:
+            raise AssertionError(fn)
+        for s in step:
+            m = _mul(m, s)
+    return m
+
+
+def _mul(p, q):
+    a, b, c, d, e, f = p
+    a2, b2, c2, d2, e2, f2 = q
+    return (
+        a * a2 + c * b2,
+        b * a2 + d * b2,
+        a * c2 + c * d2,
+        b * c2 + d * d2,
+        a * e2 + c * f2 + e,
+        b * e2 + d * f2 + f,
+    )
+
+
+def _box(m, x, y, w, h):
+    pts = [(x, y), (x + w, y), (x, y + h), (x + w, y + h)]
+    xs = [m[0] * px + m[2] * py + m[4] for px, py in pts]
+    ys = [m[1] * px + m[3] * py + m[5] for px, py in pts]
+    return min(xs), min(ys), max(xs), max(ys)
+
+
+def _keyframes(svg: str) -> dict[str, list[tuple[float, str]]]:
+    """Each stepped animation's transform keyframes, by the class it runs on."""
+    names = dict(re.findall(r"\.(\w+)\{animation:(\w+) 6s steps\(1\) infinite\}", svg))
+    frames = {}
+    for cls, name in names.items():
+        body = re.search(r"@keyframes " + name + r"\{((?:[^{}]*\{[^{}]*\})*)\}", svg).group(1)
+        steps = []
+        for sel, decl in re.findall(r"([^{}]+)\{([^{}]*)\}", body):
+            t = re.search(r"transform:([^;]+)", decl)
+            if t:
+                steps += [(float(p.strip().rstrip("%")), t.group(1)) for p in sel.split(",")]
+        frames[cls] = sorted(steps)
+    return frames
+
+
+def _transform_at(steps, pct: float, still: str) -> str:
+    if pct is None or not steps:
+        return still
+    return [t for p, t in steps if p <= pct][-1]
+
+
+def _art_boxes(svg: str, pct: float | None):
+    """Where each pixel of art is drawn at pct of the loop (None: the still frame), and the
+    class of the group it belongs to. A clip-path cuts the box to the clip's rectangle."""
+    root = ET.fromstring(svg)
+    frames = _keyframes(svg)
+    clips = {
+        c.get("id"): [float(r.get(k)) for k in ("x", "y", "width", "height")]
+        for c in root.iter(SVG_NS + "clipPath")
+        for r in c
+    }
+    out = []
+
+    def walk(el, m, clip, owner):
+        cls = el.get("class")
+        if el.tag == SVG_NS + "g":
+            if cls in frames or el.get("transform"):
+                t = _transform_at(frames.get(cls), pct, el.get("transform") or "none")
+                m = _mul(m, _matrix(t))
+            if el.get("clip-path"):
+                x, y, w, h = clips[el.get("clip-path")[5:-1]]
+                clip = _box(m, x, y, w, h)
+            owner = cls or owner
+            for child in el:
+                walk(child, m, clip, owner)
+        elif el.tag == SVG_NS + "rect" and owner:
+            x0, y0, x1, y1 = _box(m, *(float(el.get(k)) for k in ("x", "y", "width", "height")))
+            if clip:
+                x0, y0 = max(x0, clip[0]), max(y0, clip[1])
+                x1, y1 = min(x1, clip[2]), min(y1, clip[3])
+            if x1 > x0 and y1 > y0:
+                out.append((owner, el, (x0, y0, x1, y1)))
+
+    for child in root:
+        if child.tag == SVG_NS + "g":
+            walk(child, (1.0, 0.0, 0.0, 1.0, 0.0, 0.0), None, None)
+    return out
+
+
+def _bounds(boxes):
+    return (
+        min(b[0] for b in boxes),
+        min(b[1] for b in boxes),
+        max(b[2] for b in boxes),
+        max(b[3] for b in boxes),
+    )
+
+
+def test_the_crawl_art_stays_inside_the_card_at_every_keyframe():
+    """At the still frame and at every keyframe of the chest's loop, every pixel of art is at
+    least 8px inside the card's border and 8px clear of the text column, where text starts 6px
+    left of its x as it slides in. The potion never shows below the chest's rim."""
+    svg = brand.crawl_card()
+    width, height = (float(v) for v in re.search(r'viewBox="0 0 (\d+) (\d+)"', svg).groups())
+    border = 2  # the card's rect runs from 0 to 2 with its stroke
+    text_x = min(float(x) for x in re.findall(r'<text class="[^"]*" x="([\d.]+)"', svg))
+    allowed = (border + 8, border + 8, text_x - 6 - 8, height - border - 8)
+    chest = next(g for g in ET.fromstring(svg).iter(SVG_NS + "g") if g.get("class") == "chest")
+    rim = min(float(r.get("y")) for r in chest.findall(SVG_NS + "rect"))  # the body's top
+    pcts = sorted({p for steps in _keyframes(svg).values() for p, _ in steps})
+    assert len(pcts) > 20
+    for pct in [None, *pcts]:
+        boxes = _art_boxes(svg, pct)
+        x0, y0, x1, y1 = _bounds([b for _, _, b in boxes])
+        where = "still frame" if pct is None else f"{pct}%"
+        assert x0 >= allowed[0] and y0 >= allowed[1], where
+        assert x1 <= allowed[2] and y1 <= allowed[3], where
+        potion = [b for owner, _, b in boxes if owner == "potion"]
+        assert all(b[3] <= rim for b in potion), where
+    # The still frame is the open chest with the whole potion out above the rim.
+    still = _art_boxes(svg, None)
+    assert sum(owner == "potion" for owner, _, _ in still) == sum(
+        1 for _ in re.finditer("<rect", re.search(r'<g class="potion">(.*?)</g>', svg).group(1))
+    )
+
+
+def test_the_potion_is_drawn_behind_the_chest_body_and_in_front_of_the_lid():
+    chest = next(
+        g for g in ET.fromstring(brand.crawl_card()).iter(SVG_NS + "g") if g.get("class") == "chest"
+    )
+    order = [c.get("class") or c.get("clip-path") or c.tag[len(SVG_NS) :] for c in chest]
+    assert order[:2] == ["lid", "url(#rim)"] and set(order[2:]) == {"rect"}
+    assert chest[1][0].get("class") == "potion"
