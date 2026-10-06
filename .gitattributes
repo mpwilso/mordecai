@@ -1,0 +1,8 @@
+# Keep GitHub's language bar to Mordecai's own source. The planted suites, the pilot and the
+# brand files are written by scripts (see CLAUDE.md); the fixtures are test data.
+evals/planted/** linguist-generated
+evals/pilot/** linguist-generated
+docs/brand/*.svg linguist-generated
+docs/brand/*.png linguist-generated
+docs/planted-results/** linguist-generated
+tests/fixtures/** linguist-vendored
