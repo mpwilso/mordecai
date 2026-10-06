@@ -46,7 +46,7 @@ skills check, run against real evals, is what tests the rules against that.
 Written by `scripts/simulate.py` with the 0.2.0 rules (at least 5 cases, a
 90% interval, a 10-point minimum effect), 200
 simulated suites per row, 3 runs per side per case. The table at the top of this file is kept
-as it was; its "rerun the script" note refers to the script at 519708f, and the independent
+as it was; its "rerun the script" note refers to the script at f43421b, and the independent
 rows below reproduce it with the current script and rules.
 
 The planted skills check ([planted-skills-results.md](planted-skills-results.md)) found that

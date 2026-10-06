@@ -14,7 +14,7 @@ Two ways to draw a case's runs:
 
 - independent: every run is its own coin flip, so three runs agree only about a third of the
   time. This is the setting the first simulation used (the table at the top of the doc,
-  written at 519708f with the 0.1.0 rules and kept as it was).
+  written at f43421b with the 0.1.0 rules and kept as it was).
 - agreement A: each case has one outcome per side, drawn once, and shared by both sides
   unless the skill changes it. Each run then repeats that outcome, flipping with a small
   probability chosen so that all three runs of a side agree with probability A. The planted
@@ -146,7 +146,7 @@ def main(argv: list[str]) -> int:
 Written by `scripts/simulate.py` with the {__version__} rules (at least {r.min_cases} cases, a
 {round(r.confidence * 100)}% interval, a {round(r.min_effect * 100)}-point minimum effect), {TRIALS}
 simulated suites per row, 3 runs per side per case. The table at the top of this file is kept
-as it was; its "rerun the script" note refers to the script at 519708f, and the independent
+as it was; its "rerun the script" note refers to the script at f43421b, and the independent
 rows below reproduce it with the current script and rules.
 
 The planted skills check ([planted-skills-results.md](planted-skills-results.md)) found that

@@ -86,7 +86,7 @@ Crawl mode is a fan nod. It isn't affiliated with or endorsed by the author or p
 
 ### Planted skills, run for real
 
-Each planted skill has a known intended effect, and every prediction was committed before its suite ran. **Only some of the suites were blind.** The first set of five skills and the two sealed holdouts were written and predicted before any result existed: their predictions are in commit 6c37ff9 ([docs/planted-skills.md](docs/planted-skills.md)), and the first results start at commit ea8021a. Everything after that (V1, V2, V3, H1 and both Sonnet reruns) was designed or predicted after seeing earlier results. Each suite has 12 cases: 9 compared, and 3 where the skill should stay quiet. Every suite ran with 3 runs per side and regex or tool-use graders only. Details, cards and costs are in [docs/planted-skills-results.md](docs/planted-skills-results.md).
+Each planted skill has a known intended effect, and every prediction was committed before its suite ran. **Only some of the suites were blind.** The first set of five skills and the two sealed holdouts were written and predicted before any result existed: their predictions are in commit bd92b23 ([docs/planted-skills.md](docs/planted-skills.md)), and the first results start at commit 15da64f. Everything after that (V1, V2, V3, H1 and both Sonnet reruns) was designed or predicted after seeing earlier results. Each suite has 12 cases: 9 compared, and 3 where the skill should stay quiet. Every suite ran with 3 runs per side and regex or tool-use graders only. Details, cards and costs are in [docs/planted-skills-results.md](docs/planted-skills-results.md).
 
 **First set, 0.1.0 rules, Claude Haiku 4.5: 3 of 5 skills got their predicted verdict.** The criterion written in advance was that every suite gets its predicted outcome, so the check as a whole failed.
 
@@ -99,7 +99,7 @@ Each planted skill has a known intended effect, and every prediction was committ
 | 5a. A twin placebo | Not Helps or Hurts | Already handled | Match. Every run agreed, so there was no noise to misread |
 | 5b. A filler placebo | Not Helps or Hurts | No effect | Match. Every run agreed |
 
-**Later suites, 0.2.0 rules, frozen at 03d2619.** V1, V2, V3 and H1 were written after the first results, so they are not blind. Holdouts 6 and 7 were written with the first set, before any result, and each ran once.
+**Later suites, 0.2.0 rules, frozen at 64a7701.** V1, V2, V3 and H1 were written after the first results, so they are not blind. Holdouts 6 and 7 were written with the first set, before any result, and each ran once.
 
 | Suite | Predicted | Actual | |
 |---|---|---|---|

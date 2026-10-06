@@ -89,9 +89,9 @@ Fire rates on the 14 recorded cards: 100% on 10 cards, 56% (5a), 22% (suite 3), 
 2. **A moderate-effect planted skill,** to check the simulation's +20 point finding on real runs. No planted skill has had a true effect between +10 and +30. **Recommendation: yes, if the README's simulation claims matter to you.** About $1.30 a suite on Haiku. It needs a new ceiling.
 3. **More models. Recommendation: not now.** Two Sonnet comparisons gave no verdict change. Judge-graded suites would test more than another model would.
 4. **Old absolute paths in git history. Recommendation: leave them.**
-   - They are 7 lines, the `casesRoot` field in the cards committed in ea8021a through 2c991f4.
+   - They are 7 lines, the `casesRoot` field in the cards committed in 15da64f through ef6eff3.
    - They name the local username and folder layout, nothing secret. Your name is already in LICENSE.
-   - Rewriting would change every commit hash from ea8021a on, and the docs cite those hashes (6c37ff9, 03d2619, f848767, ef49573, 337397d, b434b9a) as the record that predictions came before results.
+   - Rewriting would change every commit hash from 15da64f on, and the docs cite those hashes (bd92b23, 64a7701, a360f70, 86fa0b9, 43659a5, 289302e) as the record that predictions came before results.
    - The other options: rewrite and update every cited hash (about an hour, and the order becomes your word rather than the hashes'), or squash to one commit (loses the record).
 
 ## Ready to push?

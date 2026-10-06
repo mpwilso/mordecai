@@ -1,6 +1,6 @@
 # The planted skills check: results
 
-The predictions, the pass criterion and the frozen rules are in [planted-skills.md](planted-skills.md), committed in 6c37ff9 before any suite ran. Each card below is what `mordecai identify` wrote, unedited, and is saved in [planted-results/](planted-results/). On 2026-10-05, after the drift demo, all seven cards were rewritten by `mordecai identify` from the same raw results so that they store relative paths instead of absolute local ones. Only the `paths` field changed. Every verdict, count, interval and hash is byte-for-byte the same. Raw eval results stay in `evals/results/`, which git ignores.
+The predictions, the pass criterion and the frozen rules are in [planted-skills.md](planted-skills.md), committed in bd92b23 before any suite ran. Each card below is what `mordecai identify` wrote, unedited, and is saved in [planted-results/](planted-results/). On 2026-10-05, after the drift demo, all seven cards were rewritten by `mordecai identify` from the same raw results so that they store relative paths instead of absolute local ones. Only the `paths` field changed. Every verdict, count, interval and hash is byte-for-byte the same. Raw eval results stay in `evals/results/`, which git ignores.
 
 Every run: `claude plugin eval <suite> --model <pinned ID> --judge-model <same ID> --no-publish --max-cost-usd <cap> --scaffold -j 2 --threshold 0`, 3 runs per side, temporary files kept inside the repo so the traces could be checked. Costs are Claude Code's list-price estimates (`costUsd` in the result).
 
@@ -100,7 +100,7 @@ Of the two misses, suite 2 is a prediction miss: the rules read the numbers corr
 
 ## Post-hoc: the seven cards under the 0.2.0 rules
 
-**This section was written after the results above, and the rule change it applies was designed after seeing them.** The recorded cards above are unchanged. They are what the frozen rules (6c37ff9) said.
+**This section was written after the results above, and the rule change it applies was designed after seeing them.** The recorded cards above are unchanged. They are what the frozen rules (bd92b23) said.
 
 In 0.2.0, Already handled also requires the interval to rule out a 10-point loss; otherwise the verdict is Inconclusive. Each verdict below comes from rerunning `mordecai identify` on the same raw result with the new rules.
 
@@ -116,9 +116,9 @@ In 0.2.0, Already handled also requires the interval to rule out a 10-point loss
 
 Only suite 3 moves. Its new reason: "The model scored 93% without the skill, but the 90% interval (-41 to +7 points) doesn't rule out a loss of 10 points." The new rules still don't call it Hurts, since the interval reaches +7. Because the change was fitted to this result, suite 3 can't count as evidence for it. The validation suites below are the test.
 
-## Validation set and sealed holdouts (0.2.0 rules, frozen at 03d2619)
+## Validation set and sealed holdouts (0.2.0 rules, frozen at 64a7701)
 
-Predictions: [validation-skills.md](validation-skills.md) for V1 and V2 (committed in f848767, written after the first results, so not blind), and [planted-skills.md](planted-skills.md) for the holdouts (committed in 6c37ff9, before any result).
+Predictions: [validation-skills.md](validation-skills.md) for V1 and V2 (committed in a360f70, written after the first results, so not blind), and [planted-skills.md](planted-skills.md) for the holdouts (committed in bd92b23, before any result).
 
 | Suite | Predicted | Actual | Match | Better / same / worse | With / without | Fired | Run agreement | Cost | Run (UTC) |
 |---|---|---|---|---|---|---|---|---|---|
@@ -151,7 +151,7 @@ So V2 doesn't show that the rules make false calls on noise. It shows that a "pl
 
 **Not run, because of the stop:** the two sealed holdouts, the suite 2 drift demo on Sonnet, `check --model` and the README rewrite. See [review-queue.md](review-queue.md).
 
-**V3 v3-inert-placebo: Inconclusive, a match. The inert placebo stayed out of Helps and Hurts on noisy runs.** The card reads: "The 90% interval runs -33 to +11 points, too wide to call." With the skill, 15% of runs used a Conventional Commits prefix; without it, 26%. 2 cases were better, 3 the same, 4 worse. [Card](planted-results/v3-inert-placebo.card.json). Predictions: [validation-skills.md](validation-skills.md), committed in ef49573.
+**V3 v3-inert-placebo: Inconclusive, a match. The inert placebo stayed out of Helps and Hurts on noisy runs.** The card reads: "The 90% interval runs -33 to +11 points, too wide to call." With the skill, 15% of runs used a Conventional Commits prefix; without it, 26%. 2 cases were better, 3 the same, 4 worse. [Card](planted-results/v3-inert-placebo.card.json). Predictions: [validation-skills.md](validation-skills.md), committed in 86fa0b9.
 
 - **This is the noisy placebo the check lacked.** The skill fired in all 27 runs that needed it, so it was really opened every time. Runs disagreed often: all 3 agreed in only 16 of 24 case-and-side cells (67%), against 94% in the first main set. Cases moved both ways: csv-tests went from 0 of 3 to 1 of 3, and commit-6 from 2 of 3 to 0 of 3. The rules didn't turn that into a verdict.
 - **The point estimate leans negative (-11)**, and the interval includes zero. That fits noise. It is also consistent with a small effect of opening a skill at all: runs with it took 2.5 turns on average, against 1.3 without. One suite can't tell those apart.
@@ -159,7 +159,7 @@ So V2 doesn't show that the rules make false calls on noise. It shows that a "pl
 
 ## Sealed holdouts: a note before they run
 
-Both holdouts are as committed in 6c37ff9 and unedited since. `git log -- evals/planted/holdout` shows only that commit.
+Both holdouts are as committed in bd92b23 and unedited since. `git log -- evals/planted/holdout` shows only that commit.
 
 **Holdout 7 (`changelog-helper`, the placebo) is not inert. Its result will be read with this caveat.** Its body is: "Changelog entries should be clear and useful to readers. Describe what changed in plain language, keep each entry brief, and mention anything a reader needs to act on." Those are behavior-changing instructions, the same kind of text that made V2 a design defect. But holdout 7's grader requires the made-up line format `ZK-<ticket> | <area> | <summary>`, which no run can produce without holdout 6's real skill. So the instructions can't create a pass, and with a baseline expected at or near 0 there is nothing for them to lower. As a result:
 
@@ -168,7 +168,7 @@ Both holdouts are as committed in 6c37ff9 and unedited since. `git log -- evals/
 
 **Holdout 6 (`changelog-format`)** is a made-up convention like suite 1, predicted Helps. It has no caveat.
 
-Both run once each on Haiku under the 0.2.0 rules (03d2619).
+Both run once each on Haiku under the 0.2.0 rules (64a7701).
 
 | Suite | Predicted | Actual | Match | Better / same / worse | With / without | Fired | Run agreement | Cost | Run (UTC) |
 |---|---|---|---|---|---|---|---|---|---|
@@ -185,7 +185,7 @@ Both run once each on Haiku under the 0.2.0 rules (03d2619).
 |---|---|---|---|---|---|---|---|---|---|
 | H1 h1-must-fire | Hurts | Hurts | Match | 0 / 0 / 9 | 0% / 100% | 27 of 27; 0 of 9 quiet | 24 of 24 cells | $1.24 | 2026-10-06 00:09 |
 
-**H1: Hurts, a match. The rules call Hurts when a harmful skill is actually opened.** The skill fired in all 27 runs that needed it, and every with-skill run followed it. Every baseline run passed. The interval collapsed to -100 to -100. [Card](planted-results/h1-must-fire.card.json). Predictions: [validation-skills.md](validation-skills.md), committed in 337397d. With suites 3 and V1, this shows that **Hurts detection depends on the skill being opened.** The rules found the harm when the skill fired every time (H1). They couldn't confirm it when it fired in 6 of 27 runs (suite 3) or 1 of 27 (V1).
+**H1: Hurts, a match. The rules call Hurts when a harmful skill is actually opened.** The skill fired in all 27 runs that needed it, and every with-skill run followed it. Every baseline run passed. The interval collapsed to -100 to -100. [Card](planted-results/h1-must-fire.card.json). Predictions: [validation-skills.md](validation-skills.md), committed in 43659a5. With suites 3 and V1, this shows that **Hurts detection depends on the skill being opened.** The rules found the harm when the skill fired every time (H1). They couldn't confirm it when it fired in 6 of 27 runs (suite 3) or 1 of 27 (V1).
 
 ## Drift demo 2: suite 2 on Sonnet, prediction written before the run
 

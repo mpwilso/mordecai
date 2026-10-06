@@ -7,7 +7,7 @@
 
 The predictions and the pass criterion below were committed before either suite ran.
 
-The verdict rules are the 0.2.0 rules, frozen at commit 03d2619. That commit changed Already handled so it must also rule out a 10-point loss. The fixtures are written by `scripts/planted.py` into [evals/planted/validation/](../evals/planted/validation/). Each suite has 12 cases (9 compared, 3 where the skill should stay quiet). No prompt names its skill, and `mordecai lint` reports no warnings for either suite.
+The verdict rules are the 0.2.0 rules, frozen at commit 64a7701. That commit changed Already handled so it must also rule out a 10-point loss. The fixtures are written by `scripts/planted.py` into [evals/planted/validation/](../evals/planted/validation/). Each suite has 12 cases (9 compared, 3 where the skill should stay quiet). No prompt names its skill, and `mordecai lint` reports no warnings for either suite.
 
 ## V1: an outdated rule that fires (`v1-outdated`, skill `python-dependencies`)
 
@@ -49,7 +49,7 @@ All 10 candidates failed their single run, so the last 5 are the first 5 of the 
 
 ## The sealed holdouts
 
-After V1 and V2, the two original holdout suites run exactly once each. Both were written and committed in 6c37ff9, before any result existed: `holdout/6-convention`, predicted Helps, and `holdout/7-filler`, predicted not Helps and not Hurts. Their predictions are in [planted-skills.md](planted-skills.md) and are not changed here. They run under the 0.2.0 rules. The rule change can't alter either prediction: one expects a large gain, and the other a placebo with a failing baseline.
+After V1 and V2, the two original holdout suites run exactly once each. Both were written and committed in bd92b23, before any result existed: `holdout/6-convention`, predicted Helps, and `holdout/7-filler`, predicted not Helps and not Hurts. Their predictions are in [planted-skills.md](planted-skills.md) and are not changed here. They run under the 0.2.0 rules. The rule change can't alter either prediction: one expects a large gain, and the other a placebo with a failing baseline.
 
 ## V3: an inert placebo on V2's cases (`v3-inert-placebo`, skill `team-background`)
 
