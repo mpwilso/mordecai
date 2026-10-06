@@ -24,6 +24,7 @@ The ceiling for this check is $35. Before each run, the spend so far plus that r
 | 12 | holdout 6-convention | claude-haiku-4-5-20251001 | $3 | $1.28 | $16.37 |
 | 13 | holdout 7-filler | claude-haiku-4-5-20251001 | $3 | $1.30 | $17.67 |
 | 14 | H1 h1-must-fire | claude-haiku-4-5-20251001 | $3 | $1.24 | $18.91 |
+| 15 | 2-commits (drift demo 2) | claude-sonnet-5-5 | $3 | $1.69 | $20.60 |
 
 Not counted above: the one-case run on 2026-10-05 that captured the result format ($0.07, before this check).
 
@@ -191,3 +192,21 @@ Both run once each on Haiku under the 0.2.0 rules (03d2619).
 Suite 2's skill (Conventional Commits) came out Helps on Haiku 4.5: 96% with the skill, 19% without, +78 points (interval +59 to +96). That card is recorded above. The same suite, unchanged, now runs once on `claude-sonnet-5-5` with a $3 cap.
 
 **Predicted Sonnet verdict: Helps, with a higher baseline and a smaller change than on Haiku.** A larger model may use a type prefix unprompted more often than Haiku's 5 of 27. Unless it does so in at least 90% of runs, the skill still has room to help, and Helps stays the likely verdict. If Sonnet's baseline reaches 90% or more and the interval rules out a 10-point gain or loss, the verdict moves to Already handled. That would be the drift this demo looks for. I don't expect it, but it would not be surprising.
+
+### Result: the verdict did not move
+
+| | Haiku 4.5 | Sonnet 5.5 |
+|---|---|---|
+| Verdict | Helps | Helps |
+| With / without | 96% / 19% | 100% / 0% |
+| Change (interval) | +78 (+59 to +96) | +100 (+100 to +100) |
+| Better / same / worse | 9 / 0 / 0 | 9 / 0 / 0 |
+| Fired | 27 of 27; 0 of 9 quiet | 27 of 27; 0 of 9 quiet |
+| Run agreement | 19 of 24 cells | 24 of 24 cells |
+| Suite cost | $1.32 | $1.69 |
+
+**Both models say Helps, so the verdict didn't move.** Same skill hash (`sha256:0c7e32a00692`) and cases hash (`sha256:d9c55d6374ba`) on both cards. [Sonnet card](planted-results/2-commits-sonnet.card.json).
+
+**My prediction was right on the verdict and wrong on the direction.** I predicted Sonnet would use a type prefix unprompted more often than Haiku. It used one less often: in none of 27 runs, against Haiku's 5. Without the skill, Sonnet wrote "Update README with new install steps" (commit-4, all three runs) and "Rename getUser to fetchUser", with a body (commit-1, all three). With the skill, it wrote `docs(readme): update install steps` every time. So the change grew from +78 to +100.
+
+This is the second Haiku-to-Sonnet comparison, and the second with no verdict change. On these two skills, the cards would not have gone stale in substance. They are still stale in record: each card names the model it was measured on, and `mordecai check --model` (added after this run) reports that.

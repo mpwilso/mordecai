@@ -1,0 +1,80 @@
+{
+  "card": 1,
+  "hashes": {
+    "cases": "sha256:d9c55d6374ba1b2504907f0f3153fec7d30b4ecd108f52b3711b89c6106209f1",
+    "result": "sha256:aca7d54d7f90952bd0fb9247c4f8920ad760e9ec91a97016003d0f287f9be671",
+    "skill": "sha256:0c7e32a006922dc871025727bef3f16fd8c11ad12f2e4b51bc49a3a8fd7101e7"
+  },
+  "mordecai": "0.2.0",
+  "numbers": {
+    "casesCompared": 9,
+    "change": 1.0,
+    "costPerRunWith": 0.025885125925925928,
+    "costPerRunWithout": 0.021969414814814816,
+    "fired": [
+      27,
+      27
+    ],
+    "flat": 0,
+    "improved": 9,
+    "interval": [
+      1.0,
+      1.0
+    ],
+    "misfired": [
+      0,
+      9
+    ],
+    "turnsPerRunWith": 3.0,
+    "turnsPerRunWithout": 1.0,
+    "withScore": 1.0,
+    "withoutScore": 0.0,
+    "worse": 0
+  },
+  "paths": {
+    "caseDirs": [
+      "evals/commit-1",
+      "evals/commit-2",
+      "evals/commit-3",
+      "evals/commit-4",
+      "evals/commit-5",
+      "evals/commit-6",
+      "evals/commit-7",
+      "evals/commit-8",
+      "evals/commit-9",
+      "evals/log-oneline",
+      "evals/percent",
+      "evals/rebase"
+    ],
+    "casesRoot": ".",
+    "relativeTo": {
+      "casesRoot": "the skill directory",
+      "skill": "the card's directory"
+    },
+    "skill": "../../evals/planted/2-commits"
+  },
+  "reason": "The skill raised the score: 90% interval +100 to +100 points.",
+  "rules": {
+    "ceiling": 0.9,
+    "confidence": 0.9,
+    "min_cases": 5,
+    "min_effect": 0.1,
+    "resamples": 2000,
+    "seed": 0
+  },
+  "subject": {
+    "plugin": "planted-commits",
+    "skills": [
+      "commit-messages"
+    ],
+    "version": "1.0.0"
+  },
+  "tested": {
+    "claudeVersion": "2.1.290",
+    "judgeModel": "claude-sonnet-5-5",
+    "model": "claude-sonnet-5-5",
+    "startedAt": "2026-10-06T00:12:48.947Z"
+  },
+  "verdict": "helps",
+  "warnings": []
+}
