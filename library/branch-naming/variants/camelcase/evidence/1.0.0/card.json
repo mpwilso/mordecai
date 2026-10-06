@@ -1,0 +1,78 @@
+{
+  "card": 1,
+  "hashes": {
+    "cases": "sha256:33fd5f5075a76636ca1eccdba7302b7f8dfd210be1278c7eec37a244f8325ec8",
+    "result": "sha256:bfc1c25c3440b7770c161798fbd5c8bd17528d757d5e84d54e38a5b06fd4718b",
+    "skill": "sha256:7a2cb36e8588c0188a679162c990e80e9d318a71fa1d563e6dc8f51ad382221b"
+  },
+  "mordecai": "0.2.0",
+  "numbers": {
+    "casesCompared": 9,
+    "change": -1.0,
+    "costPerRunWith": 0.019256629629629627,
+    "costPerRunWithout": 0.01623157037037037,
+    "fired": [
+      27,
+      27
+    ],
+    "flat": 0,
+    "improved": 0,
+    "interval": [
+      -1.0,
+      -1.0
+    ],
+    "misfired": [
+      0,
+      9
+    ],
+    "turnsPerRunWith": 3.0,
+    "turnsPerRunWithout": 1.0,
+    "withScore": 0.0,
+    "withoutScore": 1.0,
+    "worse": 9
+  },
+  "paths": {
+    "caseDirs": [
+      "evals/branch-1189",
+      "evals/branch-2096",
+      "evals/branch-3301",
+      "evals/branch-418",
+      "evals/branch-5530",
+      "evals/branch-64",
+      "evals/branch-7752",
+      "evals/branch-8004",
+      "evals/branch-930",
+      "evals/celsius",
+      "evals/list-remote",
+      "evals/rename-branch"
+    ],
+    "casesRoot": "../../../../../evals/planted/validation/h1-must-fire",
+    "relativeTo": {
+      "casesRoot": "the skill directory",
+      "skill": "the card's directory"
+    },
+    "skill": "../../branch-naming"
+  },
+  "reason": "The skill lowered the score: 90% interval -100 to -100 points.",
+  "rules": {
+    "ceiling": 0.9,
+    "confidence": 0.9,
+    "min_cases": 5,
+    "min_effect": 0.1,
+    "resamples": 2000,
+    "seed": 0
+  },
+  "subject": {
+    "plugin": "validation-must-fire",
+    "skills": [],
+    "version": "1.0.0"
+  },
+  "tested": {
+    "claudeVersion": "2.1.290",
+    "judgeModel": "claude-haiku-4-5-20251001",
+    "model": "claude-haiku-4-5-20251001",
+    "startedAt": "2026-10-06T00:09:07.734Z"
+  },
+  "verdict": "hurts",
+  "warnings": []
+}
