@@ -122,7 +122,7 @@ def test_markdown_text_is_inert_on_github():
         "\\[a\\]\\(https\\://e.example\\) \\!\\[i\\]\\(x.png\\)"
     )
     assert md_text("@octocat &#64;octocat") == f"@{WJ}octocat \\&#{WJ}64;octocat"
-    assert md_text("cli/cli#1 GH-1 x@e.com") == f"cli/cli#{WJ}1 GH-{WJ}1 x@{WJ}e.com"
+    assert md_text("cli/cli#1 GH-1 x@example.com") == f"cli/cli#{WJ}1 GH-{WJ}1 x@{WJ}example.com"
     assert md_text("www.e.example **b** _i_ ~~s~~ `c` | t |") == (
         "www\\.e.example \\*\\*b\\*\\* \\_i\\_ \\~\\~s\\~\\~ \\`c\\` \\| t \\|"
     )
