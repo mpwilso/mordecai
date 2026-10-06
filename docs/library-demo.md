@@ -92,7 +92,7 @@ With no `--variant`, install takes the config's default, the team's `payments` v
 $ uv run mordecai library install pr-description --project $DEMO --target agents --target claude
 warning: pr-description (variant payments) 1.0.0 has no card, so nothing says whether it helps.
 Installed pr-description (variant payments) 1.0.0 (unmeasured) into .agents/skills/pr-description, .claude/skills/pr-description.
-Locked in $DEMO/mordecai-lock.json at commit 7b0cdbdaa1f9.
+Locked in $DEMO/mordecai-lock.json at commit 48e05d4cfd06.
 ```
 
 ## The lockfile
@@ -105,7 +105,7 @@ $ cat $DEMO/mordecai-lock.json
   "installed": {
     ".agents/skills/pr-description": {
       "allowed": [],
-      "commit": "7b0cdbdaa1f9261d64f207b7fc693f2ba6e42d72",
+      "commit": "48e05d4cfd06d71f92fd3d33ca1601e9eae434ee",
       "evidence": "unmeasured",
       "hash": "sha256:4da3fcae45ceea08f8e39ccba90e6cf5aeae3a0d3dc738206fd56b2a286d3fe1",
       "path": "examples/team/library/pr-description/variants/payments/pr-description",
@@ -122,7 +122,7 @@ $ cat $DEMO/mordecai-lock.json
     },
     ".claude/skills/pr-description": {
       "allowed": [],
-      "commit": "7b0cdbdaa1f9261d64f207b7fc693f2ba6e42d72",
+      "commit": "48e05d4cfd06d71f92fd3d33ca1601e9eae434ee",
       "evidence": "unmeasured",
       "hash": "sha256:4da3fcae45ceea08f8e39ccba90e6cf5aeae3a0d3dc738206fd56b2a286d3fe1",
       "path": "examples/team/library/pr-description/variants/payments/pr-description",

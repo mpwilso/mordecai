@@ -13,7 +13,7 @@ There is no task-list tool in this session, so the steps are tracked here instea
 | 2. Library commands | done (8a982fb): 258 tests with the extra |
 | 3. MCP server | done (df71ad6) |
 | 4. Seed library and demo | done: library/, examples/, skills/, docs/library-demo.md |
-| 5. README and release prep, fresh-clone check | done (a7b7552) |
+| 5. README and release prep, fresh-clone check | done (5eca266) |
 
 ## Notes
 
@@ -39,3 +39,4 @@ Nothing is half finished. The open questions are in [decisions-for-matt.md](deci
 - Section 4: a case-insensitive search of every tracked file, every commit after fd83056 (content and messages) and every tag message found no hits, and every host, email address and commit identity is public. Nothing was rewritten for it.
 - Section 6: `status` failed on a tag it couldn't trust, instead of reporting it; fixed. `show` now reads a SKILL.md that isn't UTF-8, `uninstall` lost an unused `--config`, every option has help text, the exit codes are in the help and the README, and tests/test_library_demo.py replays the demo doc. Coverage with the extra went from 92% to 93%; the engine alone, without it, from 98% to 99%.
 - History: the rewrite that would remove the old local paths from the commits after fd83056 was refused by this session's permission check, so it wasn't done. The tracked files are clean. [decisions-for-matt.md](decisions-for-matt.md) item 0 says what remains before a push.
+- History rewrite (requested): the commits after fd83056 were rewritten to remove the old local paths from file content (result files made relative, docs given /work), with names, dates, messages and order unchanged. HEAD^{tree} stayed 23f1dad0, fd83056 is still the first parent, and the 16 skill/ tags point to the rewritten commits with the same messages. Hashes changed from fe4247a on; this commit updates the four places that cited one.
