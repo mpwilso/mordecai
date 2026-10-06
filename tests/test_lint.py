@@ -50,3 +50,52 @@ def test_lint_exit_codes():
     assert out.getvalue().startswith(
         f"{FIXTURES / 'probe'}: 1 cases (1 compared, 0 quiet), 3 warning(s)"
     )
+
+
+def broken_plugin(tmp_path, name):
+    import shutil
+
+    plugin = tmp_path / name
+    shutil.copytree(FIXTURES / "probe", plugin)
+    return plugin, plugin / "evals" / "goodbye" / "prompt.md"
+
+
+def test_unreadable_case_files_exit_2_naming_the_file(tmp_path, capsys):
+    import os
+
+    cases = {
+        "utf8": lambda p, prompt: prompt.write_bytes(b"---\nname: x\n---\n\xff\n"),
+        "runs": lambda p, prompt: prompt.write_text("---\nruns: abc\n---\nhi\n"),
+        "zero-runs": lambda p, prompt: prompt.write_text("---\nruns: 0\n---\nhi\n"),
+        "json": lambda p, prompt: (p / ".claude-plugin" / "plugin.json").write_text("{"),
+        "link": lambda p, prompt: (
+            prompt.unlink(),
+            (tmp_path / "outside.md").write_text("---\nmodel: secret\n---\n"),
+            os.symlink(tmp_path / "outside.md", prompt),
+        ),
+    }
+    for name, breakage in cases.items():
+        plugin, prompt = broken_plugin(tmp_path, name)
+        breakage(plugin, prompt)
+        assert main(["lint", str(plugin)], out=io.StringIO()) == 2, name
+        err = capsys.readouterr().err
+        assert err.startswith("mordecai: ") and name in err, name
+        assert "secret" not in err
+    assert main(["lint", str(tmp_path / "missing")], out=io.StringIO()) == 2
+    assert "isn't a directory" in capsys.readouterr().err
+
+
+def test_one_broken_plugin_does_not_hide_the_others(tmp_path):
+    plugin, prompt = broken_plugin(tmp_path, "broken")
+    prompt.write_text("---\nruns: abc\n---\nhi\n")
+    out = io.StringIO()
+    assert main(["lint", str(plugin), str(FIXTURES / "probe")], out=out) == 2
+    assert "3 warning(s)" in out.getvalue()
+
+
+def test_a_manifest_that_is_not_an_object_falls_back_to_the_directory_name(tmp_path):
+    from mordecai.lint import plugin_name
+
+    plugin, _ = broken_plugin(tmp_path, "listy")
+    (plugin / ".claude-plugin" / "plugin.json").write_text("[1]")
+    assert plugin_name(plugin) == "listy"

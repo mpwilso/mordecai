@@ -2,17 +2,35 @@
 
 It reads the same files `claude plugin eval` reads: <plugin>/evals/<case>/prompt.md, its
 graders/*.md, and case.yaml when present. Only the fields the checks need are read.
+
+The plugin may be someone else's, so a file that is a link out of the plugin directory isn't
+read, and a file lint can't read is a LintError naming it, not a traceback.
 """
 
 import json
 from dataclasses import dataclass
 from pathlib import Path
 
-from mordecai.provenance import skill_names
+from mordecai.provenance import skill_names, within
 from mordecai.result import Case, skill_graders
 from mordecai.verdict import DEFAULT_RULES, case_warnings
 
 SKIP = {"results", "mocks"}
+
+
+class LintError(Exception):
+    """A plugin's files can't be read."""
+
+
+def _read(path: Path, plugin: Path) -> str:
+    if not within(path, plugin):
+        raise LintError(f"{path} is a link out of the plugin directory, so lint won't read it")
+    try:
+        return path.read_text(encoding="utf-8")
+    except UnicodeDecodeError as e:
+        raise LintError(f"{path} isn't UTF-8 text") from e
+    except OSError as e:
+        raise LintError(f"can't read {path}: {e.strerror or e}") from e
 
 
 def frontmatter(text: str) -> tuple[dict, str]:
@@ -61,14 +79,16 @@ class CaseFile:
     scored: bool  # has a grader other than "the skill fired"
 
 
-def read_case(path: Path) -> CaseFile:
+def read_case(path: Path, plugin: Path) -> CaseFile:
     prompt_md = path / "prompt.md"
-    fields, body = (
-        frontmatter(prompt_md.read_text(encoding="utf-8")) if prompt_md.exists() else ({}, "")
-    )
+    fields, body = frontmatter(_read(prompt_md, plugin)) if prompt_md.exists() else ({}, "")
+    runs = fields.get("runs")
+    runs = 3 if runs in (None, "") else runs
+    if not isinstance(runs, int) or runs < 1:
+        raise LintError(f"{prompt_md}: runs should be a whole number of at least 1")
     graders = []
     for g in sorted((path / "graders").glob("*.md")):
-        gf, _ = frontmatter(g.read_text(encoding="utf-8"))
+        gf, _ = frontmatter(_read(g, plugin))
         config = {k: v for k, v in gf.items() if k not in ("type", "weight", "arm")}
         graders.append({"name": g.stem, "type": gf.get("type"), "config": config})
     fire, silent = skill_graders({"graders": graders})
@@ -83,7 +103,7 @@ def read_case(path: Path) -> CaseFile:
     )
     return CaseFile(
         case=case,
-        runs=int(fields.get("runs") or 3),
+        runs=runs,
         model=fields.get("model"),
         scored=any(g["name"] not in fire for g in graders),
     )
@@ -92,11 +112,18 @@ def read_case(path: Path) -> CaseFile:
 def plugin_name(plugin: Path) -> str:
     for manifest in (plugin / ".claude-plugin" / "plugin.json", plugin / "plugin.json"):
         if manifest.exists():
-            return json.loads(manifest.read_text(encoding="utf-8")).get("name") or plugin.name
+            try:
+                doc = json.loads(_read(manifest, plugin))
+            except (json.JSONDecodeError, RecursionError) as e:
+                raise LintError(f"{manifest} isn't valid JSON") from e
+            name = doc.get("name") if isinstance(doc, dict) else None
+            return name if isinstance(name, str) and name else plugin.name
     return plugin.name
 
 
 def lint(plugin: Path, rules=DEFAULT_RULES) -> tuple[list[CaseFile], list[str]]:
+    if not plugin.is_dir():
+        raise LintError(f"{plugin} isn't a directory")
     evals = plugin / "evals"
     dirs = (
         sorted(
@@ -109,7 +136,7 @@ def lint(plugin: Path, rules=DEFAULT_RULES) -> tuple[list[CaseFile], list[str]]:
         if evals.is_dir()
         else []
     )
-    files = [read_case(d) for d in dirs]
+    files = [read_case(d, plugin) for d in dirs]
     cases = [f.case for f in files]
     effect = [f for f in files if f.case.trigger != "should-not-fire"]
     names = skill_names(plugin) + [plugin_name(plugin)]

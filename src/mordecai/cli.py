@@ -10,7 +10,7 @@ from pathlib import Path
 
 from mordecai import __version__
 from mordecai.card import CardError, build, check, to_json
-from mordecai.lint import lint
+from mordecai.lint import LintError, lint
 from mordecai.provenance import PathError
 from mordecai.render import clean, crawl, markdown, plain
 from mordecai.result import ResultError, load, read_json
@@ -116,7 +116,12 @@ def check_card(args, out) -> int:
 def lint_plugins(args, out) -> int:
     worst = 0
     for plugin in args.plugin:
-        files, warnings = lint(plugin)
+        try:
+            files, warnings = lint(plugin)
+        except LintError as e:
+            print(f"mordecai: {clean(str(e))}", file=sys.stderr)
+            worst = 2
+            continue
         quiet = sum(1 for f in files if f.case.trigger == "should-not-fire")
         out.write(
             f"{clean(str(plugin))}: {len(files)} cases ({len(files) - quiet} compared, "
