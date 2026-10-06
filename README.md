@@ -7,17 +7,17 @@
 
 <p align="center"><b>Skill catalogs count downloads. Mordecai checks whether the skill helps.</b></p>
 
-Status: A portfolio project, built to show how I design, test and judge an AI tool. Version 0.2.0. Its verdict rules have been checked on simulated skills and on 12 planted skill suites with real eval runs, almost all on one small model (Claude Haiku 4.5). On the first set, 3 of 5 planted skills got their predicted verdict. Every result is in [docs/planted-skills-results.md](docs/planted-skills-results.md), including the misses.
+Status: A portfolio project, built to show how I design, test and judge an AI tool. Version 0.2.0. Its verdict rules have been checked on simulated skills and on 12 planted skill suites with real eval runs, almost all on one small model (Claude Haiku 4.5). Only the first set of five skills and two sealed holdouts were blind; on that first set, 3 of 5 got their predicted verdict. The later suites were designed after seeing those results. Every result is in [docs/planted-skills-results.md](docs/planted-skills-results.md), including the misses.
 
 Mordecai is for teams that share Claude skills. Claude Code already runs a skill's test cases with and without the skill (`claude plugin eval`). Mordecai reads that result and decides what the skill can honestly claim: it helps, it hurts, the model already handles it, or there isn't enough to tell. The card it writes is tied to the exact skill, cases and model it was measured on, so a team can see when a claim has gone stale.
 
-It sits beside [Loupe](https://github.com/mpwilso/loupe), [Parallax](https://github.com/mpwilso/parallax), [ISR](https://github.com/mpwilso/isr) and [Polarizer](https://github.com/mpwilso/polarizer), and has no dependency on any of them.
+It sits beside [Loupe](https://github.com/mpwilso/loupe), [Parallax](https://github.com/mpwilso/parallax) and [ISR](https://github.com/mpwilso/isr), and has no dependency on any of them.
 
 Jump to [an example card](#what-a-card-looks-like), [the verdicts](#the-verdicts), [crawl mode](#crawl-mode), [how it was tested](#how-it-was-tested), [the limits](#known-limits) or [setup](#setup).
 
 ## Why it exists
 
-Most shared skills don't measurably help, and nobody checks:
+Many skills don't measurably help, and the usual tools don't flag it:
 
 - In SWE-Skills-Bench, 39 of 49 skills gave no gain in pass rate, and 24 of them passed every task without the skill. Token use moved between -78% and +451% with the results unchanged.
 - In SkillsBench, skills written by people added about 16 points on average, skills written by models about -1, and 16 of 84 tasks did worse with a skill.
@@ -86,7 +86,7 @@ Crawl mode is a fan nod. It isn't affiliated with or endorsed by the author or p
 
 ### Planted skills, run for real
 
-Each planted skill has a known intended effect. Its prediction was committed before it ran, and the commit order is the record: the first set's predictions are in [6c37ff9](docs/planted-skills.md), and its results start at ea8021a. Each suite has 12 cases: 9 compared, and 3 where the skill should stay quiet. Every suite ran with 3 runs per side and regex or tool-use graders only. Details, cards and costs are in [docs/planted-skills-results.md](docs/planted-skills-results.md).
+Each planted skill has a known intended effect, and every prediction was committed before its suite ran. **Only some of the suites were blind.** The first set of five skills and the two sealed holdouts were written and predicted before any result existed: their predictions are in commit 6c37ff9 ([docs/planted-skills.md](docs/planted-skills.md)), and the first results start at commit ea8021a. Everything after that (V1, V2, V3, H1 and both Sonnet reruns) was designed or predicted after seeing earlier results. Each suite has 12 cases: 9 compared, and 3 where the skill should stay quiet. Every suite ran with 3 runs per side and regex or tool-use graders only. Details, cards and costs are in [docs/planted-skills-results.md](docs/planted-skills-results.md).
 
 **First set, 0.1.0 rules, Claude Haiku 4.5: 3 of 5 skills got their predicted verdict.** The criterion written in advance was that every suite gets its predicted outcome, so the check as a whole failed.
 
@@ -99,7 +99,7 @@ Each planted skill has a known intended effect. Its prediction was committed bef
 | 5a. A twin placebo | Not Helps or Hurts | Already handled | Match. Every run agreed, so there was no noise to misread |
 | 5b. A filler placebo | Not Helps or Hurts | No effect | Match. Every run agreed |
 
-**Validation and sealed holdouts, 0.2.0 rules, frozen at 03d2619.** The validation suites were written after the first results, so they are not blind. The two holdouts were written with the first set, before any result, and each ran once.
+**Later suites, 0.2.0 rules, frozen at 03d2619.** V1, V2, V3 and H1 were written after the first results, so they are not blind. Holdouts 6 and 7 were written with the first set, before any result, and each ran once.
 
 | Suite | Predicted | Actual | |
 |---|---|---|---|
@@ -107,27 +107,27 @@ Each planted skill has a known intended effect. Its prediction was committed bef
 | V2. Meant as a noisy placebo | Not Helps or Hurts | Hurts (-37) | Design defect. Its text ("Say what changed in plain words") changed behavior, and the rules read that real effect correctly |
 | V3. An inert placebo on V2's cases | Not Helps or Hurts | Inconclusive (-11, interval -33 to +11) | Match. It fired in 27 of 27 runs, on noisy runs |
 | Holdout 6. A made-up changelog format | Helps | Helps (+100) | Match |
-| Holdout 7. A filler placebo | Not Helps or Hurts | No effect | Match, with a caveat: its text isn't inert, but its baseline was 0%, so it could only show a false gain |
-| H1. A made-up convention that conflicts with the graders | Hurts | Hurts (-100) | Match. It fired in 27 of 27 runs |
+| Holdout 7. A filler placebo | Not Helps or Hurts | No effect | Match, but weak evidence: its baseline was 0%, so it could only have shown a false gain, and its text isn't inert |
+| H1. A made-up convention that conflicts with the graders | Hurts | Hurts (-100) | Match. It fired in 27 of 27 runs. Designed after seeing results, so that the skill would fire |
 
 What these show:
 
-- **No placebo has been called Helps or Hurts on noise.** V3 is the clearest test. Its skill fired every time, its runs disagreed often (all 3 runs agreed in 16 of 24 case-and-side cells), and its card said Inconclusive. V2's Hurts was a real effect from an instruction in its text, not a false call.
-- **Hurts detection depends on the skill being opened.** The rules found the harm when the harmful skill fired in every run (H1). They couldn't confirm it when it fired in 6 of 27 runs (suite 3) or 1 of 27 (V1). Both of those cards said Inconclusive or Already handled, not Hurts.
+- **No placebo has been called Helps or Hurts, but only one placebo ran on noisy runs.** That was V3, which was not blind. Its skill fired every time, its runs disagreed often (all 3 runs agreed in 16 of 24 case-and-side cells), and its card said Inconclusive. The other placebos (5a, 5b and holdout 7) had no noise to misread. V2's Hurts was a real effect from an instruction in its text, not a false call.
+- **Hurts was detected once, and it depends on the skill being opened.** The only Hurts on a harmful skill was H1, a suite designed after seeing results so that its skill would fire in every run. When a harmful skill fired in 6 of 27 runs (suite 3, blind) or 1 of 27 (V1), the rules didn't call Hurts. Those cards said Already handled and Inconclusive. This doesn't show that Hurts detection is reliable.
 - **Real runs were much less noisy than the simulation assumed.** In the first set, all 3 runs of a side agreed in 94% of case-and-side cells.
 
 Total cost of the planted runs: $20.60 at list price, across 15 runs, one of them a $0.25 pilot.
 
 ### Model comparisons
 
-Two suites were rerun on Claude Sonnet 5.5 (`claude-sonnet-5-5`). Neither verdict moved. Suite 1 stayed Helps (+100 on both models). Suite 2 stayed Helps, but its baseline went down, not up: Sonnet used a Conventional Commits prefix unprompted in 0 of 27 runs, against Haiku's 5. The change grew from +78 to +100. Both cards in each pair match the same skill and case files, so only the model tells them apart. `mordecai check --model` reports that (see [setup](#setup)).
+Two suites were rerun on Claude Sonnet 5.5 (`claude-sonnet-5-5`). Neither verdict moved, so no drift was caught. The first rerun had no written prediction; the second was predicted after seeing the Haiku card. Suite 1 stayed Helps (+100 on both models). Suite 2 stayed Helps, but its baseline went down, not up: Sonnet used a Conventional Commits prefix unprompted in 0 of 27 runs, against Haiku's 5. The change grew from +78 to +100. Both cards in each pair match the same skill and case files, so only the model tells them apart. `mordecai check --model` reports that difference in the record (see [setup](#setup)). It doesn't show that a verdict changed.
 
 ### Simulation
 
 [docs/simulation.md](docs/simulation.md) runs the rules on simulated skills with a known effect, 200 suites per row. The first simulation treated every run as an independent coin flip, which makes 3 runs agree only about a third of the time. Real runs agreed 94% of the time, so that assumption didn't match. Rerun at 94% agreement:
 
 - **A placebo was called Helps or Hurts in 0% of suites**, against up to 4% with coin flips.
-- **A skill worth +20 points was called Helps in 13%, 36% and 56% of suites at 5, 10 and 15 cases.** That's almost the same as with coin flips (14%, 35% and 52%). The remaining uncertainty is between cases, not between runs: a +20 point skill changes the outcome of only some cases. A moderate effect needs well over 15 cases to be called reliably.
+- **A skill worth +20 points was called Helps in 13%, 36% and 56% of suites at 5, 10 and 15 cases.** That's almost the same as with coin flips (14%, 35% and 52%). The remaining uncertainty is between cases, not between runs: a +20 point skill changes the outcome of only some cases. In simulation, a moderate effect needs well over 15 cases to be called reliably. **This finding hasn't been tested on real runs:** no planted skill had a moderate effect.
 - **A skill worth +40 points was called Helps in 80% of suites at 10 cases and 96% at 15.**
 
 ### Unit tests
@@ -147,6 +147,7 @@ Each verdict and warning has a test on a constructed result, along with hashing,
 ## Known limits
 
 - **Hurts needs the skill to be opened.** A harmful skill that fires rarely gets Inconclusive, or Already handled under the 0.1.0 rules, not Hurts. Check the card's "Fired in" line.
+- **A skill that rarely fires is reported as Inconclusive.** V1's skill fired in 1 of 27 runs, and its card says Inconclusive, the same word used for a wide interval. A fix is proposed in [docs/review-queue.md](docs/review-queue.md): a Rarely fired verdict under a 10% fire rate, and a warning under 50%. It isn't applied.
 - **The bootstrap is optimistic when runs agree.** In 8 of the 13 planted cards that have an interval, it collapsed to a single point, such as +100 to +100.
 - **Results come from one small model.** See [what wasn't checked](#what-wasnt-checked).
 - **Only one plugin per result.** Cards name the first plugin in the suite.
@@ -177,7 +178,7 @@ uv run mordecai check card.json --model claude-sonnet-5-5
 
 Cards store paths relative to where the card is written, so a card still checks after the repository is cloned somewhere else.
 
-A worked example from the planted check: suite 2's Haiku card matches its files, but not Sonnet.
+A worked example from the planted check: suite 2's Haiku card still matches its files, but it is stale for Sonnet.
 
 ```
 $ uv run mordecai check docs/planted-results/2-commits.card.json --model claude-sonnet-5-5
