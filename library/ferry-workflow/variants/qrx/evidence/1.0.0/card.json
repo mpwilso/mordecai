@@ -2,10 +2,10 @@
   "card": 1,
   "hashes": {
     "cases": "sha256:417d28c8319e5b9a0ceb5f28209cc5e1fe276cbdc39a60d92a66bd5bdb19bab9",
-    "result": "sha256:06cf8a4738645aad259bd8029e0ae44aa5ef147105826d600ac7bfaba814a17c",
+    "result": "sha256:3bb5d8ac7c8e782c48580164d16c8420e6218bed76e6546bb416d66513c1efb4",
     "skill": "sha256:6f05f0dadc4921f984f206d238ba8edfb6bea341a3253f5abb2e24f04e4ab64b"
   },
-  "mordecai": "0.2.0",
+  "mordecai": "0.3.0",
   "numbers": {
     "casesCompared": 9,
     "change": 1.0,

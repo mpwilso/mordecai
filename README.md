@@ -55,7 +55,7 @@ A version can carry a card and the eval result it was made from, beside it in `e
 
 Install refuses Hurts, Invalid and broken by default, and warns on stale and unmeasured. `--allow hurts` overrides one refusal, at the command line only, and the lockfile records it.
 
-In the seeded library, two variants carry real cards from the planted check. Their skill folders are byte for byte the planted skills, their result files are the recorded results unchanged, and their cards were made from them with `mordecai identify`:
+In the seeded library, two variants carry real cards from the planted check. Their skill folders are byte for byte the planted skills, their result files are the recorded results with local paths made relative (each evidence folder's NOTE.md gives the original hash), and their cards were made from them with `mordecai identify`:
 
 | Copy | Planted suite | Card | Install |
 |---|---|---|---|

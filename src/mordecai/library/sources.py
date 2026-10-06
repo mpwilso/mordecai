@@ -36,10 +36,19 @@ class SourceSpec:
     path: Path | None = None
     ref: str | None = None
     library: str = "library"
+    written: str | None = None  # the path as the config wrote it, before resolving
 
     def describe(self) -> dict:
-        where = {"github": self.github} if self.github else {"path": str(self.path)}
-        return {"name": self.name, **where, **({"ref": self.ref} if self.ref else {})}
+        """The source as the lockfile and export record it: a GitHub repository, or a local
+        path as the config wrote it, so no machine's folder names end up in either."""
+        if self.github:
+            where = {"github": self.github}
+        else:
+            where = {"path": self.written if self.written is not None else str(self.path)}
+        extra = {"ref": self.ref} if self.ref else {}
+        if self.library != "library":
+            extra["library"] = self.library
+        return {"name": self.name, **where, **extra}
 
 
 @dataclass(frozen=True)
@@ -111,6 +120,7 @@ def parse_config(doc: dict, path: Path | None, base: Path) -> Config:
                 path=local,
                 ref=_text(s, "ref", at),
                 library=_subpath(_text(s, "library", at) or "library", at),
+                written=_text(s, "path", at),
             )
         )
     variants = doc.get("variants", {})

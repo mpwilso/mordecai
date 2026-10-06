@@ -15,11 +15,9 @@ Questions from the library build that need the author's judgment. Each has a rec
 - **Why:** the 15 `skill/...` tags are local. Without them, a clone or a GitHub source reads every copy as untagged at the commit, and `history` shows no tags. The demo's output assumes they exist. CI passes either way (a test run on a clone with no tags passed).
 - **Cost:** 15 more tags in the tag list. None matches `v*`.
 
-## 3. The raw eval results are committed as they were
+## 3. The library's result files had their local paths made relative
 
-- **Recommendation:** keep them unchanged.
-- **Why:** `library/ferry-workflow/variants/qrx/evidence/1.0.0/result.json` and `library/branch-naming/variants/camelcase/evidence/1.0.0/result.json` are byte for byte `evals/results/1-convention/result.json` and `evals/results/h1-must-fire/result.json`. That makes their hashes equal the recorded cards' result hashes, which ties the library cards to the recorded runs.
-- **Cost:** they hold local paths (`/work/...`, and `/tmp/claude-eval-*` trace paths). The alternative is to replace the paths, as the test fixtures do; the hash tie to the recorded cards would then be lost, and the cards would need remaking with `identify`.
+- **Done, no decision needed.** The two committed results named absolute local folders. Their paths are now relative to the repository root, and their cards were remade with `mordecai identify`. Verdict, counts, cases hash and skill hash are unchanged; only the result hash differs. Each evidence folder's NOTE.md gives the original hash, which is the one in the recorded card under docs/planted-results/.
 
 ## 4. Version stamps are optional, not required
 

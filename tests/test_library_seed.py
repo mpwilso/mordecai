@@ -78,8 +78,13 @@ def test_library_cards_are_the_recorded_results_and_check_current(monkeypatch):
         for key in ("verdict", "numbers", "rules", "tested"):
             assert card[key] == recorded[key], (copy, key)
         assert card["hashes"]["cases"] == recorded["hashes"]["cases"]
-        # The result is the raw recorded result, byte for byte.
-        assert card["hashes"]["result"] == recorded["hashes"]["result"]
+        # The result is the recorded one with its local paths made relative, so its hash
+        # differs; NOTE.md gives both hashes.
+        note = (evidence / "NOTE.md").read_text()
+        assert f"Original result hash: `{recorded['hashes']['result']}`" in note
+        assert f"This file's hash: `{card['hashes']['result']}`" in note
+        assert card["hashes"]["result"] != recorded["hashes"]["result"]
+        assert b"/" + b"home/" not in (evidence / "result.json").read_bytes()
         assert check(card, evidence) == []
         # The library card hashes the skill folder; the recorded one hashed the whole plugin.
         assert card["hashes"]["skill"] != recorded["hashes"]["skill"]

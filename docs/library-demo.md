@@ -109,8 +109,9 @@ $ cat $DEMO/mordecai-lock.json
       "path": "examples/team/library/pr-description/variants/payments/pr-description",
       "skill": "pr-description",
       "source": {
+        "library": "examples/team/library",
         "name": "team",
-        "path": "/work"
+        "path": ".."
       },
       "tag": "skill/pr-description.payments@1.0.0",
       "variant": "payments",
@@ -125,8 +126,9 @@ $ cat $DEMO/mordecai-lock.json
       "path": "examples/team/library/pr-description/variants/payments/pr-description",
       "skill": "pr-description",
       "source": {
+        "library": "examples/team/library",
         "name": "team",
-        "path": "/work"
+        "path": ".."
       },
       "tag": "skill/pr-description.payments@1.0.0",
       "variant": "payments",

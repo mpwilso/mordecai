@@ -145,9 +145,8 @@ class Plan:
 def describe_source(entry: Resolved, proj: Project) -> dict:
     spec = entry.source.spec
     out = spec.describe()
-    if spec.path is not None:
-        p = spec.path.resolve()
-        out["path"] = os.path.relpath(p, proj.root) if within(p, proj.root) else str(p)
+    if spec.path is not None and within(spec.path, proj.root):
+        out["path"] = Path(os.path.relpath(spec.path.resolve(), proj.root)).as_posix()
     return out
 
 

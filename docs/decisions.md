@@ -85,3 +85,17 @@ Reversible decisions made during the library build, each with the options consid
 - **Options:** a separate `update_skill` tool; replace without asking.
 - **Why:** the brief asks for the diff before an update replaces an installed skill. Two calls put the diff in front of the client before anything changes, and keep the tool list to the seven the brief names.
 - **Reverse:** drop the `needsConfirmation` branch in `server.py`.
+
+## D13. Library result files use paths relative to the repository
+
+- **Decision:** absolute local paths in a committed result are made relative to the repository root, by removing the leading folder, and the card is remade with `mordecai identify` from the edited file. The evidence folder's NOTE.md records the original hash.
+- **Options:** keep the raw bytes, so the result hash equals the recorded card's; replace paths with `/work/...` as the test fixtures do.
+- **Why:** no committed file may name a local home folder. Relative paths, unlike `/work/...`, still lead `identify` to the cases on disk, so the remade card keeps its cases hash and checks current. Only the result hash changes, and the note ties it back to the recorded one.
+- **Reverse:** not without putting local paths back.
+
+## D14. A lockfile records a local source's path as the config wrote it
+
+- **Decision:** `source.path` in `mordecai-lock.json` and in an export's manifest is the path text from the config (or relative to the project, if the source is inside it), not the resolved absolute folder.
+- **Options:** the resolved absolute path.
+- **Why:** lockfiles are committed with projects, and an absolute path names one machine's folders. The commit SHA already pins what was installed.
+- **Reverse:** `SourceSpec.describe()` in `sources.py`.
