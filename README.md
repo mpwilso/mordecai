@@ -9,13 +9,187 @@
 
 <p align="center"><a href="https://github.com/mpwilso/mordecai/actions/workflows/ci.yml"><img src="https://github.com/mpwilso/mordecai/actions/workflows/ci.yml/badge.svg" alt="CI status"></a></p>
 
-Status: A portfolio project, built to show how I design, test and judge an AI tool. Version 0.2.0. Its verdict rules have been checked on simulated skills and on 12 planted skill suites with real eval runs, almost all on one small model (Claude Haiku 4.5). Only the first set of five skills and two sealed holdouts were blind; on that first set, 3 of 5 got their predicted verdict. The later suites were designed after seeing those results. Every result is in [docs/planted-skills-results.md](docs/planted-skills-results.md), including the misses.
+Status: A portfolio project, built to show how I design, test and judge an AI tool. Version 0.3.0. Its verdict rules have been checked on simulated skills and on 12 planted skill suites with real eval runs, almost all on one small model (Claude Haiku 4.5). Only the first set of five skills and two sealed holdouts were blind; on that first set, 3 of 5 got their predicted verdict. The later suites were designed after seeing those results. Every result is in [docs/planted-skills-results.md](docs/planted-skills-results.md), including the misses.
 
 Mordecai is for teams that share Claude skills. Claude Code already runs a skill's test cases with and without the skill (`claude plugin eval`). Mordecai reads that result and decides what the skill can honestly claim: it helps, it hurts, the model already handles it, or there isn't enough to tell. The card it writes is tied to the exact skill, cases and model it was measured on, so a team can see when a claim has gone stale.
 
-It sits beside [Loupe](https://github.com/mpwilso/loupe), [Parallax](https://github.com/mpwilso/parallax) and [ISR](https://github.com/mpwilso/isr), and has no dependency on any of them.
+0.3.0 adds a [skill library](#the-skill-library): skills kept in Git, each with a base and named variants, each version with its own history and, when it has been measured, its card. Install copies a skill into the folder your AI coding tool reads and refuses a version whose card says it hurts.
 
-Jump to [an example card](#what-a-card-looks-like), [the verdicts](#the-verdicts), [crawl mode](#crawl-mode), [how it was tested](#how-it-was-tested), [the limits](#known-limits) or [setup](#setup).
+It sits beside [Loupe](https://github.com/mpwilso/loupe), [Parallax](https://github.com/mpwilso/parallax), [ISR](https://github.com/mpwilso/isr) and [Polarizer](https://github.com/mpwilso/polarizer), and has no dependency on any of them.
+
+Jump to [the skill library](#the-skill-library), [an example card](#what-a-card-looks-like), [the verdicts](#the-verdicts), [crawl mode](#crawl-mode), [how it was tested](#how-it-was-tested), [the limits](#known-limits) or [setup](#setup).
+
+## The skill library
+
+0.3.0 adds a way to share skills with that evidence attached. A library is a folder of skills in a Git repository. `mordecai library` installs a skill from it into the folder your AI coding tool reads, records where it came from, and refuses a version whose card says it hurts. `mordecai mcp` offers the same operations to MCP clients. It works for one person with a personal library, and for an organization with base skills and team variants. The design is in [docs/library-design.md](docs/library-design.md), the research behind it in [docs/research.md](docs/research.md), and the choices made along the way in [docs/decisions.md](docs/decisions.md).
+
+### Base and variants
+
+Each skill has a base and any number of named variants, and each of those copies is a plain skill folder that passes the Agent Skills spec's reference validator (`skills-ref validate`) on its own:
+
+```
+library/pr-description/base/pr-description/SKILL.md
+library/pr-description/base/CHANGELOG.md
+library/pr-description/variants/mobile/pr-description/SKILL.md
+library/pr-description/variants/mobile/CHANGELOG.md
+library/pr-description/variants/mobile/evidence/1.1.0/card.json    (when it has been measured)
+```
+
+The spec says a skill's `name` must match its folder, so every copy's folder is named after the skill, whichever variant it is. An installed skill always has that name, and a project has one variant of it at a time. Install copies the inner folder byte for byte, so the card's skill hash verifies against the installed copy with `mordecai check`.
+
+### Versions and history
+
+The base and each variant have their own semver version and `CHANGELOG.md`. `mordecai library release <skill> [--variant V] --bump patch|minor|major` moves the changelog's Unreleased notes under a new version, commits the copy, and creates a local annotated tag: `skill/<skill>@X.Y.Z` for a base, `skill/<skill>.<variant>@X.Y.Z` for a variant. It never pushes. The `skill/` prefix keeps these tags out of `v*` release triggers. History (`mordecai library history`) is the tags plus the changelog.
+
+Each variant records the base version it was forked from (`mordecai library fork`) or last brought up to. `mordecai library status` reports a variant that is behind its base's newest release. It never merges: a variant is someone's deliberate change.
+
+### Sources and precedence
+
+A config file (`mordecai-library.toml`) lists sources, each a GitHub repository or a local folder, with an optional ref. For each copy of a skill (its base, or one named variant), the source listed last wins. List them broad to narrow, org then team then personal, and a team can add a variant of an org skill, or a person replace one, without copying the rest. Shadowed copies are reported, never installed and never merged. [examples/library.toml](examples/library.toml) shows all three. Who may change a library is decided by GitHub: repository permissions, CODEOWNERS and branch rules.
+
+Every Git source is read at a commit, from Git's objects, never from a working tree, and every install records that commit. A private repository is read with a token from `MORDECAI_GITHUB_TOKEN` (or `GITHUB_TOKEN`), passed to Git in its environment, never read from the config, never written to the lockfile and never printed.
+
+### Verdicts gate installs
+
+A version can carry a card and the eval result it was made from, beside it in `evidence/<version>/`. The library never trusts the verdict written in the card: it checks that the result is the one the card was made from, reruns the verdict rules on it, and checks that the card's skill hash equals the hash of that version's files. Listing shows the verdict, or one of these: unmeasured (no card), stale (a card for other files), or broken (a card that doesn't match its result).
+
+Install refuses Hurts, Invalid and broken by default, and warns on stale and unmeasured. `--allow hurts` overrides one refusal, at the command line only, and the lockfile records it.
+
+In the seeded library, two variants carry real cards from the planted check. Their skill folders are byte for byte the planted skills, their result files are the recorded results unchanged, and their cards were made from them with `mordecai identify`:
+
+| Copy | Planted suite | Card | Install |
+|---|---|---|---|
+| `ferry-workflow` variant `qrx` | 1, a made-up convention | Helps (+100) | installs |
+| `branch-naming` variant `camelcase` | H1, a convention that conflicts with the graders | Hurts (-100) | refused |
+
+The rest of the seeded library (an org skill, `pr-description`, with a `platform` and a `mobile` variant, several releases each, `mobile` behind its base) is unmeasured, and says so.
+
+### Install, update and the lockfile
+
+```
+uv run mordecai library install <skill> [--variant V] [--version X.Y.Z] [--target agents|claude|github|cursor|PATH]...
+uv run mordecai library update [<skill>] [--yes]
+uv run mordecai library uninstall <skill>
+```
+
+- `agents` (`.agents/skills/`, read by Codex, Cursor and Copilot) is the default target. Claude Code's docs list `.claude/skills/` and not `.agents/skills/`, so add `--target claude` for it. `--user` installs under your home folder instead.
+- `mordecai-lock.json` in the project records each installed folder's source, ref, commit, tag, version, folder hash and verdict.
+- `update` prints a diff of every change and replaces nothing without `--yes`. Installing a different variant over an installed one works the same way.
+- Mordecai never replaces or removes a folder it didn't install, or one that changed since it did.
+- It never runs a skill's scripts. But a skill's scripts run with your permissions when your AI tool uses them, so install says when a skill has any. Read them first.
+
+**Why install rather than serve.** Claude Code, Codex, Cursor and Copilot all read each installed skill's name and description up front, and load the rest when the description matches the task. That is how a skill fires, and how it was measured. A skill served over MCP reaches the model only if the model first decides to call a tool. So install is the main path, and reading a skill over MCP is the fallback for clients without native skills.
+
+### Enterprise: export a marketplace
+
+```
+uv run mordecai library export --marketplace <dir> --name <marketplace> --owner "<org>"
+```
+
+This writes the resolved library as a Claude Code plugin marketplace: one plugin per skill, holding the copy install would pick, byte for byte, with its verdict in the description. Refused copies are left out. An organization commits the folder to a repository, and its managed settings restrict users to that marketplace (`strictKnownMarketplaces`), register it (`extraKnownMarketplaces`) and install each plugin for everyone (`enabledPlugins`). [examples/managed-settings.json](examples/managed-settings.json) is an example, explained in [examples/README.md](examples/README.md).
+
+`export --skills <dir>` writes the same copies as plain `<skill>/` folders. This repository keeps that output in [skills/](skills/), so `npx skills add mpwilso/mordecai` and APM find one copy of each skill there, instead of searching the repository and picking an arbitrary one of its several same-named copies.
+
+### Library setup
+
+```
+uv sync --extra library
+uv run mordecai library list
+```
+
+To install into another project, run it from there with `uv run --project /path/to/mordecai mordecai library install <skill>`, or pass `--project`.
+
+**The MCP server.** `mordecai mcp` is a stdio server with seven tools: `list_skills`, `search_skills`, `get_skill`, `skill_history`, `check_updates`, `install_skill` and `uninstall_skill`. The last two change files: they write only inside the targets the config's `[install] targets` allows, they're marked destructive so a client can ask you first, they can't override the install policy, and replacing an installed copy takes a second call after the diff. No tool writes to GitHub. The server reads the config from the folder it is started in (the project), and installs into that project unless you pass `--project`.
+
+None of these snippets has been run against its client. Each follows the client's own docs as read on 2026-10-06; the parts marked unverified weren't stated there.
+
+Claude Code ([docs](https://code.claude.com/docs/en/mcp)), from your project folder. Unverified: that Claude Code starts the server in the project folder and passes your environment to it.
+
+```
+claude mcp add mordecai -- uv run --project /path/to/mordecai mordecai mcp
+```
+
+GitHub Copilot in VS Code, `.vscode/mcp.json` ([docs](https://code.visualstudio.com/docs/copilot/reference/mcp-configuration)). The server starts in the workspace folder. Unverified: where `${env:...}` reads its value from.
+
+```json
+{
+  "servers": {
+    "mordecai": {
+      "type": "stdio",
+      "command": "uv",
+      "args": ["run", "--project", "/path/to/mordecai", "mordecai", "mcp"],
+      "env": { "MORDECAI_GITHUB_TOKEN": "${env:MORDECAI_GITHUB_TOKEN}" }
+    }
+  }
+}
+```
+
+Cursor, `.cursor/mcp.json` ([docs](https://cursor.com/docs/context/mcp)). Unverified: the folder Cursor starts the server in, so the project is passed explicitly.
+
+```json
+{
+  "mcpServers": {
+    "mordecai": {
+      "type": "stdio",
+      "command": "uv",
+      "args": ["run", "--project", "/path/to/mordecai", "mordecai", "mcp", "--project", "${workspaceFolder}"],
+      "env": { "MORDECAI_GITHUB_TOKEN": "${env:MORDECAI_GITHUB_TOKEN}" }
+    }
+  }
+}
+```
+
+Codex, `~/.codex/config.toml` ([docs](https://developers.openai.com/codex/mcp)). Unverified: the folder Codex starts the server in.
+
+```toml
+[mcp_servers.mordecai]
+command = "uv"
+args = ["run", "--project", "/path/to/mordecai", "mordecai", "mcp", "--project", "/path/to/your/project"]
+env_vars = ["MORDECAI_GITHUB_TOKEN"]
+```
+
+**Behind Polarizer.** Unverified, and written only from [Polarizer's README](https://github.com/mpwilso/polarizer): Polarizer can sit in front of `mordecai mcp` as an upstream server, so a person approves the tool definitions and each install or uninstall before it runs. In `polarizer.toml`:
+
+```toml
+[upstream.mordecai]
+command = "uv"
+args = ["run", "--project", "/path/to/mordecai", "mordecai", "mcp", "--project", "/path/to/your/project"]
+
+[upstream.mordecai.tools]
+list_skills = { class = "open-world" }
+search_skills = { class = "open-world" }
+get_skill = { class = "open-world" }
+skill_history = { class = "open-world" }
+check_updates = { class = "open-world" }
+install_skill = { class = "destructive" }
+uninstall_skill = { class = "destructive" }
+```
+
+The reading tools are `open-world` because a GitHub source is fetched over the network. Polarizer holds a `destructive` tool on every call, so each install and uninstall waits for you.
+
+### The demo
+
+[docs/library-demo.md](docs/library-demo.md) runs in a few seconds with no tokens and no model: it lists the library, shows history, installs a variant into a temporary project, shows the lockfile, tries the Hurts variant and gets refused, reports the variant behind its base, and exports a marketplace. Every output in it is from a real run.
+
+### How it relates to the author's other tools
+
+Mordecai has no dependency on any of them.
+
+- [Loupe](https://github.com/mpwilso/loupe) and [ISR](https://github.com/mpwilso/isr) are skills. A team could keep them in a Mordecai library and measure them; neither is in the seeded library.
+- [Parallax](https://github.com/mpwilso/parallax) runs agents that plan, build and check work in a sandbox. It doesn't install skills, and Mordecai doesn't run agents.
+- [Polarizer](https://github.com/mpwilso/polarizer) is a local MCP gateway that pins tool definitions, holds risky calls for a person and keeps a verifiable ledger. It can sit in front of `mordecai mcp`, as above.
+
+### Limits of the library
+
+- **The MCP server never writes to GitHub,** and nothing in Mordecai does yet. Releases are local tags, and pushing them is up to you. There is no GitHub Action yet that posts a card on a library pull request.
+- **Cards are only as good as their cases.** A Helps card says the skill helped on those cases, with that model. See [the verdicts](#the-verdicts) and [known limits](#known-limits).
+- **The gate trusts committed result files.** It checks that a card matches its result and its version's files, but not that the eval really ran. Someone who writes a fake result and makes a card from it passes the gate.
+- **Precedence is by rule, not merge.** The last source listed wins for each copy. Two copies are never combined, and a variant behind its base is reported, not updated.
+- **The client snippets are unverified** where marked, and none has been run against its client.
+- **Version stamps in frontmatter are optional.** The changelog is the record of versions and lineage. A skill measured before it joined the library, like the planted suites, can't carry stamps without changing the bytes its card measured. [docs/decisions.md](docs/decisions.md) has the reasoning.
+- **Mordecai isn't a general package manager.** It installs only skills, only from Mordecai library layouts, and keeps its own lockfile. It never reads or writes npx skills' or APM's lockfiles or folders, and coexists with both. If npx skills replaces a folder Mordecai installed, Mordecai reports it rather than acting on it.
+- **The release tags in this repository are local** until they're pushed. A clone without them reads every copy as untagged.
+- **Tested offline only.** Fetching from GitHub was tested against a local Git repository standing in for github.com, never against github.com itself, and the exported marketplace hasn't been tried in a managed Claude Code install.
 
 ## Why it exists
 
@@ -145,7 +319,7 @@ Two suites were rerun on Claude Sonnet 5.5 (`claude-sonnet-5-5`). Neither verdic
 
 ### Unit tests
 
-Each verdict and warning has a test on a constructed result, along with hashing, staleness, relative card paths, `lint`, `check --model` and the command line. Others feed in hostile input: malformed results and cards, paths and links that lead outside the plugin, and names carrying terminal escapes or Markdown. One test is built from the real suite 3 result, and others check that the README's example cards are what the tool prints. `uv run pytest` runs 151 tests, and none call a model. CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs the tests, lint, the format check, `scripts/brand.py --check` and `scripts/planted.py --check` on Python 3.11, 3.12 and 3.13, on every push and pull request. Live eval runs are never part of CI: they call a model and cost money, and CI has no secrets. The result format comes from a real `claude plugin eval` run, not from the docs alone.
+Each verdict and warning has a test on a constructed result, along with hashing, staleness, relative card paths, `lint`, `check --model` and the command line. Others feed in hostile input: malformed results and cards, paths and links that lead outside the plugin, and names carrying terminal escapes or Markdown. One test is built from the real suite 3 result, and others check that the README's example cards are what the tool prints. The library's tests cover every command, including hostile sources and targets (path traversal, links, malformed frontmatter, a name that doesn't match its folder, a card that doesn't match its version's files or its result), the byte-for-byte install, the seeded library, and the MCP server through the SDK's in-process client and over stdio. `uv run pytest` runs 157 tests without the library extra (its seven test files skip), and 277 with it (`uv sync --extra library --group spec`). None call a model or reach the network. CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs the tests, lint, the format check, `scripts/brand.py --check` and `scripts/planted.py --check` on Python 3.11, 3.12 and 3.13, on every push and pull request, and runs the tests again with the library extra. Live eval runs are never part of CI: they call a model and cost money, and CI has no secrets. The result format comes from a real `claude plugin eval` run, not from the docs alone.
 
 ### What wasn't checked
 
@@ -176,6 +350,8 @@ git clone https://github.com/mpwilso/mordecai
 cd mordecai
 uv sync
 ```
+
+`uv sync` is enough for `identify`, `check` and `lint`, which use only the standard library. The skill library and its MCP server need `uv sync --extra library`; see [its setup](#library-setup).
 
 Check your cases, run your skill's eval with a pinned model, then read it:
 
@@ -208,13 +384,14 @@ Stale: docs/planted-results/2-commits.card.json
 1. A way to report a skill that rarely fires, distinct from Inconclusive (see [known limits](#known-limits)).
 2. A planted skill with a moderate effect, to check the simulation's +20 point finding on real runs.
 3. `mordecai measure`: run the eval with a pinned model and a cost cap, then write the card, in one step.
-4. A registry template: a Git repo that's also a Claude Code plugin marketplace, with a GitHub Action that posts each skill's card on its pull request and blocks the merge on Hurts, Invalid or a stale card.
 
 ## Prior art
 
 - [`claude plugin eval`](https://code.claude.com/docs/en/plugin-evals) runs the cases, both arms and the graders. Mordecai only reads its result.
 - [SWE-Skills-Bench](https://arxiv.org/abs/2603.15401) and [SkillsBench](https://arxiv.org/abs/2602.12670) measured how often skills help, with and without.
-- [NVIDIA SkillEvaluator](https://developer.nvidia.com/blog/evaluating-ai-agent-skill-performance-with-nvidia-skillevaluator/) reports a with-minus-without "skill lift", and says it doesn't report confidence intervals.
+- [NVIDIA SkillEvaluator](https://developer.nvidia.com/blog/evaluating-ai-agent-skill-performance-with-nvidia-skillevaluator/) reports a with-minus-without "skill lift", and says it doesn't report confidence intervals. NVIDIA's [skills catalog](https://docs.nvidia.com/skills/evaluating-agent-skills) gates publication on a with-and-without eval, and [Tessl's registry](https://tessl.io/blog/introducing-task-evals-measure-whether-your-skills-actually-work/) shows with-and-without scores for each version.
+- [npx skills](https://github.com/vercel-labs/skills) and [APM](https://github.com/microsoft/apm) install skills with lockfiles. Mordecai's library coexists with both and doesn't replace them.
+- Skill MCP servers such as [agentskills-mcp](https://github.com/pinkpixel-dev/agentskills-mcp) and [tiger-skills-mcp-server](https://github.com/timescale/tiger-skills-mcp-server) list, read and install skills, and registries such as [Speakeasy's](https://www.speakeasy.com/docs/ai-control-plane/mcp-gateway/skills) track versions and drift. None of those gates an install on a measured result for that version's files. [docs/research.md](docs/research.md) has the comparison.
 
 ## License
 

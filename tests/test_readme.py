@@ -52,3 +52,41 @@ def test_the_planted_card_matches_the_recorded_one_but_for_the_result_hash(monke
     assert recorded["hashes"]["result"][:19] not in shown
     assert recorded["hashes"]["result"][7:19] in README
     assert recorded["verdict"] == "helps"
+
+
+def _slugs(text: str) -> set[str]:
+    """GitHub's heading anchors: lowercase, punctuation dropped, spaces as hyphens, and -1, -2
+    on repeats."""
+    seen: dict[str, int] = {}
+    out = set()
+    for heading in re.findall(r"^#{1,6} (.+)$", text, re.M):
+        slug = re.sub(r"[^\w\- ]", "", heading.strip().lower()).replace(" ", "-")
+        n = seen.get(slug, 0)
+        seen[slug] = n + 1
+        out.add(slug if n == 0 else f"{slug}-{n}")
+    return out
+
+
+def test_every_anchor_link_in_the_readme_has_a_heading():
+    links = set(re.findall(r"\]\(#([^)]+)\)", README))
+    assert links and links <= _slugs(README), links - _slugs(README)
+
+
+def test_the_readme_links_all_four_sibling_tools():
+    for tool in ("loupe", "parallax", "isr", "polarizer"):
+        assert f"https://github.com/mpwilso/{tool})" in README
+
+
+def test_no_em_or_en_dashes_in_the_readme_and_library_docs():
+    docs = [
+        "README.md",
+        "examples/README.md",
+        "docs/research.md",
+        "docs/library-design.md",
+        "docs/library-demo.md",
+        "docs/decisions.md",
+        "docs/build-log.md",
+    ]
+    for doc in docs:
+        text = (ROOT / doc).read_text(encoding="utf-8")
+        assert chr(0x2014) not in text and chr(0x2013) not in text, doc

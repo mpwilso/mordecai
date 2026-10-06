@@ -1,6 +1,6 @@
 [project]
 name = "mordecai-skills"
-version = "0.2.0"
+version = "0.3.0"
 description = "Reads a skill's eval results and says what the skill can honestly claim: helps, hurts, already handled, or can't tell yet."
 readme = "README.md"
 license = "MIT"
