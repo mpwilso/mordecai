@@ -2,9 +2,14 @@
 mode for fun.
 
 Crawl mode only adds lines around the plain card's stat block, from fixed templates. It never
-computes anything, so it can't show a different number or verdict. tests/test_render.py pins
-that the stat block is identical in both.
+computes anything, so it can't show a different number or verdict. tests/test_card.py pins
+that the stat block is identical in every mode.
+
+Names, models, reasons and warnings can carry text from a result someone else wrote. Every mode
+prints them through clean(), so they can't send terminal escapes or start a new line.
 """
+
+from dataclasses import replace
 
 from mordecai.card import Card
 
@@ -31,6 +36,43 @@ NEXT = {
 }
 
 
+# Control characters, and the Unicode marks that reorder text or break a line. clean() prints
+# them as escapes such as \x1b, so a crafted name can't move the cursor, recolor or clear the
+# screen, add a line that looks like a verdict, or reverse what follows it.
+UNSAFE = frozenset(
+    [*range(0x20), *range(0x7F, 0xA0), 0x061C, 0x200E, 0x200F, 0x2028, 0x2029]
+    + [*range(0x202A, 0x202F), *range(0x2066, 0x206A)]
+)
+
+
+def clean(text: str) -> str:
+    """text with every unsafe character written as a visible escape. Safe to apply twice."""
+    return "".join(
+        (f"\\x{ord(c):02x}" if ord(c) < 0x100 else f"\\u{ord(c):04x}") if ord(c) in UNSAFE else c
+        for c in text
+    )
+
+
+def _clean_or_none(text: str | None) -> str | None:
+    return None if text is None else clean(text)
+
+
+def _safe(card: Card) -> Card:
+    """The card with every field that can come from a result made printable."""
+    r = card.reading
+    return replace(
+        card,
+        plugin=clean(card.plugin),
+        version=_clean_or_none(card.version),
+        skills=tuple(clean(s) for s in card.skills),
+        model=_clean_or_none(card.model),
+        judge_model=_clean_or_none(card.judge_model),
+        claude_version=_clean_or_none(card.claude_version),
+        started_at=_clean_or_none(card.started_at),
+        reading=replace(r, reason=clean(r.reason), warnings=tuple(clean(w) for w in r.warnings)),
+    )
+
+
 def _pct(x: float | None) -> str:
     return "?" if x is None else f"{round(x * 100)}%"
 
@@ -49,6 +91,7 @@ def _short(h: str | None) -> str:
 
 def stat_block(card: Card) -> list[str]:
     """The facts, the same in every mode."""
+    card = _safe(card)
     r = card.reading
     lines = []
     if r.change is not None:
@@ -96,6 +139,7 @@ def _warnings(card: Card) -> list[str]:
 
 
 def plain(card: Card) -> str:
+    card = _safe(card)
     r = card.reading
     lines = [f"{card.title}: {LABEL[r.verdict]}", r.reason, ""]
     lines += ["  " + s for s in stat_block(card)]
@@ -105,6 +149,7 @@ def plain(card: Card) -> str:
 
 
 def markdown(card: Card) -> str:
+    card = _safe(card)
     r = card.reading
     lines = [f"### {card.title}: {LABEL[r.verdict]}", "", r.reason, "", "```"]
     lines += stat_block(card)
@@ -181,6 +226,7 @@ COLOR = {
 
 
 def crawl(card: Card, width: int = 64, color: bool = False) -> str:
+    card = _safe(card)
     r = card.reading
     pts = _pts(r.change) if r.change is not None else "+0"
     fields = {"n": r.cases_compared, "runs": r.fired[1] if r.fired else 0, "pts": pts}

@@ -12,7 +12,7 @@ from mordecai import __version__
 from mordecai.card import CardError, build, check, to_json
 from mordecai.lint import lint
 from mordecai.provenance import PathError
-from mordecai.render import crawl, markdown, plain
+from mordecai.render import clean, crawl, markdown, plain
 from mordecai.result import ResultError, load, read_json
 from mordecai.verdict import VERDICTS
 
@@ -74,7 +74,7 @@ def identify(args, out) -> int:
     unknown = fail_on - set(VERDICTS)
     if unknown:
         print(
-            f"mordecai: unknown verdict(s) for --fail-on: {', '.join(sorted(unknown))}",
+            f"mordecai: unknown verdict(s) for --fail-on: {clean(', '.join(sorted(unknown)))}",
             file=sys.stderr,
         )
         return 2
@@ -86,7 +86,7 @@ def identify(args, out) -> int:
         if args.markdown:
             args.markdown.write_text(markdown(card), encoding="utf-8", newline="\n")
     except (ResultError, PathError, OSError) as e:
-        print(f"mordecai: {e}", file=sys.stderr)
+        print(f"mordecai: {clean(str(e))}", file=sys.stderr)
         return 2
     if args.crawl:
         color = _color_ok(out)
@@ -103,12 +103,13 @@ def check_card(args, out) -> int:
         doc, _ = read_json(args.card, "a card")
         changes = check(doc, args.card.parent, args.skill, args.cases_root, args.model)
     except (ResultError, CardError, PathError, OSError) as e:
-        print(f"mordecai: can't check {args.card}: {e}", file=sys.stderr)
+        print(f"mordecai: can't check {clean(str(args.card))}: {clean(str(e))}", file=sys.stderr)
         return 2
+    name = clean(str(args.card))
     if not changes:
-        out.write(f"Current: {args.card} matches the skill and cases it was measured on.\n")
+        out.write(f"Current: {name} matches the skill and cases it was measured on.\n")
         return 0
-    out.write(f"Stale: {args.card}\n" + "".join(f"  - {c}\n" for c in changes))
+    out.write(f"Stale: {name}\n" + "".join(f"  - {clean(c)}\n" for c in changes))
     return 1
 
 
@@ -118,10 +119,10 @@ def lint_plugins(args, out) -> int:
         files, warnings = lint(plugin)
         quiet = sum(1 for f in files if f.case.trigger == "should-not-fire")
         out.write(
-            f"{plugin}: {len(files)} cases ({len(files) - quiet} compared, {quiet} quiet), "
-            f"{len(warnings)} warning(s)\n"
+            f"{clean(str(plugin))}: {len(files)} cases ({len(files) - quiet} compared, "
+            f"{quiet} quiet), {len(warnings)} warning(s)\n"
         )
-        out.write("".join(f"  - {w}\n" for w in warnings))
+        out.write("".join(f"  - {clean(w)}\n" for w in warnings))
         worst = max(worst, 1 if warnings else 0)
     return worst
 
