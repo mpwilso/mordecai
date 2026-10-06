@@ -33,7 +33,11 @@ def _parser() -> argparse.ArgumentParser:
 
     i = sub.add_parser("identify", help="read a claude plugin eval result and print the card")
     i.add_argument("result", type=Path, help="the JSON from claude plugin eval --json")
-    i.add_argument("--skill", type=Path, help="the plugin directory, if not where it was run")
+    i.add_argument(
+        "--skill",
+        type=Path,
+        help="the plugin directory, if it has moved or is outside the current directory",
+    )
     i.add_argument("--card", type=Path, help="also write the card as JSON here")
     i.add_argument("--markdown", type=Path, help="also write the card as Markdown here")
     mode = i.add_mutually_exclusive_group()
@@ -56,9 +60,15 @@ def _parser() -> argparse.ArgumentParser:
         help=f"exit 1 on these verdicts, comma-separated: {', '.join(VERDICTS)}",
     )
 
-    c = sub.add_parser("check", help="exit 1 if a card's skill or cases have changed")
-    c.add_argument("card", type=Path)
-    c.add_argument("--skill", type=Path, help="the plugin directory, if it has moved")
+    c = sub.add_parser(
+        "check", help="exit 1 if a card's skill, cases or (with --model) model have changed"
+    )
+    c.add_argument("card", type=Path, help="a card written by identify --card")
+    c.add_argument(
+        "--skill",
+        type=Path,
+        help="the plugin directory, if it has moved or is outside the current directory",
+    )
     c.add_argument("--cases-root", type=Path, help="the directory holding the cases, if moved")
     c.add_argument(
         "--model", help="the model you use now; a card measured on another model is stale"
