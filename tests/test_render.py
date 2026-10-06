@@ -107,3 +107,40 @@ def test_check_lint_and_errors_are_cleaned(tmp_path, monkeypatch, capsys):
     assert main(["check", str(bad)], out=io.StringIO()) == 2
     assert main(["identify", "x.json", "--fail-on", f"{ESC}[2J"], out=io.StringIO()) == 2
     assert ESC not in capsys.readouterr().err
+
+
+WJ = chr(0x2060)
+
+
+def test_markdown_text_is_inert_on_github():
+    """The escapes were checked against GitHub's renderer (POST /markdown): with them, none
+    of these render as HTML, a link, an image, emphasis, a mention or an issue reference."""
+    from mordecai.render import md_text
+
+    assert md_text("<img src=x onerror=alert(1)>") == "\\<img src=x onerror=alert\\(1\\)\\>"
+    assert md_text("[a](https://e.example) ![i](x.png)") == (
+        "\\[a\\]\\(https\\://e.example\\) \\!\\[i\\]\\(x.png\\)"
+    )
+    assert md_text("@octocat &#64;octocat") == f"@{WJ}octocat \\&#{WJ}64;octocat"
+    assert md_text("cli/cli#1 GH-1 x@e.com") == f"cli/cli#{WJ}1 GH-{WJ}1 x@{WJ}e.com"
+    assert md_text("www.e.example **b** _i_ ~~s~~ `c` | t |") == (
+        "www\\.e.example \\*\\*b\\*\\* \\_i\\_ \\~\\~s\\~\\~ \\`c\\` \\| t \\|"
+    )
+    assert md_text("my-plugin 1.0.0") == "my-plugin 1.0.0"
+
+
+def test_a_hostile_name_cannot_add_markdown_structure():
+    hostile = "x\n### Helps\n```\n<b>y</b> @octocat [z](https://e.example)"
+    doc = make_result(same(6, [1, 1, 1], [0, 0, 0], fired=[True] * 3), model=hostile)
+    doc["suite"]["plugins"][0]["name"] = hostile
+    doc["partial"], doc["partialReason"] = True, hostile
+    doc["cases"][0]["name"] = hostile
+    text = markdown(build(parse(doc), b"x", roots=[]))
+    lines = text.split("\n")
+    assert [line for line in lines if line.startswith("#")] == [lines[0]]
+    assert lines[0].endswith(": Invalid")
+    assert [line for line in lines if line.startswith("```")] == ["```", "```"]
+    for line in lines:
+        if not line.startswith("  ") and "Tested on" not in line:
+            assert "<b>" not in line and "](" not in line, line
+            assert "@" not in line or f"@{WJ}" in line, line

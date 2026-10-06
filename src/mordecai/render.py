@@ -9,6 +9,7 @@ Names, models, reasons and warnings can carry text from a result someone else wr
 prints them through clean(), so they can't send terminal escapes or start a new line.
 """
 
+import re
 from dataclasses import replace
 
 from mordecai.card import Card
@@ -71,6 +72,28 @@ def _safe(card: Card) -> Card:
         started_at=_clean_or_none(card.started_at),
         reading=replace(r, reason=clean(r.reason), warnings=tuple(clean(w) for w in r.warnings)),
     )
+
+
+# Markdown is meant for pull request comments, where a name could otherwise become HTML, a link,
+# an image, emphasis, a table cell or a ping. Each was checked against GitHub's own renderer:
+# a backslash stops all of those but mentions and issue references, which need a word joiner
+# after the @ or #. & is escaped too, since &#64; renders as a mention.
+MD_ESCAPE = frozenset("\\`*_[]<>()!|~:&")
+WORD_JOINER = chr(0x2060)
+
+
+def md_text(text: str) -> str:
+    """text, cleaned, then made inert in GitHub Markdown outside a code block."""
+    out = []
+    for c in clean(text):
+        if c in MD_ESCAPE:
+            out.append("\\" + c)
+        elif c in "@#":
+            out.append(c + WORD_JOINER)
+        else:
+            out.append(c)
+    text = re.sub(r"(?i)\b(www)\.", r"\1\\.", "".join(out))
+    return re.sub(r"(?i)\b(gh-)(?=\d)", r"\1" + WORD_JOINER, text)
 
 
 def _pct(x: float | None) -> str:
@@ -151,11 +174,13 @@ def plain(card: Card) -> str:
 def markdown(card: Card) -> str:
     card = _safe(card)
     r = card.reading
-    lines = [f"### {card.title}: {LABEL[r.verdict]}", "", r.reason, "", "```"]
+    # The stat block is a code block, where nothing renders. Its lines all start with fixed
+    # text and cleaned fields can't add a line, so nothing in it can close the fence.
+    lines = [f"### {md_text(card.title)}: {LABEL[r.verdict]}", "", md_text(r.reason), "", "```"]
     lines += stat_block(card)
     lines += ["```"]
     if r.warnings:
-        lines += ["", "**Warnings**", ""] + [f"- {w}" for w in r.warnings]
+        lines += ["", "**Warnings**", ""] + [f"- {md_text(w)}" for w in r.warnings]
     lines += ["", f"**Next:** {NEXT[r.verdict]}"]
     return "\n".join(lines) + "\n"
 
