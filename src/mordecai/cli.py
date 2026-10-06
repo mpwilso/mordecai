@@ -36,11 +36,18 @@ def _parser() -> argparse.ArgumentParser:
     i.add_argument("--skill", type=Path, help="the plugin directory, if not where it was run")
     i.add_argument("--card", type=Path, help="also write the card as JSON here")
     i.add_argument("--markdown", type=Path, help="also write the card as Markdown here")
-    i.add_argument(
+    mode = i.add_mutually_exclusive_group()
+    mode.add_argument(
         "--crawl",
         action="store_true",
         default=os.environ.get("MORDECAI_MODE") == "crawl",
         help="dungeon mode: the same card, with loot and commentary (or MORDECAI_MODE=crawl)",
+    )
+    mode.add_argument(
+        "--plain",
+        dest="crawl",
+        action="store_false",
+        help="the plain card, even when MORDECAI_MODE=crawl is set",
     )
     i.add_argument(
         "--fail-on",
@@ -78,7 +85,8 @@ def identify(args, out) -> int:
     unknown = fail_on - set(VERDICTS)
     if unknown:
         print(
-            f"mordecai: unknown verdict(s) for --fail-on: {clean(', '.join(sorted(unknown)))}",
+            f"mordecai: unknown verdict(s) for --fail-on: {clean(', '.join(sorted(unknown)))}. "
+            f"Use {', '.join(VERDICTS)}.",
             file=sys.stderr,
         )
         return 2
