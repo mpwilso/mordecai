@@ -123,17 +123,23 @@ def _number(raw: dict, key: str, where: str, high: float | None = None) -> float
 
 
 def skill_graders(case: dict) -> tuple[set[str], set[str]]:
-    """Names of the case's tool_used graders on the Skill tool: those that expect it to fire,
-    and those that expect it not to (max: 0)."""
+    """Names of the case's tool_used graders on the Skill tool: those that expect it to fire
+    (min, 1 by default, a whole number of at least 1), and those that expect it not to (max: 0).
+    Any other range can't tell either, like min: 0 with no max, which always passes."""
+
+    def whole(v) -> bool:
+        return isinstance(v, int) and not isinstance(v, bool)
+
     fire, silent = set(), set()
     for g in _items(case, "graders", f"case {case.get('name')!r}"):
         config = _get(g, "config", dict, "a grader") or {}
         name = _get(g, "name", str, "a grader")
         if g.get("type") != "tool_used" or config.get("tool") != "Skill":
             continue
-        if config.get("max") == 0:
+        low, high = config.get("min", 1), config.get("max")
+        if whole(high) and high == 0:
             silent.add(name)
-        else:
+        elif whole(low) and low >= 1:
             fire.add(name)
     return fire, silent
 

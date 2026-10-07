@@ -216,3 +216,25 @@ def test_a_refusal_inside_the_runs_own_folder_is_blocked(tmp_path):
     # With no init message there's no folder to judge by, so nothing counts as blocked.
     assert refusals(*inside, first=None) == result.Refusals(4, 0)
     assert result.trace_denials(tmp_path / "trace.jsonl") == 4
+
+
+def test_only_graders_that_can_fail_count_as_skill_graders():
+    """A tool_used grader on Skill counts as "it must fire" only when its min (1 by default)
+    is a whole number of at least 1, and as "it must stay quiet" only when its max is the
+    whole number 0. min: 0 with no max always passes, so counting it would hide Never fired;
+    false and 0.0 equal 0 in Python but aren't the 0 the eval means."""
+
+    def graders(**config):
+        g = {"name": "g", "type": "tool_used", "config": {"tool": "Skill", **config}}
+        return result.skill_graders({"name": "c", "graders": [g]})
+
+    assert graders() == ({"g"}, set())
+    assert graders(min=1) == ({"g"}, set())
+    assert graders(min=2) == ({"g"}, set())
+    assert graders(max=0) == (set(), {"g"})
+    assert graders(min=0, max=0) == (set(), {"g"})
+    assert graders(min=0) == (set(), set())
+    assert graders(max=False) == ({"g"}, set())
+    assert graders(max=0.0) == ({"g"}, set())
+    assert graders(min=True) == (set(), set())
+    assert graders(min=0.5) == (set(), set())
