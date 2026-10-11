@@ -94,8 +94,8 @@ def test_check_model_on_the_suite_2_pair():
 SCENARIOS = {
     "helps": same(6, [1, 1, 1], [0, 0, 0], fired=[True] * 3),
     "hurts": same(6, [0, 0, 0], [1, 1, 1], fired=[True] * 3),
-    "already-handled": same(6, [1, 1, 1], [1, 1, 1], fired=[True] * 3),
-    "no-effect": same(6, [0, 0, 0], [0, 0, 0], fired=[True] * 3),
+    "already-handled": same(10, [1, 1, 1], [1, 1, 1], fired=[True] * 3),
+    "no-effect": same(10, [0, 0, 0], [0, 0, 0], fired=[True] * 3),
     "inconclusive": same(2, [1, 1, 1], [0, 0, 0], fired=[True] * 3),
     "never-fired": same(6, [1, 1, 1], [0, 0, 0], fired=[False] * 3),
     "rarely-fired": fired_in(1, 6, [1, 1, 1], [0, 0, 0]),

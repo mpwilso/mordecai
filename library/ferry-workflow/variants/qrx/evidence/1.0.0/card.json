@@ -5,8 +5,12 @@
     "result": "sha256:3bb5d8ac7c8e782c48580164d16c8420e6218bed76e6546bb416d66513c1efb4",
     "skill": "sha256:6f05f0dadc4921f984f206d238ba8edfb6bea341a3253f5abb2e24f04e4ab64b"
   },
-  "mordecai": "0.3.0",
+  "mordecai": "0.5.0",
   "numbers": {
+    "agreement": {
+      "cases": 9,
+      "couldDiffer": 0.2257
+    },
     "casesCompared": 9,
     "change": 1.0,
     "costPerRunWith": 0.01914068888888889,
@@ -17,10 +21,7 @@
     ],
     "flat": 0,
     "improved": 9,
-    "interval": [
-      1.0,
-      1.0
-    ],
+    "interval": null,
     "misfired": [
       0,
       9
@@ -53,7 +54,7 @@
     },
     "skill": "../../ferry-workflow"
   },
-  "reason": "The skill raised the score: 90% interval +100 to +100 points.",
+  "reason": "The skill raised the score by 100 points in 9 of 9 cases. At 90% confidence, up to 23% of cases like these could differ.",
   "rules": {
     "ceiling": 0.9,
     "confidence": 0.9,
@@ -74,5 +75,7 @@
     "startedAt": "2026-10-05T22:13:29.047Z"
   },
   "verdict": "helps",
-  "warnings": []
+  "warnings": [
+    "2 of 72 runs had a tool call refused by permissions (0 with the skill, 2 without). They were graded on what they produced, so a refusal, not the skill, may have moved their scores."
+  ]
 }

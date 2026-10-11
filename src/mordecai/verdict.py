@@ -16,6 +16,9 @@ The order is fixed, and the first rule that applies wins:
 9. No effect: the interval sits inside plus or minus the minimum effect.
 10. Inconclusive: anything else. The interval is too wide to call.
 
+Already handled and No effect also need at least NULL_MIN_CASES compared cases; with fewer, the
+card is Inconclusive and says why.
+
 Rules 7 and 8 changed in 0.2.0. Before, Already handled checked only for a gain, and in the
 planted skills check it gave a skill that did harm whenever it fired a calm label
 (docs/planted-skills-results.md, suite 3). The change was designed after seeing that result.
@@ -23,6 +26,12 @@ planted skills check it gave a skill that did harm whenever it fired a calm labe
 Rule 3 was added in 0.4.0 (D21 in docs/decisions.md), with a warning when the skill fired in
 some but under half of those runs. It was designed after seeing planted suite V1, whose skill
 fired in 1 of 27 runs.
+
+Since 0.5.0 (D22, chosen after seeing the planted cards whose interval was a single point):
+when every compared case has the same change and every run in each arm agrees, the bootstrap
+can only return that one number, so the reading has no interval. It reports the N of N cases
+and an exact one-sided binomial bound on the share of cases like these that could differ, and
+the verdict is decided from the change as before. No effect and Already handled need 10 cases.
 
 Cases that check the skill does *not* fire (a Skill grader with max: 0) are left out of the
 change and reported as misfires instead, since the run without the skill passes them by
@@ -51,6 +60,10 @@ VERDICTS = (
 # records stay the same fields (D20); the card's mordecai version says which thresholds applied.
 RARE_FIRE = 0.10
 LOW_FIRE = 0.50
+
+# D22: No effect and Already handled claim the effect is near zero, which takes more cases than
+# a large effect does. A constant, not a Rules field, for the same reason as D21's thresholds.
+NULL_MIN_CASES = 10
 
 # Errors that mean the run says nothing about the skill. The docs warn that a run which hits
 # a limit is still graded, usually scores 0, and doesn't mark the suite partial.
@@ -92,6 +105,8 @@ class Reading:
     turns_without: float | None
     warnings: tuple[str, ...] = field(default_factory=tuple)
     blocked_runs: int = 0  # runs the setup refused inside their own folder (D19)
+    # D22: when every case agrees, (cases, the most of cases like these that could differ)
+    agreement: tuple[int, float] | None = None
 
 
 def _mean(xs) -> float | None:
@@ -127,6 +142,22 @@ def interval(cases: list[Case], rules: Rules) -> tuple[float, float]:
     lo = means[int(tail * rules.resamples)]
     hi = means[min(rules.resamples - 1, int((1 - tail) * rules.resamples))]
     return round(lo, 4), round(hi, 4)
+
+
+def agreement_bound(n: int, confidence: float) -> float:
+    """The exact one-sided (Clopper-Pearson) upper bound on the share of cases that could
+    differ, when none of n did: the p with (1 - p)^n = 1 - confidence."""
+    return 1 - (1 - confidence) ** (1 / n)
+
+
+def _unanimous(cases: list[Case]) -> float | None:
+    """The change, if every case has the same change and every run in each arm agrees, so the
+    bootstrap could only return that one number (D22). Otherwise None."""
+    for c in cases:
+        if len({r.score for r in c.with_runs}) > 1 or len({r.score for r in c.without_runs}) > 1:
+            return None
+    changes = {round(case_change(c), 4) for c in cases}
+    return changes.pop() if len(changes) == 1 else None
 
 
 def _problems(suite: Suite) -> list[str]:
@@ -308,34 +339,65 @@ def read(
             f"Only {len(effect)} case(s) were compared; the rules need at least {rules.min_cases}.",
         )
 
-    lo, hi = iv = interval(effect, rules)
-    span = f"{_pts(lo)} to {_pts(hi)} points"
     conf = f"{round(rules.confidence * 100)}%"
     change = base["change"]
+    minimum = f"{round(rules.min_effect * 100)} points"
+    n = len(effect)
+    same = _unanimous(effect)
+    if same is not None:
+        # D22 (a): the interval would be the single point (same, same). The verdict uses it;
+        # the card reports the cases and the bound instead.
+        lo = hi = same
+        bound = agreement_bound(n, rules.confidence)
+        agreement, shown = (n, round(bound, 4)), None
+        tail = (
+            f" At {conf} confidence, up to {round(bound * 100)}% of cases like these could differ."
+        )
+        moved = f"{abs(round(same * 100))} points in {n} of {n} cases"
+        lowered = f"The skill lowered the score by {moved}.{tail}"
+        raised = f"The skill raised the score by {moved}.{tail}"
+        change_was = f"the change was {_pts(same)} points in {n} of {n} cases"
+        handled = f", and {change_was}.{tail}"
+        flat = f"The {change_was[4:]}, inside plus or minus {minimum}.{tail}"
+        few = (
+            f"The {change_was[4:]}, but {{}} needs at least {NULL_MIN_CASES} compared cases.{tail}"
+        )
+    else:
+        lo, hi = shown = interval(effect, rules)
+        agreement = None
+        span = f"{_pts(lo)} to {_pts(hi)} points"
+        lowered = f"The skill lowered the score: {conf} interval {span}."
+        raised = f"The skill raised the score: {conf} interval {span}."
+        handled = f", and the {conf} interval ({span}) rules out a gain or a loss of {minimum}."
+        inside = f"The {conf} interval ({span}) stays inside plus or minus {minimum}"
+        flat = f"{inside}."
+        few = (
+            f"{inside}, but {{}} needs at least {NULL_MIN_CASES} compared cases; {n} were compared."
+        )
+
+    def call(name, reason):
+        return Reading(verdict=name, reason=reason, interval=shown, agreement=agreement, **base)
+
+    def null(name, label, reason):
+        """D22 (b): a null claim needs NULL_MIN_CASES cases."""
+        return call("inconclusive", few.format(label)) if n < NULL_MIN_CASES else call(name, reason)
+
     if hi < 0:
-        return verdict("hurts", f"The skill lowered the score: {conf} interval {span}.", iv)
+        return call("hurts", lowered)
     if lo > 0 and change >= rules.min_effect:
-        return verdict("helps", f"The skill raised the score: {conf} interval {span}.", iv)
+        return call("helps", raised)
     if base["without_score"] >= rules.ceiling and hi < rules.min_effect:
         scored = f"The model scored {round(base['without_score'] * 100)}% without the skill"
         if lo > -rules.min_effect:
-            return verdict(
-                "already-handled",
-                f"{scored}, and the {conf} interval ({span}) rules out a gain or a loss of "
-                f"{round(rules.min_effect * 100)} points.",
-                iv,
-            )
-        return verdict(
+            return null("already-handled", "Already handled", scored + handled)
+        return call(
             "inconclusive",
-            f"{scored}, but the {conf} interval ({span}) doesn't rule out a loss of "
-            f"{round(rules.min_effect * 100)} points.",
-            iv,
+            f"{scored}, but the {conf} interval ({_pts(lo)} to {_pts(hi)} points) doesn't rule "
+            f"out a loss of {minimum}.",
         )
     if lo > -rules.min_effect and hi < rules.min_effect:
-        return verdict(
-            "no-effect",
-            f"The {conf} interval ({span}) stays inside plus or minus "
-            f"{round(rules.min_effect * 100)} points.",
-            iv,
-        )
-    return verdict("inconclusive", f"The {conf} interval runs {span}, too wide to call.", iv)
+        return null("no-effect", "No effect", flat)
+    return call(
+        "inconclusive",
+        f"The {conf} interval runs {_pts(lo)} to {_pts(hi)} points, too wide to call.",
+    )

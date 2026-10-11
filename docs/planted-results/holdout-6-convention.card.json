@@ -5,8 +5,12 @@
     "result": "sha256:202df37527d3781ccba4109c29bbc01898f6266ce4f6eabfcfe986c9a185d008",
     "skill": "sha256:c21f2c4808219aafb110877b53b6bd65b60f0b116d4a1b20248d011fdb0d39af"
   },
-  "mordecai": "0.3.0",
+  "mordecai": "0.5.0",
   "numbers": {
+    "agreement": {
+      "cases": 9,
+      "couldDiffer": 0.2257
+    },
     "casesCompared": 9,
     "change": 1.0,
     "costPerRunWith": 0.018672555555555557,
@@ -17,10 +21,7 @@
     ],
     "flat": 0,
     "improved": 9,
-    "interval": [
-      1.0,
-      1.0
-    ],
+    "interval": null,
     "misfired": [
       0,
       9
@@ -53,7 +54,7 @@
     },
     "skill": "../../evals/planted/holdout/6-convention"
   },
-  "reason": "The skill raised the score: 90% interval +100 to +100 points.",
+  "reason": "The skill raised the score by 100 points in 9 of 9 cases. At 90% confidence, up to 23% of cases like these could differ.",
   "rules": {
     "ceiling": 0.9,
     "confidence": 0.9,

@@ -192,6 +192,11 @@ def to_json(card: Card, base: Path | None = None) -> str:
             "turnsPerRunWith": r.turns_with,
             "turnsPerRunWithout": r.turns_without,
             **({"blockedRuns": r.blocked_runs} if r.blocked_runs else {}),
+            **(
+                {"agreement": {"cases": r.agreement[0], "couldDiffer": r.agreement[1]}}
+                if r.agreement
+                else {}
+            ),
         },
         "warnings": list(r.warnings),
         "tested": {

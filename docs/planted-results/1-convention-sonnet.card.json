@@ -5,8 +5,12 @@
     "result": "sha256:d86cbf66bd42b9d169b8fd61bbd74b6660c6d13ecfb09dcd75a6ce5695fd7350",
     "skill": "sha256:f35f631cd4d56be549cbde93716b7e205a49ca31af97911c9f477bc6ef5390b7"
   },
-  "mordecai": "0.3.0",
+  "mordecai": "0.5.0",
   "numbers": {
+    "agreement": {
+      "cases": 9,
+      "couldDiffer": 0.2257
+    },
     "casesCompared": 9,
     "change": 1.0,
     "costPerRunWith": 0.025746451851851853,
@@ -17,10 +21,7 @@
     ],
     "flat": 0,
     "improved": 9,
-    "interval": [
-      1.0,
-      1.0
-    ],
+    "interval": null,
     "misfired": [
       0,
       9
@@ -53,7 +54,7 @@
     },
     "skill": "../../evals/planted/1-convention"
   },
-  "reason": "The skill raised the score: 90% interval +100 to +100 points.",
+  "reason": "The skill raised the score by 100 points in 9 of 9 cases. At 90% confidence, up to 23% of cases like these could differ.",
   "rules": {
     "ceiling": 0.9,
     "confidence": 0.9,

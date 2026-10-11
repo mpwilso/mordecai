@@ -34,9 +34,9 @@ This is suite 1 from the planted check, a made-up branch and pull request conven
 ```
 $ uv run mordecai identify tests/fixtures/suite1-result.json --skill evals/planted/1-convention
 planted-convention 1.0.0: Helps
-The skill raised the score: 90% interval +100 to +100 points.
+The skill raised the score by 100 points in 9 of 9 cases. At 90% confidence, up to 23% of cases like these could differ.
 
-  With 100% · Without 0% · Change +100 pts (90% interval +100 to +100)
+  With 100% · Without 0% · Change +100 pts in 9 of 9 cases (90% bound: up to 23% of cases could differ)
   Cases 9: 9 better, 0 same, 0 worse
   Fired in 27 of 27 runs that needed it, fired in 0 of 9 runs that didn't
   Cost per run $0.019 with, $0.025 without (-23%) · Turns 3.0 with, 2.0 without
@@ -78,18 +78,20 @@ Code decides, not a model. The rules run in this order, and the first one that a
 | Inconclusive | Fewer than 5 cases were compared |
 | Hurts | The whole 90% interval for the change is below zero |
 | Helps | The whole interval is above zero, and the change is at least 10 points |
-| Already handled | The model scores at least 90% without the skill, and the interval rules out both a 10-point gain and a 10-point loss |
+| Already handled | At least 10 cases, the model scores at least 90% without the skill, and the interval rules out both a 10-point gain and a 10-point loss |
 | Inconclusive | The model scores at least 90% without the skill, but the interval doesn't rule out a 10-point loss |
-| No effect | The interval stays inside plus or minus 10 points |
+| No effect | At least 10 cases, and the interval stays inside plus or minus 10 points |
 | Inconclusive | Anything else: the interval is too wide to call |
 
-The interval is a bootstrap over cases, and over runs inside each case, with a fixed seed, so the same result always gives the same card. Cases that check the skill stays quiet are left out of the change and reported as misfires.
+The interval is a bootstrap over cases, and over runs inside each case, with a fixed seed, so the same result always gives the same card. When every case has the same change and every run agrees, the bootstrap can only return that one number, so the card says "9 of 9 cases" instead, with an exact binomial bound on how many cases like these could differ (23% for 9 cases at 90%). A No effect or Already handled card with fewer than 10 cases is Inconclusive. Cases that check the skill stays quiet are left out of the change and reported as misfires.
 
 Every card also lists warnings that don't change the verdict: a skill that fired in at least 10% but under half of the runs where it should have (the change then mostly reflects runs that didn't use it), a model alias instead of a pinned ID, runs that ended with an error other than a usage or rate limit, runs that had a tool call refused by permissions (with how many on each side), fewer than 3 runs per side, no case that checks the skill stays quiet, no case that checks it fired, and case prompts that name the skill (which tests whether the model follows an instruction, not whether it finds the skill). `mordecai lint` runs the last four checks on case files before an eval.
 
 A refused tool call leaves the run's `error` empty, and the result JSON has no field for it, so Mordecai reads it from each run's trace (`tracePath`): the `permission_denials` list in the trace's result message. It reads a trace only if it is inside the current directory or the `--skill` directory, as with every other path a result names. If the run had the tool and the refused call aimed inside the run's own working folder or the skill's folder, the setup decided the run, not the skill, and the card is Invalid; a refusal anywhere else is a warning. `claude plugin eval` writes traces to a temporary folder by default, so a card made after that folder is gone can't see refusals, and it says so.
 
 **The two Already handled rows changed in 0.2.0.** Under the original rules, Already handled only checked that the interval ruled out a 10-point gain. In the planted check, that hid harm. An outdated skill (suite 3) gave the wrong answer in 5 of the 6 runs where it fired, and the card still said Already handled, with an interval of -41 to +7. The rules never flagged that skill as Hurts, and the new rules don't either, because its interval reaches +7. They now call it Inconclusive. The change was designed after seeing that result, so suite 3 can't count as evidence for it. Of the seven cards recorded before the change, it moves only suite 3.
+
+**0.5.0 counts agreeing cases, and a null needs 10 of them** ([D22](docs/decisions.md)). 8 of the 13 planted cards with an interval showed a single point such as "+100 to +100", and in simulation a placebo with 5 agreeing cases came out No effect or Already handled 59% of the time. Three recorded cards move from a null verdict to Inconclusive: 5a (Already handled), 5b and holdout 7 (No effect), each with 9 cases. No Helps or Hurts card moves. The rule was chosen after seeing those cards, so they can't count as evidence for it. [docs/planted-skills-results.md](docs/planted-skills-results.md) lists every card that moved.
 
 **Rarely fired was added in 0.4.0** ([D21](docs/decisions.md)). When the model barely opened the skill, the interval compares two arms that mostly ran without it, so no interval verdict says much about the skill. V1's skill fired in 1 of 27 runs, and its card moved from Inconclusive to Rarely fired; no other recorded card moves. The rule was designed after seeing V1, so V1 can't count as evidence for it.
 
@@ -203,7 +205,7 @@ Each verdict and warning has a test on a constructed result, along with hashing,
 
 - **Hurts needs the skill to be opened.** A harmful skill that fires in under 10% of the runs that need it gets Rarely fired, not Hurts. Between 10% and 50% the card warns, and the verdict can still be Inconclusive or Already handled: suite 3 fired in 6 of 27 runs and reads Inconclusive. Check the card's "Fired in" line.
 - **Rarely fired was designed after seeing V1.** V1's skill fired in 1 of 27 runs, and its card said Inconclusive, the same word used for a wide interval. 0.4.0 applies the fix proposed in [docs/open-questions.md](docs/open-questions.md): a Rarely fired verdict under a 10% fire rate, and a warning under 50% ([D21](docs/decisions.md)). V1 can't count as evidence for it. Its first test, R1, missed: the skill was predicted to fire in 1 or 2 of 27 runs and fired in 15, so the rule wasn't exercised ([results](docs/planted-skills-results.md)).
-- **The bootstrap is optimistic when runs agree.** In 8 of the 13 planted cards that have an interval, it collapsed to a single point, such as +100 to +100.
+- **9 of 9 cases is still only 9 cases.** Since 0.5.0, a card where every case agreed reports the count and a binomial bound instead of a single-point interval, but Helps and Hurts still need only 5 cases: a 5 of 5 card's bound is 37%.
 - **Results come from one small model.** See [what wasn't checked](#what-wasnt-checked).
 - **Only one plugin per result.** Cards name the first plugin in the suite.
 - **Refused tool calls are seen only in kept traces.** The permissions warning needs each run's trace, inside the current directory or `--skill`. Without the traces a card can't tell a refused tool call from a skill that did badly. A refusal never changes the verdict; whether it should is an [open question](docs/open-questions.md#open-question-4-runs-that-say-nothing-about-the-skill).

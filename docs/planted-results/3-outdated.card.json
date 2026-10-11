@@ -5,7 +5,7 @@
     "result": "sha256:9ce219e12de52e42c7b6717ea8ac7b0caf9761010c82ccf801bf95caa75671b5",
     "skill": "sha256:9bf162cf9ff8414c8904634fb999b74fb2b3c0d181dad1564eb72d140157d02c"
   },
-  "mordecai": "0.3.0",
+  "mordecai": "0.5.0",
   "numbers": {
     "casesCompared": 9,
     "change": -0.14814814814814817,
@@ -76,5 +76,7 @@
     "startedAt": "2026-10-05T22:31:22.906Z"
   },
   "verdict": "inconclusive",
-  "warnings": []
+  "warnings": [
+    "The skill fired in only 6 of the 27 runs where it should have, so the change mostly reflects runs where it wasn't used."
+  ]
 }

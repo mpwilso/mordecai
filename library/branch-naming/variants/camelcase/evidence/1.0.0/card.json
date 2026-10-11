@@ -5,8 +5,12 @@
     "result": "sha256:5fe8ff35bb6083bac8ddeaa99227d3c165be91e6af2a42b7ae5906c707009b03",
     "skill": "sha256:7a2cb36e8588c0188a679162c990e80e9d318a71fa1d563e6dc8f51ad382221b"
   },
-  "mordecai": "0.3.0",
+  "mordecai": "0.5.0",
   "numbers": {
+    "agreement": {
+      "cases": 9,
+      "couldDiffer": 0.2257
+    },
     "casesCompared": 9,
     "change": -1.0,
     "costPerRunWith": 0.019256629629629627,
@@ -17,10 +21,7 @@
     ],
     "flat": 0,
     "improved": 0,
-    "interval": [
-      -1.0,
-      -1.0
-    ],
+    "interval": null,
     "misfired": [
       0,
       9
@@ -53,7 +54,7 @@
     },
     "skill": "../../branch-naming"
   },
-  "reason": "The skill lowered the score: 90% interval -100 to -100 points.",
+  "reason": "The skill lowered the score by 100 points in 9 of 9 cases. At 90% confidence, up to 23% of cases like these could differ.",
   "rules": {
     "ceiling": 0.9,
     "confidence": 0.9,

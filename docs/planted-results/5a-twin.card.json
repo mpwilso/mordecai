@@ -5,8 +5,12 @@
     "result": "sha256:2e9a8af74e86988cd281776d37e7fad2a6c45e3e68d0ab6c974f1af3f00896bf",
     "skill": "sha256:45c98bc9dd064ce8eb9e4feeca16e6a8213be93530077e9ab09f94a583cb9f92"
   },
-  "mordecai": "0.3.0",
+  "mordecai": "0.5.0",
   "numbers": {
+    "agreement": {
+      "cases": 9,
+      "couldDiffer": 0.2257
+    },
     "casesCompared": 9,
     "change": 0.0,
     "costPerRunWith": 0.019868444444444446,
@@ -17,10 +21,7 @@
     ],
     "flat": 9,
     "improved": 0,
-    "interval": [
-      0.0,
-      0.0
-    ],
+    "interval": null,
     "misfired": [
       0,
       9
@@ -53,7 +54,7 @@
     },
     "skill": "../../evals/planted/5a-twin"
   },
-  "reason": "The model scored 100% without the skill, and the 90% interval (+0 to +0 points) rules out a gain or a loss of 10 points.",
+  "reason": "The change was +0 points in 9 of 9 cases, but Already handled needs at least 10 compared cases. At 90% confidence, up to 23% of cases like these could differ.",
   "rules": {
     "ceiling": 0.9,
     "confidence": 0.9,
@@ -75,6 +76,6 @@
     "model": "claude-haiku-4-5-20251001",
     "startedAt": "2026-10-05T22:18:14.262Z"
   },
-  "verdict": "already-handled",
+  "verdict": "inconclusive",
   "warnings": []
 }

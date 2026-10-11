@@ -1,3 +1,3 @@
 """Mordecai reads a skill's eval results and says what the skill can honestly claim."""
 
-__version__ = "0.4.0"
+__version__ = "0.5.0"

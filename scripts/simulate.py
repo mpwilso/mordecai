@@ -36,7 +36,7 @@ from builder import make_result  # noqa: E402
 
 from mordecai import __version__  # noqa: E402
 from mordecai.result import parse  # noqa: E402
-from mordecai.verdict import DEFAULT_RULES, read  # noqa: E402
+from mordecai.verdict import DEFAULT_RULES, NULL_MIN_CASES, read  # noqa: E402
 
 TRIALS = 200
 SEED = 20261005
@@ -89,8 +89,13 @@ def simulate(gain, n_cases, runs, rng, e=None):
             cells += 2
             agreed += (len(set(w)) == 1) + (len(set(b)) == 1)
             cases.append({"name": f"c{i}", "with": w, "without": b, "fired": [True] * runs})
-        v = read(parse(make_result(cases))).verdict
-        counts[v] = counts.get(v, 0) + 1
+        r = read(parse(make_result(cases)))
+        counts[r.verdict] = counts.get(r.verdict, 0) + 1
+        # D22: every case agreed (no interval, N of N), and nulls held back for too few cases,
+        # which the 0.4.0 rules would have called No effect or Already handled.
+        counts["agreed"] = counts.get("agreed", 0) + (r.agreement is not None)
+        held = f"needs at least {NULL_MIN_CASES} compared cases" in r.reason
+        counts["held"] = counts.get("held", 0) + held
     return counts, agreed / cells
 
 
@@ -138,13 +143,27 @@ def main(argv: list[str]) -> int:
     def false_calls(c):
         return max(c[(0.0, n)].get("helps", 0) + c[(0.0, n)].get("hurts", 0) for n in (5, 10, 15))
 
+    def before(c, n):
+        """The Other column under the 0.4.0 rules: the same, plus nulls D22 held back."""
+        k = c[(0.0, n)]
+        return pct(
+            TRIALS - k.get("helps", 0) - k.get("hurts", 0) - k.get("inconclusive", 0) + k["held"]
+        )
+
+    def agreed(c, n):
+        return pct(c[(0.0, n)]["agreed"])
+
+    def calls_at_5(c):
+        return pct(c[(0.0, 5)].get("helps", 0) + c[(0.0, 5)].get("hurts", 0))
+
     r = DEFAULT_RULES
     section = f"""{MARKER}
 
 ## Recalibration: the rules on runs that agree like real runs
 
 Written by `scripts/simulate.py` with the {__version__} rules (at least {r.min_cases} cases, a
-{round(r.confidence * 100)}% interval, a {round(r.min_effect * 100)}-point minimum effect), {TRIALS}
+{round(r.confidence * 100)}% interval, a {round(r.min_effect * 100)}-point minimum effect, and at
+least {NULL_MIN_CASES} cases for No effect or Already handled), {TRIALS}
 simulated suites per row, 3 runs per side per case. The table at the top of this file is kept
 as it was; its "rerun the script" note refers to the script at f43421b, and the independent
 rows below reproduce it with the current script and rules.
@@ -179,9 +198,21 @@ less often. So this section runs both settings with the current rules:
   some cases, and the interval is drawn over cases.
 - **Placebos get fewer false calls when runs agree.** The most Helps or Hurts calls for a
   placebo at any size was {pct(false_calls(agr))} with 94% agreement and
-  {pct(false_calls(ind))} with independent runs. With agreeing runs, a placebo often comes out
-  No effect or Already handled (the Other column) rather than Inconclusive: {other(agr, 5)},
-  {other(agr, 10)} and {other(agr, 15)} of suites at 5, 10 and 15 cases.
+  {pct(false_calls(ind))} with independent runs. With agreeing runs, a placebo comes out
+  No effect or Already handled (the Other column) in {other(agr, 5)}, {other(agr, 10)} and
+  {other(agr, 15)} of suites at 5, 10 and 15 cases.
+- **What D22 moved (0.5.0).** Under the 0.4.0 rules that placebo row read {before(agr, 5)},
+  {before(agr, 10)} and {before(agr, 15)}. It went down and then up, and that wasn't a bug: two
+  things add up. Suites where every case agreed, whose interval was a single point, get rarer
+  as cases are added ({agreed(agr, 5)}, {agreed(agr, 10)} and {agreed(agr, 15)} of placebo
+  suites), while intervals with real spread get narrow enough to fit inside plus or minus 10
+  points only at 15 cases. A null now needs {NULL_MIN_CASES} cases, so the 5-case suites are
+  Inconclusive. The only other cells that moved are the same 5-case Other cells for +20 and
+  +40 points, also to Inconclusive. No Helps or Hurts call moved.
+- **Helps and Hurts keep their minimum of {r.min_cases} cases.** At 5 cases a placebo was called
+  Helps or Hurts in {calls_at_5(agr)} of suites with 94% agreement and {calls_at_5(ind)} with
+  independent runs, so this simulation doesn't show that minimum to be unsound. It can't show it
+  sound for real runs either: cases that share a cause aren't simulated.
 - **Large effects are still found:** +40 points is called Helps in {helps(agr, 0.4, 10)} of
   suites at 10 cases and {helps(agr, 0.4, 15)} at 15 with 94% agreement.
 """

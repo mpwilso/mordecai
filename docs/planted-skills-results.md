@@ -6,6 +6,23 @@ On 2026-10-06 all 14 cards were rebuilt by `mordecai identify` 0.3.0 from the sa
 
 On 2026-10-11, V1's card was rebuilt by `mordecai identify` 0.4.0 from the same raw result, under the Rarely fired rule (D21). **Its verdict changed: Inconclusive became Rarely fired**, because its skill fired in 1 of 27 runs. The counts and hashes are the same; the interval is gone, since a Rarely fired card has none. The rule was designed after seeing this card, so it is not evidence for the rule. No other card's verdict changes under 0.4.0. The table and text below still report what V1's card said when it ran. Its card as it was is at commit 02f2a8f.
 
+On 2026-10-11, all 15 cards and the library's two were rebuilt by `mordecai identify` 0.5.0 from the same raw results and traces, under D22: when every case agrees the card reports "N of N cases" and a binomial bound instead of a single-point interval, and No effect and Already handled need at least 10 cases. **Three verdicts changed, all from a null to Inconclusive. No Helps or Hurts card changed its verdict.** The rule was chosen after seeing these cards, so none of them is evidence for it. Every count and hash is the same. The cards as they were are at commit 875cac4. Every card whose verdict or reported uncertainty moved:
+
+| Card | Before (0.3.0 or 0.4.0 card) | After (0.5.0) | What moved |
+|---|---|---|---|
+| 5a-twin | Already handled, interval +0 to +0 | Inconclusive, +0 in 9 of 9 cases, up to 23% could differ | **Verdict**: a null needs 10 cases |
+| 5b-filler | No effect, interval +0 to +0 | Inconclusive, +0 in 9 of 9 cases, up to 23% could differ | **Verdict**: a null needs 10 cases |
+| holdout-7-filler | No effect, interval +0 to +0 | Inconclusive, +0 in 9 of 9 cases, up to 23% could differ | **Verdict**: a null needs 10 cases |
+| 1-convention | Helps, interval +100 to +100 | Helps, +100 in 9 of 9 cases, up to 23% could differ | Uncertainty only |
+| 1-convention-sonnet | Helps, interval +100 to +100 | Helps, +100 in 9 of 9 cases, up to 23% could differ | Uncertainty only |
+| 2-commits-sonnet | Helps, interval +100 to +100 | Helps, +100 in 9 of 9 cases, up to 23% could differ | Uncertainty only |
+| holdout-6-convention | Helps, interval +100 to +100 | Helps, +100 in 9 of 9 cases, up to 23% could differ | Uncertainty only |
+| h1-must-fire | Hurts, interval -100 to -100 | Hurts, -100 in 9 of 9 cases, up to 23% could differ | Uncertainty only |
+| library: ferry-workflow qrx (suite 1) | Helps, interval +100 to +100 | Helps, +100 in 9 of 9 cases, up to 23% could differ | Uncertainty only; it also gains suite 1's refusal warning, since its traces are now read |
+| library: branch-naming camelcase (H1) | Hurts, interval -100 to -100 | Hurts, -100 in 9 of 9 cases, up to 23% could differ | Uncertainty only |
+
+The other cards (2-commits, 3-outdated, 4-vague, R1, V1, V2, V3) keep their verdict and interval; only their `mordecai` version changed. 3-outdated also gains the 0.4.0 warning that its skill fired in only 6 of 27 runs, which D21 said it would show if rebuilt. The table and text below still report what each card said when its suite ran. 5a's new verdict, Inconclusive, is in its acceptable set where Already handled wasn't, but 5a was scored when it ran and isn't rescored.
+
 Every run: `claude plugin eval <suite> --model <pinned ID> --judge-model <same ID> --no-publish --max-cost-usd <cap> --scaffold -j 2 --threshold 0`, 3 runs per side, temporary files kept inside the repo so the traces could be checked. Costs are Claude Code's list-price estimates (`costUsd` in the result).
 
 ## Spend

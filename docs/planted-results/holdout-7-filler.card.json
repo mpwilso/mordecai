@@ -5,8 +5,12 @@
     "result": "sha256:1351a36b6fb589ac1710f9183f6a3f226378d300f3ce72db72eeeebb9bad984e",
     "skill": "sha256:1ff42ff1095811fa6e5663e0e75bb0fafb4d1362d75ee8e15ca8ca4591c6142f"
   },
-  "mordecai": "0.3.0",
+  "mordecai": "0.5.0",
   "numbers": {
+    "agreement": {
+      "cases": 9,
+      "couldDiffer": 0.2257
+    },
     "casesCompared": 9,
     "change": 0.0,
     "costPerRunWith": 0.01877981111111111,
@@ -17,10 +21,7 @@
     ],
     "flat": 9,
     "improved": 0,
-    "interval": [
-      0.0,
-      0.0
-    ],
+    "interval": null,
     "misfired": [
       0,
       9
@@ -53,7 +54,7 @@
     },
     "skill": "../../evals/planted/holdout/7-filler"
   },
-  "reason": "The 90% interval (+0 to +0 points) stays inside plus or minus 10 points.",
+  "reason": "The change was +0 points in 9 of 9 cases, but No effect needs at least 10 compared cases. At 90% confidence, up to 23% of cases like these could differ.",
   "rules": {
     "ceiling": 0.9,
     "confidence": 0.9,
@@ -75,7 +76,7 @@
     "model": "claude-haiku-4-5-20251001",
     "startedAt": "2026-10-06T00:06:04.186Z"
   },
-  "verdict": "no-effect",
+  "verdict": "inconclusive",
   "warnings": [
     "4 of 72 runs ended with an error. They were graded on what they produced."
   ]

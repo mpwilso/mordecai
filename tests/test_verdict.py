@@ -16,26 +16,131 @@ def verdict_of(cases, **kw):
 def test_helps():
     r = verdict_of(same(6, [1, 1, 1], [0, 0, 0], fired=[True] * 3))
     assert r.verdict == "helps"
-    assert r.change == 1.0 and r.interval == (1.0, 1.0)
+    assert r.change == 1.0
     assert (r.improved, r.flat, r.worse) == (6, 0, 0)
     assert r.fired == (18, 18)
+
+
+def test_helps_with_an_interval_when_cases_differ():
+    cases = same(4, [1, 1, 1], [0, 0, 0], fired=[True] * 3)
+    cases += same(2, [1, 1, 1], [1, 0, 0], fired=[True] * 3)
+    r = verdict_of(cases)
+    assert r.verdict == "helps" and r.agreement is None
+    lo, hi = r.interval
+    assert 0 < lo < hi <= 1.0
+    assert r.reason.startswith("The skill raised the score: 90% interval ")
 
 
 def test_hurts():
     r = verdict_of(same(6, [0, 0, 0], [1, 1, 1], fired=[True] * 3))
     assert r.verdict == "hurts"
-    assert r.reason == "The skill lowered the score: 90% interval -100 to -100 points."
+    assert r.reason == (
+        "The skill lowered the score by 100 points in 6 of 6 cases. At 90% confidence, up to "
+        "32% of cases like these could differ."
+    )
 
 
 def test_already_handled():
-    r = verdict_of(same(6, [1, 1, 1], [1, 1, 1], fired=[True] * 3))
+    r = verdict_of(same(10, [1, 1, 1], [1, 1, 1], fired=[True] * 3))
     assert r.verdict == "already-handled"
     assert r.without_score == 1.0
 
 
 def test_no_effect_when_the_model_fails_either_way():
-    r = verdict_of(same(6, [0, 0, 0], [0, 0, 0], fired=[True] * 3))
+    r = verdict_of(same(10, [0, 0, 0], [0, 0, 0], fired=[True] * 3))
     assert r.verdict == "no-effect"
+
+
+def test_when_every_case_agrees_the_card_counts_cases_instead_of_a_point_interval():
+    """D22 (a): the bootstrap can only return one number, so the card reports N of N cases and
+    an exact one-sided binomial bound on the share of cases that could differ."""
+    r = verdict_of(same(9, [1, 1, 1], [0, 0, 0], fired=[True] * 3))
+    assert r.verdict == "helps"
+    assert r.interval is None
+    assert r.agreement == (9, 0.2257)
+    assert r.reason == (
+        "The skill raised the score by 100 points in 9 of 9 cases. At 90% confidence, up to "
+        "23% of cases like these could differ."
+    )
+
+
+def test_the_bound_is_clopper_pearson_at_the_rules_confidence():
+    """With none of n cases differing, the exact one-sided upper bound p solves
+    P(no case differs | p) = (1 - p)^n = 1 - confidence."""
+    from mordecai.verdict import agreement_bound
+
+    for n in range(1, 40):
+        for conf in (0.8, 0.9, 0.95):
+            p = agreement_bound(n, conf)
+            assert abs((1 - p) ** n - (1 - conf)) < 1e-12, (n, conf)
+    assert round(agreement_bound(5, 0.9), 4) == 0.3690
+    assert round(agreement_bound(10, 0.9), 4) == 0.2057
+    r = read(parse(make_result(same(9, [1, 1, 1], [0, 0, 0]))), rules=Rules(confidence=0.95))
+    assert r.agreement == (9, round(agreement_bound(9, 0.95), 4))
+    assert "At 95% confidence, up to 28% of cases" in r.reason
+
+
+def test_cases_with_the_same_mean_change_but_noisy_runs_keep_their_interval():
+    """D22 (a) applies only when the bootstrap has nothing to resample: runs that disagree
+    inside a case still give it spread."""
+    r = verdict_of(same(9, [1, 1, 0], [0, 0, 0], fired=[True] * 3))
+    assert r.agreement is None
+    lo, hi = r.interval
+    assert lo < hi
+
+
+def test_no_effect_and_already_handled_need_10_cases():
+    """D22 (b): a null claims the effect is near zero, which takes more cases than a large
+    effect does. Helps and Hurts keep the minimum of 5."""
+    r = verdict_of(same(9, [1, 1, 1], [1, 1, 1], fired=[True] * 3))
+    assert r.verdict == "inconclusive"
+    assert r.agreement == (9, 0.2257)
+    assert r.reason == (
+        "The change was +0 points in 9 of 9 cases, but Already handled needs at least 10 "
+        "compared cases. At 90% confidence, up to 23% of cases like these could differ."
+    )
+    r = verdict_of(same(9, [0, 0, 0], [0, 0, 0], fired=[True] * 3))
+    assert r.verdict == "inconclusive"
+    assert "but No effect needs at least 10 compared cases" in r.reason
+    r = verdict_of(same(10, [0, 0, 0], [0, 0, 0], fired=[True] * 3))
+    assert r.verdict == "no-effect"
+    assert r.reason == (
+        "The change was +0 points in 10 of 10 cases, inside plus or minus 10 points. At 90% "
+        "confidence, up to 21% of cases like these could differ."
+    )
+    r = verdict_of(same(10, [1, 1, 1], [1, 1, 1], fired=[True] * 3))
+    assert r.reason == (
+        "The model scored 100% without the skill, and the change was +0 points in 10 of 10 "
+        "cases. At 90% confidence, up to 21% of cases like these could differ."
+    )
+    assert verdict_of(same(5, [1, 1, 1], [0, 0, 0])).verdict == "helps"
+    assert verdict_of(same(5, [0, 0, 0], [1, 1, 1])).verdict == "hurts"
+
+
+def test_a_null_interval_under_10_cases_is_inconclusive_too():
+    noisy = same(9, [0.52, 0.5, 0.48], [0.5, 0.5, 0.5], fired=[True] * 3)
+    r = verdict_of(noisy)
+    assert r.agreement is None and r.interval is not None
+    assert r.verdict == "inconclusive"
+    assert r.reason.startswith("The 90% interval (")
+    assert r.reason.endswith(
+        "stays inside plus or minus 10 points, but No effect needs at least 10 compared cases; "
+        "9 were compared."
+    )
+    more = noisy + [{**noisy[0], "name": "case-9"}]
+    assert verdict_of(more).verdict == "no-effect"
+
+
+def test_the_null_threshold_is_not_a_rule_field():
+    """D20: a card's rules must equal the engine's, so a new Rules field would break every
+    recorded library card. The threshold is a constant, like D21's."""
+    from dataclasses import fields
+
+    from mordecai.verdict import NULL_MIN_CASES
+
+    assert NULL_MIN_CASES == 10
+    names = {f.name for f in fields(Rules)}
+    assert names == {"min_cases", "min_effect", "ceiling", "confidence", "resamples", "seed"}
 
 
 def test_inconclusive_when_cases_disagree():
@@ -59,7 +164,7 @@ def test_too_few_cases_is_inconclusive_whatever_the_change():
 
 def test_small_gain_under_the_minimum_effect_is_not_helps():
     # Every case gains 5 points: real, but under the 10-point minimum.
-    r = verdict_of(same(6, [0.55, 0.55, 0.55], [0.5, 0.5, 0.5], fired=[True] * 3))
+    r = verdict_of(same(10, [0.55, 0.55, 0.55], [0.5, 0.5, 0.5], fired=[True] * 3))
     assert r.verdict == "no-effect"
 
 
@@ -88,18 +193,18 @@ def test_rarely_fired_beats_no_effect_and_too_few_cases():
 
 
 def test_rarely_fired_is_under_10_percent_exactly():
-    assert verdict_of(fired_in(2, 9, [1, 1, 1], [1, 1, 1])).verdict == "rarely-fired"  # 7%
-    assert verdict_of(fired_in(3, 9, [1, 1, 1], [1, 1, 1])).verdict == "already-handled"  # 11%
-    r = verdict_of(fired_in(1, 5, [1, 1], [1, 1]))  # exactly 10%
-    assert r.fired == (1, 10) and r.verdict == "already-handled"
+    assert verdict_of(fired_in(2, 10, [1, 1, 1], [1, 1, 1])).verdict == "rarely-fired"  # 7%
+    assert verdict_of(fired_in(4, 12, [1, 1, 1], [1, 1, 1])).verdict == "already-handled"  # 11%
+    r = verdict_of(fired_in(2, 10, [1, 1], [1, 1]))  # exactly 10%
+    assert r.fired == (2, 20) and r.verdict == "already-handled"
 
 
 def test_firing_in_under_half_the_runs_is_a_warning_not_a_verdict():
-    r = verdict_of(fired_in(10, 9, [1, 1, 1], [1, 1, 1]))
-    assert r.fired == (10, 27)
+    r = verdict_of(fired_in(10, 10, [1, 1, 1], [1, 1, 1]))
+    assert r.fired == (10, 30)
     assert r.verdict == "already-handled"
     warning = (
-        "The skill fired in only 10 of the 27 runs where it should have, so the change mostly "
+        "The skill fired in only 10 of the 30 runs where it should have, so the change mostly "
         "reflects runs where it wasn't used."
     )
     assert warning in r.warnings
@@ -107,7 +212,7 @@ def test_firing_in_under_half_the_runs_is_a_warning_not_a_verdict():
     rare = verdict_of(fired_in(2, 9, [1, 1, 1], [1, 1, 1]))
     assert rare.verdict == "rarely-fired"
     assert not any("runs where it wasn't used" in w for w in rare.warnings)
-    edge = verdict_of(fired_in(3, 9, [1, 1, 1], [1, 1, 1]))  # 11%: a verdict, so the warning
+    edge = verdict_of(fired_in(3, 10, [1, 1, 1], [1, 1, 1]))  # 10%: a verdict, so the warning
     assert warning.replace("10 of", "3 of") in edge.warnings
 
 
@@ -205,7 +310,7 @@ def test_no_baseline_is_invalid():
 
 
 def test_quiet_cases_are_left_out_of_the_change_and_count_misfires():
-    cases = same(6, [1, 1, 1], [1, 1, 1], fired=[True] * 3)
+    cases = same(10, [1, 1, 1], [1, 1, 1], fired=[True] * 3)
     cases.append(
         {
             "name": "unrelated",
@@ -216,7 +321,7 @@ def test_quiet_cases_are_left_out_of_the_change_and_count_misfires():
         }
     )
     r = verdict_of(cases)
-    assert r.cases_compared == 6
+    assert r.cases_compared == 10
     assert r.verdict == "already-handled"
     assert r.misfired == (1, 3)
 

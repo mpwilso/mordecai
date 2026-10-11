@@ -125,6 +125,9 @@ def stat_block(card: Card) -> list[str]:
         line += f"{DOT}Change {_pts(r.change)} pts"
         if r.interval:
             line += f" (90% interval {_pts(r.interval[0])} to {_pts(r.interval[1])})"
+        elif r.agreement:  # D22: every case agreed, so there is no interval to show
+            n, bound = r.agreement
+            line += f" in {n} of {n} cases (90% bound: up to {_pct(bound)} of cases could differ)"
         lines.append(line)
         lines.append(
             f"Cases {r.cases_compared}: {r.improved} better, {r.flat} same, {r.worse} worse"

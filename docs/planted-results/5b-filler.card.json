@@ -5,8 +5,12 @@
     "result": "sha256:9fb31a0c6bdc86d3eb95d7882ac04dfbf6ec062e09d23f7782d5c74fbd7697a1",
     "skill": "sha256:292ff8124f2e45f0576249ae1702fb24e1edf8677830dab36a754564e61e8d33"
   },
-  "mordecai": "0.3.0",
+  "mordecai": "0.5.0",
   "numbers": {
+    "agreement": {
+      "cases": 9,
+      "couldDiffer": 0.2257
+    },
     "casesCompared": 9,
     "change": 0.0,
     "costPerRunWith": 0.01932371111111111,
@@ -17,10 +21,7 @@
     ],
     "flat": 9,
     "improved": 0,
-    "interval": [
-      0.0,
-      0.0
-    ],
+    "interval": null,
     "misfired": [
       0,
       9
@@ -53,7 +54,7 @@
     },
     "skill": "../../evals/planted/5b-filler"
   },
-  "reason": "The 90% interval (+0 to +0 points) stays inside plus or minus 10 points.",
+  "reason": "The change was +0 points in 9 of 9 cases, but No effect needs at least 10 compared cases. At 90% confidence, up to 23% of cases like these could differ.",
   "rules": {
     "ceiling": 0.9,
     "confidence": 0.9,
@@ -75,7 +76,7 @@
     "model": "claude-haiku-4-5-20251001",
     "startedAt": "2026-10-05T22:21:55.720Z"
   },
-  "verdict": "no-effect",
+  "verdict": "inconclusive",
   "warnings": [
     "2 of 72 runs ended with an error. They were graded on what they produced.",
     "1 of 72 runs had a tool call refused by permissions (0 with the skill, 1 without). They were graded on what they produced, so a refusal, not the skill, may have moved their scores."

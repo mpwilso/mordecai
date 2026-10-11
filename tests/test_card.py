@@ -67,6 +67,24 @@ def test_card_json_is_stable_and_complete(tmp_path):
     assert doc["tested"]["model"] == "haiku"
 
 
+def test_a_card_where_every_case_agrees_counts_cases_instead_of_a_point_interval():
+    """D22 (a): no "90% interval +100 to +100"; the card says 9 of 9 cases and the bound."""
+    doc = make_result(same(9, [1, 1, 1], [0, 0, 0], fired=[True] * 3))
+    card = build(parse(doc), json.dumps(doc).encode())
+    line = stat_block(card)[0]
+    assert line.endswith(
+        "Change +100 pts in 9 of 9 cases (90% bound: up to 23% of cases could differ)"
+    )
+    assert "interval" not in plain(card)
+    numbers = json.loads(to_json(card))["numbers"]
+    assert numbers["interval"] is None
+    assert numbers["agreement"] == {"cases": 9, "couldDiffer": 0.2257}
+    noisy = make_result(same(9, [1, 1, 0], [0, 0, 0], fired=[True] * 3))
+    noisy_card = build(parse(noisy), json.dumps(noisy).encode())
+    assert "(90% interval " in stat_block(noisy_card)[0]
+    assert "agreement" not in json.loads(to_json(noisy_card))["numbers"]
+
+
 def test_a_card_without_files_says_it_cant_be_checked():
     suite, data = load(FIXTURES / "probe-result.json")
     card = build(suite, data)
@@ -82,8 +100,8 @@ def cards():
     scenarios = {
         "helps": same(6, [1, 1, 1], [0, 0, 0], fired=[True] * 3),
         "hurts": same(6, [0, 0, 0], [1, 1, 1], fired=[True] * 3),
-        "already-handled": same(6, [1, 1, 1], [1, 1, 1], fired=[True] * 3),
-        "no-effect": same(6, [0, 0, 0], [0, 0, 0], fired=[True] * 3),
+        "already-handled": same(10, [1, 1, 1], [1, 1, 1], fired=[True] * 3),
+        "no-effect": same(10, [0, 0, 0], [0, 0, 0], fired=[True] * 3),
         "inconclusive": same(2, [1, 1, 1], [0, 0, 0], fired=[True] * 3),
         "never-fired": same(6, [1, 1, 1], [0, 0, 0], fired=[False] * 3),
         "rarely-fired": fired_in(1, 6, [1, 1, 1], [0, 0, 0]),
