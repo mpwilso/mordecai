@@ -84,3 +84,31 @@ Written after V1, where an outdated skill fired in 1 of 27 runs, so no harm coul
 **Pass criterion.**
 - **H1 must come out Hurts.** Anything else is a miss, reported with the card and a case-level diagnosis.
 - **The fire rate is reported.** If the skill fires in fewer than half the runs that needed it, that is the finding: Hurts can only be detected when the skill is actually opened. One labeled second attempt is allowed, and no more.
+
+## R1: a skill meant to fire rarely (`r1-rarely-fires`, skill `workspace-commands`)
+
+Written on 2026-10-11, after every earlier result and after the Rarely fired rule (D21), to test that rule on runs it wasn't designed from. **Not blind:** the design uses suite 3's per-case fire counts. The prediction below is committed and pushed before the suite runs. The rules are the 0.4.0 rules, frozen at commit 4a94b17.
+
+**The setup.** The workspace is suite 3's small uv project (pyproject.toml, a Makefile, a README, uv.lock), and the prompts are in suite 3's style: "Look at the project in the current directory and tell me ... Reply with only the answer." The 9 compared questions are suite 3's seven that the repo answers on its own (run the tests, lint, format, install, run one test file, lint and fix, the minimum Python version), plus two more it also answers: stop at the first failing test, and check the formatting without changing files. Suite 3's two dependency-adding questions are left out. The skill's description names exactly these tasks. Its body is correct: the same commands the repo uses, so following it can't lower a score, and the graders accept the repo's answer with or without the skill. 3 quiet cases ask what a pytest fixture is, what a .gitignore does, and a unit conversion.
+
+**Why it should fire rarely, but not never.** In suite 3, Haiku answered these questions from the repo's files without opening the skill: 0 of 18 runs fired on the six questions R1 keeps from it besides "install", and 1 of 3 fired on "install". The runs where suite 3's skill fired most were the dependency-adding questions (3 of 3 and 2 of 3), which R1 drops. That predicts about 1 fire in 27.
+
+**Prediction.**
+
+- **Fire rate: 1 or 2 of the 27 runs that need it** (above 0%, under 10%).
+- **Verdict: Rarely fired.**
+- **Quiet cases:** 0 misfires in 9 runs.
+- Not part of the prediction: the result section will also report what the 0.3.0 rules (commit 328bc59) say on the same result. With a baseline expected near suite 3's 93% and a skill that agrees with the repo, Already handled or Inconclusive is likely there.
+
+**What would make it a miss.**
+
+- **0 of 27: Never fired.** The skill wasn't opened at all, so the rule wasn't exercised. Reported as a miss of the fire-rate prediction.
+- **3 or more of 27:** the verdict comes from the interval, with D21's warning if under half. The rule wasn't exercised. Reported as a miss.
+- **Invalid** (a usage or rate limit, or the cost cap): no reading. Recorded, not counted either way.
+
+**Pass criterion.**
+
+- R1 must fire in 1 or 2 of 27 runs and read Rarely fired. Anything else is a miss, reported with the card, the per-case fire counts and a diagnosis.
+- The verdict follows from the fire count by construction, so what this tests is whether a skill can be designed to land in the band on new runs, and whether a Rarely fired card says something more useful than the interval verdict it replaces. One suite can't show that the 10% threshold is right.
+- R1 runs once, on `claude-haiku-4-5-20251001` with the same model as judge, 3 runs per side, with a $3 cap, the spend ceiling the owner set for it. It is not rerun to get a better answer. If a case file has a real defect, the original result is recorded, the fix goes in a separate commit, and one labeled second attempt is allowed if it fits under the same $3.
+- Claude Code is now 2.1.296, against 2.1.289 when suite 3 ran. A change in how it offers skills could move the fire rate either way.

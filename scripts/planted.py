@@ -644,6 +644,107 @@ def h1_cases() -> list[dict]:
     return cases + [{"name": n, "prompt": p, "quiet": True} for n, p in quiet]
 
 
+# R1: a skill meant to fire rarely, the test of Rarely fired (D21, 0.4.0). Written after every
+# earlier result, so not blind. It reuses suite 3's repo and question style, where the model
+# answered from the repo's own files: suite 3's skill fired in 0 of 18 runs on the six
+# questions the Makefile, README and pyproject.toml answer, and in 1 of 3 on "install". R1 keeps
+# those seven, adds two more that the repo answers, leaves out the dependency questions that
+# fired most (3 of 3 and 2 of 3), and gives a correct skill, so firing can't change a score.
+R1_DESCRIPTION = (
+    "Use when answering how to install, test, lint or format the Python project in this "
+    "workspace, or which Python version it needs."
+)
+R1_BODY = """# Project commands
+
+The Python project in this workspace uses uv, pytest and ruff:
+
+- Install the dependencies: `uv sync`
+- Run the tests: `uv run pytest`, or `make test`
+- Run one test file: `uv run pytest <path>`
+- Stop at the first failing test: `uv run pytest -x`
+- Lint: `uv run ruff check .`, or `make lint`
+- Lint and fix what can be fixed: `uv run ruff check --fix .`
+- Format: `uv run ruff format .`, or `make fmt`
+- Check the formatting without changing files: `uv run ruff format --check .`
+- Python: 3.12 or newer, as `requires-python` in pyproject.toml says.
+"""
+
+
+def r1_cases() -> list[dict]:
+    def right_not(right: str, wrong: str) -> str:
+        return rf"^(?![\s\S]*({wrong}))[\s\S]*({right})"
+
+    asks = [
+        (
+            "tests",
+            "the exact command to run its tests",
+            right_not(r"uv run pytest|make test", r"setup\.py"),
+        ),
+        (
+            "lint",
+            "the exact command to lint it",
+            right_not(r"uv run ruff check|make lint", r"flake8"),
+        ),
+        (
+            "format",
+            "the exact command to format the code",
+            right_not(r"uv run ruff format|make fmt", r"black"),
+        ),
+        (
+            "install",
+            "the exact command to install its dependencies",
+            right_not(r"uv sync", r"requirements"),
+        ),
+        (
+            "one-file",
+            "the exact command to run only the tests in tests/test_tally.py",
+            right_not(r"uv run pytest[^\n]*tests/test_tally\.py", r"setup\.py"),
+        ),
+        (
+            "autofix",
+            "the exact command that lints the code and fixes what it can automatically",
+            right_not(r"ruff check[^\n]*--fix", r"flake8"),
+        ),
+        (
+            "python",
+            "the minimum Python version it supports, as a version number only",
+            right_not(r"3\.12", r"3\.8"),
+        ),
+        (
+            "first-failure",
+            "the exact command to run its tests and stop at the first failing test",
+            right_not(
+                r"pytest[^\n]*(\s-[a-wyz]*x[a-z]*\b|--exitfirst|--maxfail[= ]1\b)", r"setup\.py"
+            ),
+        ),
+        (
+            "format-check",
+            "the exact command to check the code's formatting without changing any files",
+            right_not(r"ruff format[^\n]*--check", r"black"),
+        ),
+    ]
+    cases = [
+        {
+            "name": f"proj-{name}",
+            "prompt": f"Look at the project in the current directory and tell me {what}. "
+            "Reply with only the answer.",
+            "pattern": pattern,
+            "scaffold": True,
+        }
+        for name, what, pattern in asks
+    ]
+    quiet = [
+        ("fixture", "What is a pytest fixture? Two sentences."),
+        ("gitignore", "What does a .gitignore file do? One sentence."),
+        (
+            "km-miles-8",
+            "Convert 8 kilometers to miles, rounded to two decimal places. Reply "
+            "with just the number.",
+        ),
+    ]
+    return cases + [{"name": n, "prompt": p, "quiet": True} for n, p in quiet]
+
+
 # Suites ----------------------------------------------------------------------------------------
 
 SUITES = [
@@ -747,6 +848,15 @@ SUITES = [
         H1_DESCRIPTION,
         H1_BODY,
         h1_cases,
+        None,
+    ),
+    (
+        "validation/r1-rarely-fires",
+        "validation-rarely-fires",
+        "workspace-commands",
+        R1_DESCRIPTION,
+        R1_BODY,
+        r1_cases,
         None,
     ),
 ]
