@@ -4,7 +4,7 @@ import json
 import re
 import shutil
 
-from conftest import FIXTURES, make_result, same
+from conftest import FIXTURES, fired_in, make_result, same
 
 from mordecai.card import build, check, to_json
 from mordecai.provenance import hash_dir, hash_skill
@@ -86,6 +86,7 @@ def cards():
         "no-effect": same(6, [0, 0, 0], [0, 0, 0], fired=[True] * 3),
         "inconclusive": same(2, [1, 1, 1], [0, 0, 0], fired=[True] * 3),
         "never-fired": same(6, [1, 1, 1], [0, 0, 0], fired=[False] * 3),
+        "rarely-fired": fired_in(1, 6, [1, 1, 1], [0, 0, 0]),
         "invalid": same(6, [1, 1, 1], [0, 0, 0], skipped=True),
     }
     out = {}

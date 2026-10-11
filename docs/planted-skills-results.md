@@ -4,6 +4,8 @@ The predictions, the pass criterion and the frozen rules are in [planted-skills.
 
 On 2026-10-06 all 14 cards were rebuilt by `mordecai identify` 0.3.0 from the same raw results and traces, so they carry the refusal warnings (D19). Every count, interval and hash is the same. Four cards gained the warning (suites 1, 1 on Sonnet, 4 and 5b), and no run counts as blocked. Two cards were made under the frozen 0.1.0 rules and read differently under the 0.2.0 rules: 3-outdated is now Inconclusive instead of Already handled, as the "Verdict rule problem" below proposed, and 5a-twin keeps its verdict with a reworded reason. The table and the text below report what each card said when its suite ran, since that is what the predictions were scored against. The cards as they were then are at commit 63fb958.
 
+On 2026-10-11, V1's card was rebuilt by `mordecai identify` 0.4.0 from the same raw result, under the Rarely fired rule (D21). **Its verdict changed: Inconclusive became Rarely fired**, because its skill fired in 1 of 27 runs. The counts and hashes are the same; the interval is gone, since a Rarely fired card has none. The rule was designed after seeing this card, so it is not evidence for the rule. No other card's verdict changes under 0.4.0. The table and text below still report what V1's card said when it ran. Its card as it was is at commit 02f2a8f.
+
 Every run: `claude plugin eval <suite> --model <pinned ID> --judge-model <same ID> --no-publish --max-cost-usd <cap> --scaffold -j 2 --threshold 0`, 3 runs per side, temporary files kept inside the repo so the traces could be checked. Costs are Claude Code's list-price estimates (`costUsd` in the result).
 
 ## Spend
@@ -137,6 +139,8 @@ Diagnosis: **case design problem (the trigger), plus run noise. Not a rule probl
 - **The 0.2.0 rule did what it was changed to do.** Under the 0.1.0 rules this card would have read Already handled: a 96% baseline, and an interval top of +0, under +10. Under 0.2.0 it reads Inconclusive, because the interval reaches -26. Hurts was not called, because the interval reaches exactly +0, and Hurts needs the whole interval below zero.
 
 No case file has a defect that justifies a second attempt, so V1 is not rerun.
+
+**Post-hoc, 0.4.0 rules (D21): V1 reads Rarely fired.** "The skill fired in only 1 of the 27 runs where it should have, under 10%, so the change says little about it." The rule was designed after seeing this card. Its prediction and score above are unchanged: it was scored as a miss against Hurts, and Rarely fired is not Hurts either.
 
 **Relabeled after review: V2 is a design defect, not a placebo result.** Its text ("Say what changed in plain words") is an instruction that changes behavior, not inert filler. The result, 10 of 27 runs with a Conventional Commits prefix without the skill and 0 of 27 with it, is a real effect, and the rules read it correctly. **V2 therefore did not test whether an inert placebo stays out of Helps and Hurts on noisy runs.** V3 does that. The original result, card and wording follow unchanged.
 

@@ -86,3 +86,18 @@ def make_result(
 def same(n, with_, without, **extra):
     """n cases that all ran the same way."""
     return [{"name": f"case-{i}", "with": with_, "without": without, **extra} for i in range(n)]
+
+
+def fired_in(fired, n, with_, without):
+    """n cases that all ran the same way, where the skill fired in only the first `fired`
+    with-runs, counted across the cases in order."""
+    runs = len(with_)
+    return [
+        {
+            "name": f"case-{i}",
+            "with": with_,
+            "without": without,
+            "fired": [i * runs + j < fired for j in range(runs)],
+        }
+        for i in range(n)
+    ]

@@ -5,19 +5,24 @@ The order is fixed, and the first rule that applies wins:
 1. Invalid: the eval stopped early, hit a usage or rate limit, skipped its judge graders, or
    has no baseline to compare against. Nothing can be read from it.
 2. Never fired: the skill didn't fire in any run where it should have.
-3. Inconclusive: fewer cases were compared than the rules need.
-4. Hurts: the whole interval for the change is below zero.
-5. Helps: the whole interval is above zero, and the change is at least the minimum effect.
-6. Already handled: the model scores at least the ceiling without the skill, and the interval
+3. Rarely fired: the skill fired in under 10% of the runs where it should have.
+4. Inconclusive: fewer cases were compared than the rules need.
+5. Hurts: the whole interval for the change is below zero.
+6. Helps: the whole interval is above zero, and the change is at least the minimum effect.
+7. Already handled: the model scores at least the ceiling without the skill, and the interval
    rules out both a gain and a loss as big as the minimum effect.
-7. Inconclusive: the model scores at least the ceiling without the skill, but the interval
+8. Inconclusive: the model scores at least the ceiling without the skill, but the interval
    doesn't rule out a loss as big as the minimum effect.
-8. No effect: the interval sits inside plus or minus the minimum effect.
-9. Inconclusive: anything else. The interval is too wide to call.
+9. No effect: the interval sits inside plus or minus the minimum effect.
+10. Inconclusive: anything else. The interval is too wide to call.
 
-Rules 6 and 7 changed in 0.2.0. Before, Already handled checked only for a gain, and in the
+Rules 7 and 8 changed in 0.2.0. Before, Already handled checked only for a gain, and in the
 planted skills check it gave a skill that did harm whenever it fired a calm label
 (docs/planted-skills-results.md, suite 3). The change was designed after seeing that result.
+
+Rule 3 was added in 0.4.0 (D21 in docs/decisions.md), with a warning when the skill fired in
+some but under half of those runs. It was designed after seeing planted suite V1, whose skill
+fired in 1 of 27 runs.
 
 Cases that check the skill does *not* fire (a Skill grader with max: 0) are left out of the
 change and reported as misfires instead, since the run without the skill passes them by
@@ -37,8 +42,15 @@ VERDICTS = (
     "no-effect",
     "inconclusive",
     "never-fired",
+    "rarely-fired",
     "invalid",
 )
+
+# D21: under RARE_FIRE of the runs that needed it, the skill was barely opened and the interval
+# says little about it; under LOW_FIRE, the card warns. Kept out of Rules, so the rules a card
+# records stay the same fields (D20); the card's mordecai version says which thresholds applied.
+RARE_FIRE = 0.10
+LOW_FIRE = 0.50
 
 # Errors that mean the run says nothing about the skill. The docs warn that a run which hits
 # a limit is still graded, usually scores 0, and doesn't mark the suite partial.
@@ -203,6 +215,18 @@ def _warnings(suite: Suite, effect: list[Case], skill_names: list[str]) -> list[
     return warnings
 
 
+def _fire_warnings(fired: tuple[int, int] | None) -> list[str]:
+    """D21: a warning when the skill fired in under half of the runs that needed it. The change
+    then mostly compares runs that didn't use the skill. Under RARE_FIRE the verdict itself
+    says so (Never fired or Rarely fired), so there is no warning."""
+    if not fired or fired[0] < RARE_FIRE * fired[1] or fired[0] >= LOW_FIRE * fired[1]:
+        return []
+    return [
+        f"The skill fired in only {fired[0]} of the {fired[1]} runs where it should have, so the "
+        "change mostly reflects runs where it wasn't used."
+    ]
+
+
 def _denial_warnings(suite: Suite) -> list[str]:
     """A warning when runs had a tool call refused by permissions. A refused call can lower a
     run's score for reasons that have nothing to do with the skill, and the run's error stays
@@ -257,7 +281,7 @@ def read(
         cost_without=_mean(r.cost_usd for r in without_runs),
         turns_with=_mean(r.turns for r in with_runs),
         turns_without=_mean(r.turns for r in without_runs),
-        warnings=tuple(_warnings(suite, effect, skill_names or [])),
+        warnings=tuple(_fire_warnings(fired) + _warnings(suite, effect, skill_names or [])),
         blocked_runs=suite.blocked_runs,
     )
 
@@ -271,6 +295,12 @@ def read(
         return verdict(
             "never-fired",
             f"The skill didn't fire in any of the {fired[1]} runs where it should have.",
+        )
+    if fired and fired[0] < RARE_FIRE * fired[1]:
+        return verdict(
+            "rarely-fired",
+            f"The skill fired in only {fired[0]} of the {fired[1]} runs where it should have, "
+            f"under {round(RARE_FIRE * 100)}%, so the change says little about it.",
         )
     if len(effect) < rules.min_cases:
         return verdict(

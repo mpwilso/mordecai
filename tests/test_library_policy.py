@@ -110,3 +110,26 @@ async def test_the_mcp_server_uses_the_defaults_too(cloned):
     data = r.structured_content or json.loads(r.content[0].text)
     assert data["installed"] is False and "hurts" in data["refused"]
     assert not (proj / ".agents").exists()
+
+
+@pytest.mark.parametrize("verdict", ["never-fired", "rarely-fired"])
+def test_a_skill_that_barely_fired_installs_unless_a_config_refuses_it(
+    gitenv, monkeypatch, verdict
+):
+    """Rarely fired (D21) is treated like Never fired: not a default refusal, since the card
+    says nothing against the skill, but a config can add it."""
+    repo = greeting_library(gitenv / "lib")
+    add_card(repo, repo / "library/greeting/variants/brief", "1.0.0", verdict)
+    commit(repo, "card")
+    proj = gitenv / "project"
+    proj.mkdir()
+    config = f'[[source]]\nname = "s"\npath = "{repo}"\n\n[variants]\ngreeting = "brief"\n'
+    (proj / "mordecai-library.toml").write_text(config)
+    monkeypatch.chdir(proj)
+    code, text = run(["library", "install", "greeting"])
+    assert code == 0 and verdict in text, text
+    run(["library", "uninstall", "greeting"])
+    (proj / "mordecai-library.toml").write_text(config + f'\n[policy]\nrefuse = ["{verdict}"]\n')
+    assert verdict in load_config(None, proj).refuse
+    code, text = run(["library", "install", "greeting"])
+    assert code == 1 and "Refused" in text and verdict in text, text

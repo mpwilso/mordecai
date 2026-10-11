@@ -6,7 +6,7 @@ FIXTURES = ROOT / "tests" / "fixtures"
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import pytest  # noqa: E402
-from builder import make_result, same  # noqa: E402,F401
+from builder import fired_in, make_result, same  # noqa: E402,F401
 
 
 @pytest.fixture

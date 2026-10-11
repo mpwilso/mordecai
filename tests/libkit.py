@@ -8,7 +8,7 @@ import json
 import subprocess
 from pathlib import Path
 
-from builder import make_result, same
+from builder import fired_in, make_result, same
 
 from mordecai.card import build, to_json
 from mordecai.library import changelog as cl
@@ -144,8 +144,12 @@ def add_card(
     for n in names:
         (cases_root / "evals" / n).mkdir(parents=True, exist_ok=True)
         (cases_root / "evals" / n / "prompt.md").write_text(f"Do {n}.\n")
-    with_, without = {"helps": ([1, 1, 1], [0, 0, 0]), "hurts": ([0, 0, 0], [1, 1, 1])}[effect]
-    doc = make_result(same(6, with_, without), plugin_path=str(cases_root))
+    if effect in ("never-fired", "rarely-fired"):
+        cases = fired_in(1 if effect == "rarely-fired" else 0, 6, [1, 1, 1], [0, 0, 0])
+    else:
+        with_, without = {"helps": ([1, 1, 1], [0, 0, 0]), "hurts": ([0, 0, 0], [1, 1, 1])}[effect]
+        cases = same(6, with_, without)
+    doc = make_result(cases, plugin_path=str(cases_root))
     data = json.dumps(doc, indent=2).encode()
     card = build(parse(doc), data, copy_dir / skill, roots=[repo])
     out = copy_dir / "evidence" / version

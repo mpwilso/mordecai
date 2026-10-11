@@ -3,7 +3,7 @@
 import json
 from dataclasses import replace
 
-from conftest import FIXTURES, make_result, same
+from conftest import FIXTURES, fired_in, make_result, same
 
 from mordecai.result import parse
 from mordecai.verdict import Rules, read
@@ -67,6 +67,61 @@ def test_never_fired_beats_a_good_score():
     r = verdict_of(same(6, [1, 1, 1], [0, 0, 0], fired=[False] * 3))
     assert r.verdict == "never-fired"
     assert r.reason == "The skill didn't fire in any of the 18 runs where it should have."
+
+
+def test_a_skill_that_fired_in_1_of_27_runs_is_rarely_fired():
+    """D21: the model barely opened the skill, so the interval says little about it. Every case
+    agrees, so without the rule this would be Already handled."""
+    r = verdict_of(fired_in(1, 9, [1, 1, 1], [1, 1, 1]))
+    assert r.fired == (1, 27)
+    assert r.verdict == "rarely-fired"
+    assert r.reason == (
+        "The skill fired in only 1 of the 27 runs where it should have, under 10%, so the "
+        "change says little about it."
+    )
+    assert r.interval is None
+
+
+def test_rarely_fired_beats_no_effect_and_too_few_cases():
+    assert verdict_of(fired_in(1, 9, [0, 0, 0], [0, 0, 0])).verdict == "rarely-fired"
+    assert verdict_of(fired_in(1, 4, [1, 1, 1], [0, 0, 0])).verdict == "rarely-fired"
+
+
+def test_rarely_fired_is_under_10_percent_exactly():
+    assert verdict_of(fired_in(2, 9, [1, 1, 1], [1, 1, 1])).verdict == "rarely-fired"  # 7%
+    assert verdict_of(fired_in(3, 9, [1, 1, 1], [1, 1, 1])).verdict == "already-handled"  # 11%
+    r = verdict_of(fired_in(1, 5, [1, 1], [1, 1]))  # exactly 10%
+    assert r.fired == (1, 10) and r.verdict == "already-handled"
+
+
+def test_firing_in_under_half_the_runs_is_a_warning_not_a_verdict():
+    r = verdict_of(fired_in(10, 9, [1, 1, 1], [1, 1, 1]))
+    assert r.fired == (10, 27)
+    assert r.verdict == "already-handled"
+    warning = (
+        "The skill fired in only 10 of the 27 runs where it should have, so the change mostly "
+        "reflects runs where it wasn't used."
+    )
+    assert warning in r.warnings
+    # A Rarely fired card already says so in its reason, so it doesn't repeat it as a warning.
+    rare = verdict_of(fired_in(2, 9, [1, 1, 1], [1, 1, 1]))
+    assert rare.verdict == "rarely-fired"
+    assert not any("runs where it wasn't used" in w for w in rare.warnings)
+    edge = verdict_of(fired_in(3, 9, [1, 1, 1], [1, 1, 1]))  # 11%: a verdict, so the warning
+    assert warning.replace("10 of", "3 of") in edge.warnings
+
+
+def test_no_fire_warning_at_half_or_more_or_never():
+    for fired in (14, 27, 0):
+        r = verdict_of(fired_in(fired, 9, [1, 1, 1], [1, 1, 1]))
+        assert not any("runs where it wasn't used" in w for w in r.warnings), fired
+    assert verdict_of(fired_in(0, 9, [1, 1, 1], [1, 1, 1])).verdict == "never-fired"
+
+
+def test_invalid_beats_rarely_fired():
+    cases = fired_in(1, 9, [1, 1, 1], [1, 1, 1])
+    r = verdict_of(cases, partial=True, partial_reason="cost_ceiling")
+    assert r.verdict == "invalid"
 
 
 def test_partial_is_invalid():

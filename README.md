@@ -74,6 +74,7 @@ Code decides, not a model. The rules run in this order, and the first one that a
 |---|---|
 | Invalid | The eval stopped early, a run hit a usage or rate limit, judge graders were skipped, or nothing ran without the skill |
 | Never fired | The skill didn't fire in any run where it should have |
+| Rarely fired | The skill fired in under 10% of the runs where it should have |
 | Inconclusive | Fewer than 5 cases were compared |
 | Hurts | The whole 90% interval for the change is below zero |
 | Helps | The whole interval is above zero, and the change is at least 10 points |
@@ -84,11 +85,13 @@ Code decides, not a model. The rules run in this order, and the first one that a
 
 The interval is a bootstrap over cases, and over runs inside each case, with a fixed seed, so the same result always gives the same card. Cases that check the skill stays quiet are left out of the change and reported as misfires.
 
-Every card also lists warnings that don't change the verdict: a model alias instead of a pinned ID, runs that ended with an error other than a usage or rate limit, runs that had a tool call refused by permissions (with how many on each side), fewer than 3 runs per side, no case that checks the skill stays quiet, no case that checks it fired, and case prompts that name the skill (which tests whether the model follows an instruction, not whether it finds the skill). `mordecai lint` runs the last four checks on case files before an eval.
+Every card also lists warnings that don't change the verdict: a skill that fired in at least 10% but under half of the runs where it should have (the change then mostly reflects runs that didn't use it), a model alias instead of a pinned ID, runs that ended with an error other than a usage or rate limit, runs that had a tool call refused by permissions (with how many on each side), fewer than 3 runs per side, no case that checks the skill stays quiet, no case that checks it fired, and case prompts that name the skill (which tests whether the model follows an instruction, not whether it finds the skill). `mordecai lint` runs the last four checks on case files before an eval.
 
 A refused tool call leaves the run's `error` empty, and the result JSON has no field for it, so Mordecai reads it from each run's trace (`tracePath`): the `permission_denials` list in the trace's result message. It reads a trace only if it is inside the current directory or the `--skill` directory, as with every other path a result names. If the run had the tool and the refused call aimed inside the run's own working folder or the skill's folder, the setup decided the run, not the skill, and the card is Invalid; a refusal anywhere else is a warning. `claude plugin eval` writes traces to a temporary folder by default, so a card made after that folder is gone can't see refusals, and it says so.
 
 **The two Already handled rows changed in 0.2.0.** Under the original rules, Already handled only checked that the interval ruled out a 10-point gain. In the planted check, that hid harm. An outdated skill (suite 3) gave the wrong answer in 5 of the 6 runs where it fired, and the card still said Already handled, with an interval of -41 to +7. The rules never flagged that skill as Hurts, and the new rules don't either, because its interval reaches +7. They now call it Inconclusive. The change was designed after seeing that result, so suite 3 can't count as evidence for it. Of the seven cards recorded before the change, it moves only suite 3.
+
+**Rarely fired was added in 0.4.0** ([D21](docs/decisions.md)). When the model barely opened the skill, the interval compares two arms that mostly ran without it, so no interval verdict says much about the skill. V1's skill fired in 1 of 27 runs, and its card moved from Inconclusive to Rarely fired; no other recorded card moves. The rule was designed after seeing V1, so V1 can't count as evidence for it.
 
 ## What the verdicts govern: the skill library
 
@@ -155,7 +158,7 @@ Each planted skill has a known intended effect, and every prediction was committ
 
 | Suite | Predicted | Actual | |
 |---|---|---|---|
-| V1. An outdated rule meant to fire | Hurts | Inconclusive (-11) | Miss. The skill fired in 1 of 27 runs |
+| V1. An outdated rule meant to fire | Hurts | Inconclusive (-11) | Miss. The skill fired in 1 of 27 runs. Rarely fired under the 0.4.0 rules, a rule designed after seeing this card |
 | V2. Meant as a noisy placebo | Not Helps or Hurts | Hurts (-37) | Design defect. Its text ("Say what changed in plain words") changed behavior, and the rules read that real effect correctly |
 | V3. An inert placebo on V2's cases | Not Helps or Hurts | Inconclusive (-11, interval -33 to +11) | Match. It fired in 27 of 27 runs, on noisy runs |
 | Holdout 6. A made-up changelog format | Helps | Helps (+100) | Match |
@@ -184,22 +187,22 @@ Two suites were rerun on Claude Sonnet 5.5 (`claude-sonnet-5-5`). Neither verdic
 
 ### Unit tests
 
-Each verdict and warning has a test on a constructed result, along with hashing, staleness, relative card paths, `lint`, `check --model` and the command line. Others feed in hostile input: malformed results and cards, paths and links that lead outside the plugin, and names carrying terminal escapes or Markdown. One test is built from the real suite 3 result, and others check that the README's example cards are what the tool prints. The library's tests cover every command, including hostile sources and targets (path traversal, links, malformed frontmatter, a name that doesn't match its folder, a card that doesn't match its version's files or its result), the byte-for-byte install, the seeded library, and the MCP server through the SDK's in-process client and over stdio. `uv run pytest` runs 181 tests without the library extra (the library's test files skip), and 363 with it (`uv sync --extra library --group spec`). None call a model or reach the network. CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs the tests, lint, the format check, `scripts/brand.py --check` and `scripts/planted.py --check` on Python 3.11, 3.12 and 3.13, on every push and on pull requests from forks, and runs the tests again with the library extra. Live eval runs are never part of CI: they call a model and cost money, and CI has no secrets. The result format comes from a real `claude plugin eval` run, not from the docs alone.
+Each verdict and warning has a test on a constructed result, along with hashing, staleness, relative card paths, `lint`, `check --model` and the command line. Others feed in hostile input: malformed results and cards, paths and links that lead outside the plugin, and names carrying terminal escapes or Markdown. One test is built from the real suite 3 result, and others check that the README's example cards are what the tool prints. The library's tests cover every command, including hostile sources and targets (path traversal, links, malformed frontmatter, a name that doesn't match its folder, a card that doesn't match its version's files or its result), the byte-for-byte install, the seeded library, and the MCP server through the SDK's in-process client and over stdio. `uv run pytest` runs 192 tests without the library extra (the library's test files skip), and 387 with it (`uv sync --extra library --group spec`). None call a model or reach the network. CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs the tests, lint, the format check, `scripts/brand.py --check` and `scripts/planted.py --check` on Python 3.11, 3.12 and 3.13, on every push and on pull requests from forks, and runs the tests again with the library extra. Live eval runs are never part of CI: they call a model and cost money, and CI has no secrets. The result format comes from a real `claude plugin eval` run, not from the docs alone.
 
 ### What wasn't checked
 
 - **Other models.** Everything ran on Claude Haiku 4.5, except two suites rerun on Claude Sonnet 5.5.
 - **Judge-graded suites.** Every grader was a regex or a tool-use check, so judge disagreement was never in play.
 - **Skills with a moderate real effect,** somewhere around +10 to +30 points. The changes measured on the planted cards were -100, -37, -15, -11, 0, +78 and +100.
-- **A harmful skill that fires in some runs but not others.** The rules gave Already handled (0.1.0) or Inconclusive (0.2.0) in those cases, and there is no verdict for it.
+- **A harmful skill that fires in some runs but not others.** The rules gave Already handled (0.1.0) or Inconclusive (0.2.0) in those cases. Since 0.4.0, under 10% is Rarely fired, and 10% to 50% only adds a warning.
 - **Domains other than git workflow and Python project setup.**
 - **Invalid and partial results from real runs.** No real run hit a cost cap or a rate limit, so those paths are tested only on constructed results.
 - **Using `--fail-on` as a CI gate on a real repository.**
 
 ## Known limits
 
-- **Hurts needs the skill to be opened.** A harmful skill that fires rarely gets Inconclusive, or Already handled under the 0.1.0 rules, not Hurts. Check the card's "Fired in" line.
-- **A skill that rarely fires is reported as Inconclusive.** V1's skill fired in 1 of 27 runs, and its card says Inconclusive, the same word used for a wide interval. A fix is proposed in [docs/open-questions.md](docs/open-questions.md): a Rarely fired verdict under a 10% fire rate, and a warning under 50%. It isn't applied.
+- **Hurts needs the skill to be opened.** A harmful skill that fires in under 10% of the runs that need it gets Rarely fired, not Hurts. Between 10% and 50% the card warns, and the verdict can still be Inconclusive or Already handled: suite 3 fired in 6 of 27 runs and reads Inconclusive. Check the card's "Fired in" line.
+- **Rarely fired was designed after seeing V1.** V1's skill fired in 1 of 27 runs, and its card said Inconclusive, the same word used for a wide interval. 0.4.0 applies the fix proposed in [docs/open-questions.md](docs/open-questions.md): a Rarely fired verdict under a 10% fire rate, and a warning under 50% ([D21](docs/decisions.md)). V1 can't count as evidence for it; a new suite, predicted before it runs, is its test.
 - **The bootstrap is optimistic when runs agree.** In 8 of the 13 planted cards that have an interval, it collapsed to a single point, such as +100 to +100.
 - **Results come from one small model.** See [what wasn't checked](#what-wasnt-checked).
 - **Only one plugin per result.** Cards name the first plugin in the suite.
@@ -255,7 +258,7 @@ Mordecai has no dependency on any of them.
 
 ## What's next
 
-1. A way to report a skill that rarely fires, distinct from Inconclusive (see [known limits](#known-limits)).
+1. Test Rarely fired on a suite whose skill fires rarely by design, predicted before it runs (see [known limits](#known-limits)).
 2. A planted skill with a moderate effect, to check the simulation's +20 point finding on real runs.
 3. `mordecai measure`: run the eval with a pinned model and a cost cap, then write the card, in one step.
 

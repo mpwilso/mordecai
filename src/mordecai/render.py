@@ -23,6 +23,7 @@ LABEL = {
     "no-effect": "No effect",
     "inconclusive": "Inconclusive",
     "never-fired": "Never fired",
+    "rarely-fired": "Rarely fired",
     "invalid": "Invalid",
 }
 
@@ -33,6 +34,8 @@ NEXT = {
     "no-effect": "It isn't changing results on these cases. Decide whether it's worth the context.",
     "inconclusive": "Add cases or runs, then measure again.",
     "never-fired": "Rewrite the skill's description so the model knows when to use it.",
+    "rarely-fired": "Rewrite the skill's description so the model uses it when it should, then "
+    "measure again.",
     "invalid": "Fix the problem above and run the eval again.",
 }
 
@@ -194,6 +197,7 @@ RARITY = {
     "no-effect": "PLACEBO",
     "inconclusive": "UNIDENTIFIED",
     "never-fired": "NEVER EQUIPPED",
+    "rarely-fired": "BARELY EQUIPPED",
     "invalid": "CORRUPTED",
 }
 
@@ -230,6 +234,13 @@ CRAWL = {
         "You carried this skill through {runs} runs and never once took it out.",
         "Your description isn't doing its job. Fix it so the model knows when to reach for this.",
     ),
+    "rarely-fired": (
+        "Bottom of the Bag",
+        "You carried this skill through {runs} runs and barely took it out. It's hard to judge "
+        "gear you don't wear.",
+        "Fix the description so the model reaches for it, then bring it back and I'll tell you "
+        "what it does.",
+    ),
     "invalid": (
         "Corrupted Save",
         "Something broke before anything could be measured. Congratulations?",
@@ -246,6 +257,7 @@ COLOR = {
     "no-effect": "2",
     "inconclusive": "1;36",  # bold cyan: unidentified
     "never-fired": "2",
+    "rarely-fired": "2",
     "invalid": "1;31",  # bold red: corrupted
 }
 
