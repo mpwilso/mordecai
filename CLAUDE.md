@@ -25,4 +25,6 @@ uv run python scripts/brand.py --check
 
 With the library extra (`uv sync --extra library --group spec`), the same `uv run pytest` also runs the library, MCP and seed tests; without it they skip.
 
+pytest config already sets -q. Never add another -q on the command line: stacked quiet flags hide the summary line. For repeat-run loops, check the summary appears on run 1 before looping.
+
 `uv run python scripts/simulate.py` rewrites docs/simulation.md below its marker. It takes about two minutes and calls no model. `uv run python scripts/planted.py --check` confirms the planted suites match their generator.
