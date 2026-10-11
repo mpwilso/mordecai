@@ -47,3 +47,17 @@ def test_ci_runs_the_actions_identify_step_without_commenting():
         assert "result: tests/fixtures/suite1-result.json" in step
     assert "fail-on: helps" in steps[1]
     assert "steps.failing.outcome != 'failure'" in ci
+
+
+def test_release_publishes_with_trusted_publishing_from_one_job():
+    """PyPI trusted publishing (#18): only the publish job, in the pypi environment, can ask
+    for an OIDC token, and nothing stores a PyPI token."""
+    release = (ROOT / ".github" / "workflows" / "release.yml").read_text()
+    assert re.search(r"^on:\n  release:\n    types: \[published\]$", release, re.M)
+    assert re.search(r"^permissions:\n  contents: read$", release, re.M)
+    assert release.count("id-token: write") == 1
+    publish = release[release.index("\n  publish:\n") :]
+    assert "id-token: write" in publish and "name: pypi" in publish
+    assert "pypa/gh-action-pypi-publish@" in publish
+    assert "password" not in release and "secrets." not in release
+    assert "uv build" in release
