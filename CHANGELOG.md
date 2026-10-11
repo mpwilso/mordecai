@@ -1,8 +1,8 @@
 # Changelog
 
-## Unreleased
+## 0.4.0 (2026-10-11)
 
-Changes on master since the v0.3.0 tag. The verdict rules changed, so the next release is 0.4.0, and the package already says 0.4.0.
+The verdict rules changed, so this is 0.4.0. Cards built by 0.3.0 keep their verdicts except V1's (see below).
 
 - **Rules change: Rarely fired (D21).** A skill that fired in under 10% of the runs that needed it is Rarely fired, checked right after Never fired, with no interval. Between 10% and 50%, the verdict is decided as before and the card warns that the change mostly reflects runs where the skill wasn't used. Of the recorded cards, only V1 (1 of 27) moves: Inconclusive becomes Rarely fired. The rule was designed after seeing V1. `--fail-on` accepts `rarely-fired`, and the library treats it like Never fired: not refused unless a config adds it.
 - R1, the test of Rarely fired, ran once ($1.51) and missed: its skill fired in 15 of 27 runs, not the predicted 1 or 2, so the rule wasn't exercised. The result and card are in docs/planted-skills-results.md.
