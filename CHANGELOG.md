@@ -1,8 +1,8 @@
 # Changelog
 
-## Unreleased
+## 0.5.0 (2026-10-11)
 
-The verdict rules changed, so the version is 0.5.0. Not yet tagged or released.
+The verdict rules changed, so this is 0.5.0. It is the first version published to PyPI, as mordecai-skills.
 
 - **Rules change: when every compared case has the same change and every run agrees, the card counts cases (D22).** The bootstrap could only return one number there, so cards showed a "90% interval" such as +100 to +100. Now the card says "9 of 9 cases" with an exact one-sided Clopper-Pearson bound, at the rules' confidence, on the share of cases like these that could differ (23% for 9 cases at 90%), and its JSON has `numbers.agreement` with `interval` null. Verdicts are decided as before. Chosen by the owner after seeing the collapsed cards, so those cards aren't evidence for it.
 - **Rules change: No effect and Already handled need at least 10 compared cases (D22).** With fewer, the card is Inconclusive and says why. Helps and Hurts keep the minimum of 5. The threshold is a constant, not a `Rules` field, so existing library cards still pass D20's equal-rules check. Of the recorded cards, 5a-twin (Already handled), 5b-filler and holdout 7 (No effect) move to Inconclusive; no Helps or Hurts card moves. All 15 recorded cards and the library's two were rebuilt; docs/planted-skills-results.md lists every card that moved. In scripts/simulate.py only the 5-case null calls moved, and its non-monotonic placebo row (59%, 27%, 64% under 0.4.0) turned out real, not a bug.
