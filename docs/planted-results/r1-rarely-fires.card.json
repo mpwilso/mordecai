@@ -1,0 +1,80 @@
+{
+  "card": 1,
+  "hashes": {
+    "cases": "sha256:229c2d3421de7a5ad80b3aa301e202b3243622e9da0570f561bb8db3a5c40b31",
+    "result": "sha256:b104a01f326d7f8df29bbe368f63b43fe9dfab7567182a09673ec168ad9eb812",
+    "skill": "sha256:4c67e96e194ad297b75eebe018488b99e840249c1866f9ba3deddb2140abfe6a"
+  },
+  "mordecai": "0.4.0",
+  "numbers": {
+    "casesCompared": 9,
+    "change": 0.1111111111111111,
+    "costPerRunWith": 0.020880466666666667,
+    "costPerRunWithout": 0.024581414814814816,
+    "fired": [
+      15,
+      27
+    ],
+    "flat": 6,
+    "improved": 3,
+    "interval": [
+      0.0,
+      0.2593
+    ],
+    "misfired": [
+      0,
+      9
+    ],
+    "turnsPerRunWith": 3.814814814814815,
+    "turnsPerRunWithout": 5.111111111111111,
+    "withScore": 0.925925925925926,
+    "withoutScore": 0.8148148148148148,
+    "worse": 0
+  },
+  "paths": {
+    "caseDirs": [
+      "evals/fixture",
+      "evals/gitignore",
+      "evals/km-miles-8",
+      "evals/proj-autofix",
+      "evals/proj-first-failure",
+      "evals/proj-format",
+      "evals/proj-format-check",
+      "evals/proj-install",
+      "evals/proj-lint",
+      "evals/proj-one-file",
+      "evals/proj-python",
+      "evals/proj-tests"
+    ],
+    "casesRoot": ".",
+    "relativeTo": {
+      "casesRoot": "the skill directory",
+      "skill": "the card's directory"
+    },
+    "skill": "../../evals/planted/validation/r1-rarely-fires"
+  },
+  "reason": "The 90% interval runs +0 to +26 points, too wide to call.",
+  "rules": {
+    "ceiling": 0.9,
+    "confidence": 0.9,
+    "min_cases": 5,
+    "min_effect": 0.1,
+    "resamples": 2000,
+    "seed": 0
+  },
+  "subject": {
+    "plugin": "validation-rarely-fires",
+    "skills": [
+      "workspace-commands"
+    ],
+    "version": "1.0.0"
+  },
+  "tested": {
+    "claudeVersion": "2.1.296",
+    "judgeModel": "claude-haiku-4-5-20251001",
+    "model": "claude-haiku-4-5-20251001",
+    "startedAt": "2026-10-11T18:01:57.349Z"
+  },
+  "verdict": "inconclusive",
+  "warnings": []
+}

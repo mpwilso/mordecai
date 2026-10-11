@@ -41,9 +41,9 @@ What the scorecard shows:
 - **Hurts.** It was detected once, in H1, which was designed so its skill would fire in every run. Harmful skills that fired in 6 of 27 runs (suite 3) or 1 of 27 (V1) were not called Hurts.
 - **Haiku vs Sonnet.** Neither rerun moved a verdict. On suite 2, Sonnet used a Conventional Commits prefix unprompted in 0 of 27 runs, against Haiku's 5, so the change grew from +78 to +100.
 
-## Open question 1: report skills that rarely fire distinctly (applied in 0.4.0 as A and C, D21; its test is pending)
+## Open question 1: report skills that rarely fire distinctly (applied in 0.4.0 as A and C, D21; its first test missed)
 
-**Applied in 0.4.0** ([D21](decisions.md)): proposals A and C below. V1's card was rebuilt and reads Rarely fired; no other recorded card's verdict moves. What stays open is the test: a new suite whose skill is meant to fire rarely, predicted before it runs. The proposal as it was written follows.
+**Applied in 0.4.0** ([D21](decisions.md)): proposals A and C below. V1's card was rebuilt and reads Rarely fired; no other recorded card's verdict moves. What stays open is the test. The first one, R1, missed: its skill was predicted to fire in 1 or 2 of 27 runs and fired in 15, so the rule wasn't exercised ([results](planted-skills-results.md)). A fire rate measured for one skill didn't carry over to another skill on the same questions. A second test would measure a candidate skill's fire rate first, then freeze the suite and predict. The proposal as it was written follows.
 
 V1's skill fired in 1 of 27 runs, and its card said Inconclusive, the same word used for a wide interval. The practical message is different: the skill is almost never used, so its description needs fixing before anything else can be measured.
 

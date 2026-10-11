@@ -202,7 +202,7 @@ Each verdict and warning has a test on a constructed result, along with hashing,
 ## Known limits
 
 - **Hurts needs the skill to be opened.** A harmful skill that fires in under 10% of the runs that need it gets Rarely fired, not Hurts. Between 10% and 50% the card warns, and the verdict can still be Inconclusive or Already handled: suite 3 fired in 6 of 27 runs and reads Inconclusive. Check the card's "Fired in" line.
-- **Rarely fired was designed after seeing V1.** V1's skill fired in 1 of 27 runs, and its card said Inconclusive, the same word used for a wide interval. 0.4.0 applies the fix proposed in [docs/open-questions.md](docs/open-questions.md): a Rarely fired verdict under a 10% fire rate, and a warning under 50% ([D21](docs/decisions.md)). V1 can't count as evidence for it; a new suite, predicted before it runs, is its test.
+- **Rarely fired was designed after seeing V1.** V1's skill fired in 1 of 27 runs, and its card said Inconclusive, the same word used for a wide interval. 0.4.0 applies the fix proposed in [docs/open-questions.md](docs/open-questions.md): a Rarely fired verdict under a 10% fire rate, and a warning under 50% ([D21](docs/decisions.md)). V1 can't count as evidence for it. Its first test, R1, missed: the skill was predicted to fire in 1 or 2 of 27 runs and fired in 15, so the rule wasn't exercised ([results](docs/planted-skills-results.md)).
 - **The bootstrap is optimistic when runs agree.** In 8 of the 13 planted cards that have an interval, it collapsed to a single point, such as +100 to +100.
 - **Results come from one small model.** See [what wasn't checked](#what-wasnt-checked).
 - **Only one plugin per result.** Cards name the first plugin in the suite.
@@ -258,7 +258,7 @@ Mordecai has no dependency on any of them.
 
 ## What's next
 
-1. Test Rarely fired on a suite whose skill fires rarely by design, predicted before it runs (see [known limits](#known-limits)).
+1. Test Rarely fired again: measure a candidate skill's fire rate first, then freeze the suite and predict (R1, the first try, missed; see [known limits](#known-limits)).
 2. A planted skill with a moderate effect, to check the simulation's +20 point finding on real runs.
 3. `mordecai measure`: run the eval with a pinned model and a cost cap, then write the card, in one step.
 

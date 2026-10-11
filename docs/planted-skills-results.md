@@ -29,6 +29,9 @@ The ceiling for this check is $35. Before each run, the spend so far plus that r
 | 13 | holdout 7-filler | claude-haiku-4-5-20251001 | $3 | $1.30 | $17.67 |
 | 14 | H1 h1-must-fire | claude-haiku-4-5-20251001 | $3 | $1.24 | $18.91 |
 | 15 | 2-commits (drift demo 2) | claude-sonnet-5-5 | $3 | $1.69 | $20.60 |
+| 16 | R1 r1-rarely-fires | claude-haiku-4-5-20251001 | $3 | $1.51 | $22.11 |
+
+Run 16 is outside the second stage: the owner approved it on 2026-10-11 with its own $3 ceiling, as the test of the Rarely fired rule (D21). The total stays under the $35 ceiling.
 
 Not counted above: the one-case run on 2026-10-05 that captured the result format ($0.07, before this check).
 
@@ -216,3 +219,21 @@ Suite 2's skill (Conventional Commits) came out Helps on Haiku 4.5: 96% with the
 **My prediction was right on the verdict and wrong on the direction.** I predicted Sonnet would use a type prefix unprompted more often than Haiku. It used one less often: in none of 27 runs, against Haiku's 5. Without the skill, Sonnet wrote "Update README with new install steps" (commit-4, all three runs) and "Rename getUser to fetchUser", with a body (commit-1, all three). With the skill, it wrote `docs(readme): update install steps` every time. So the change grew from +78 to +100.
 
 This is the second Haiku-to-Sonnet comparison, and the second with no verdict change. On these two skills, the cards would not have gone stale in substance. They are still stale in record: each card names the model it was measured on, and `mordecai check --model` (added after this run) reports that.
+
+## R1: the Rarely fired rule's test (0.4.0 rules, prediction committed in 4460b0d)
+
+The prediction is in [validation-skills.md](validation-skills.md) under R1, committed and pushed in 4460b0d before the suite ran. It ran once on 2026-10-11, on `claude-haiku-4-5-20251001` with the same model as judge, Claude Code 2.1.296, for $1.51 under a $3 cap.
+
+| Predicted | Card | Score | Better / same / worse | With / without | Fired | Cost |
+|---|---|---|---|---|---|---|
+| 1 or 2 of 27, Rarely fired | Inconclusive (+11, interval +0 to +26) | Miss | 3 / 6 / 0 | 93% / 81% | 15 of 27; 0 of 9 quiet | $1.51 |
+
+**R1: Inconclusive, a miss. The skill fired in 15 of 27 runs, not 1 or 2, so the Rarely fired rule was not exercised.** [Card](planted-results/r1-rarely-fires.card.json). At 56% it is above the 50% line, so the card carries no fire warning either. The 0.3.0 rules (328bc59) read the same result the same way: Inconclusive.
+
+Fires per case, out of 3 with-skill runs: proj-autofix 3, proj-install 3, proj-format 2, proj-lint 2, proj-python 2, proj-first-failure 1, proj-format-check 1, proj-tests 1, proj-one-file 0. The three quiet cases (fixture, gitignore, km-miles-8) never fired.
+
+**Why the prediction missed.** It assumed a question that didn't open suite 3's skill wouldn't open R1's either. That doesn't hold: the six questions kept from suite 3 fired 0 of 18 times there and 10 of 18 here. The skill is different (its name and description are `workspace-commands`, not suite 3's), and Claude Code moved from 2.1.289 to 2.1.296. One run can't separate the two causes. What it does show is that a fire rate measured for one skill doesn't carry over to another skill on the same questions.
+
+**The +11 points are noise, not the skill.** The skill agrees with the repo, so following it can't change an answer. The three better cases came from baseline runs that missed (proj-format-check and proj-install, 2 of 3 without), and proj-one-file improved with the skill never firing. Inconclusive is the right reading.
+
+**What this leaves.** Rarely fired is still untested on runs it wasn't designed from. It is not rerun: R1's rules say it runs once, and its case files have no defect. A second test would need a skill whose fire rate is first measured on its own, which is what [open question 1](open-questions.md) now says.
