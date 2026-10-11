@@ -122,7 +122,11 @@ def test_every_seeded_copy_installs_byte_for_byte(tmp_path, monkeypatch):
 
 def test_skills_folder_is_what_export_writes(tmp_path, monkeypatch):
     """skills/ is the published view for npx skills and APM: only the skills the root config's
-    [export] lists."""
+    [export] lists. It stays tracked rather than generated: those tools read the GitHub tree with
+    no build step, and an empty skills/ would send npx skills searching the whole repository,
+    into the planted suites' harmful skills (D15). mordecai-export.json beside it records the
+    tag, commit and hash the published copy came from. This test keeps both in sync with what
+    export writes."""
     monkeypatch.chdir(ROOT)
     out = tmp_path / "skills"
     config = load_config(ROOT / "mordecai-library.toml")

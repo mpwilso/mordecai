@@ -5,7 +5,7 @@ Reversible decisions made during the library build, each with the options consid
 ## D1. The library's dependencies are an extra, not a dependency group
 
 - **Decision:** the MCP SDK and PyYAML go in `[project.optional-dependencies] library`. `uv sync` installs neither; `uv sync --extra library` installs both. Someone installing the package can ask for `mordecai-skills[library]`.
-- **Options:** a `[dependency-groups]` group (like `dev` and `visual`), or an extra.
+- **Options:** a `[dependency-groups]` group (like `dev`), or an extra.
 - **Why:** dependency groups are for working on the repository and are never published with the package, so a user installing from an index couldn't get the MCP server at all. An extra is the published form of an optional dependency set.
 - **Reverse:** move the two pins into a dependency group and change `--extra library` to `--group library` in CI and the docs.
 
