@@ -61,3 +61,11 @@ def test_release_publishes_with_trusted_publishing_from_one_job():
     assert "pypa/gh-action-pypi-publish@" in publish
     assert "password" not in release and "secrets." not in release
     assert "uv build" in release
+
+
+def test_no_one_line_run_holds_a_colon_and_space():
+    """YAML reads ": " in a plain scalar as a new mapping, and GitHub then rejects the whole
+    workflow file before any job runs. Such a script goes in a run: | block."""
+    for name, text in [("action.yml", ACTION)] + [(w.name, w.read_text()) for w in WORKFLOWS]:
+        for script in re.findall(r"^\s*run: (?![|>])(.+)$", text, re.M):
+            assert ": " not in script, (name, script)

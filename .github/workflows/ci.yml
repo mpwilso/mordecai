@@ -63,7 +63,8 @@ jobs:
       - name: The action's card is Markdown with the verdict
         env:
           CARD: ${{ steps.card.outputs.card }}
-        run: grep -q "^### planted-convention 1.0.0: Helps$" "$CARD"
+        run: |
+          grep -q "^### planted-convention 1.0.0: Helps$" "$CARD"
       - name: The action fails on a fail-on verdict
         id: failing
         continue-on-error: true
