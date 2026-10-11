@@ -49,6 +49,33 @@ jobs:
         run: uv run python scripts/brand.py --check
       - name: Planted suites match scripts/planted.py
         run: uv run python scripts/planted.py --check
+      # The action in action.yml, on a recorded result. comment is off: a same-repo pull request
+      # doesn't run these jobs, and pushes have no pull request to comment on, so posting is
+      # untested until the action is used on a real pull request.
+      - name: The action writes the card
+        id: card
+        uses: ./
+        with:
+          result: tests/fixtures/suite1-result.json
+          skill: evals/planted/1-convention
+          fail-on: hurts,invalid
+          comment: "false"
+      - name: The action's card is Markdown with the verdict
+        env:
+          CARD: ${{ steps.card.outputs.card }}
+        run: grep -q "^### planted-convention 1.0.0: Helps$" "$CARD"
+      - name: The action fails on a fail-on verdict
+        id: failing
+        continue-on-error: true
+        uses: ./
+        with:
+          result: tests/fixtures/suite1-result.json
+          skill: evals/planted/1-convention
+          fail-on: helps
+          comment: "false"
+      - name: It did fail
+        if: steps.failing.outcome != 'failure'
+        run: exit 1
 
   library:
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository

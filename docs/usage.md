@@ -44,3 +44,28 @@ Stale: docs/planted-results/2-commits.card.json
 What it doesn't record, the card shows as not measured, never guessed: whether the skill fired (so Never fired and Rarely fired can't be called), cases where the skill should stay quiet, cost and turns, refused tool calls, the judge model, Claude Code's version, and whether a run stopped early or hit a rate limit (so a limited run can't make the card Invalid). It names no case files, so the card has no cases hash and `mordecai check` reports it can't check the cases. The same verdict rules apply.
 
 The test fixture, [tests/fixtures/benchmark/](../tests/fixtures/benchmark/), was written by hand from the documented schema, not taken from a real run.
+
+## GitHub Action
+
+[action.yml](../action.yml) at the repository root is a composite action: it runs `mordecai identify` on a result file in your workspace, writes the card as Markdown, posts it on the pull request with `gh pr comment`, and then fails the step if the verdict is in `fail-on`. Pin it to a commit SHA, as you would any action:
+
+```yaml
+on: pull_request
+permissions:
+  contents: read
+  pull-requests: write
+jobs:
+  card:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: mpwilso/mordecai@<commit SHA>
+        with:
+          result: evals/result.json
+          skill: path/to/plugin
+          fail-on: hurts,invalid
+```
+
+Inputs: `result` (required), `skill`, `fail-on`, `comment` (`"true"` by default; `"false"` only writes the card) and `github-token`. Outputs: `card`, the Markdown file's path, and `verdict-exit-code`. The result file has to be committed or made earlier in the job: the action never runs `claude plugin eval`.
+
+**The posting step is untested.** This repository's CI runs the action on a recorded result on every push, with `comment: "false"`, and checks the card and the `fail-on` failure. It can't test posting: a push has no pull request, and a pull request from this repository doesn't run CI (only one from a fork does, with a read-only token that can't comment). A pull request from a fork gets that read-only token in your repository too, so the comment step fails there unless you set `comment: "false"`.

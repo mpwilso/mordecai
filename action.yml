@@ -1,0 +1,77 @@
+name: Mordecai card
+description: Read a skill's eval result with mordecai identify, and post the card on the pull request.
+author: Matt Wilson
+branding:
+  icon: check-square
+  color: red
+
+# A composite action: it runs this repository's mordecai with uv, from the caller's workspace,
+# so Mordecai reads only inside it. Inputs reach the shell through env, never interpolated
+# into the script. The one third-party action is pinned to a full commit SHA. The posting step
+# hasn't been used on a real pull request yet; CI runs everything before it.
+inputs:
+  result:
+    description: The claude plugin eval --json result, or a skill-creator benchmark.json, relative to the workspace.
+    required: true
+  skill:
+    description: The plugin or skill folder, if the result's path doesn't lead to it.
+    required: false
+    default: ""
+  fail-on:
+    description: Comma-separated verdicts that fail the step, such as hurts,invalid. Passed to --fail-on.
+    required: false
+    default: ""
+  comment:
+    description: Post the card as a pull request comment ("true" or "false"). Needs pull-requests write permission.
+    required: false
+    default: "true"
+  github-token:
+    description: The token gh uses to comment.
+    required: false
+    default: ${{ github.token }}
+
+outputs:
+  verdict-exit-code:
+    description: identify's exit code, 0 or 1 (1 when the verdict is in fail-on).
+    value: ${{ steps.identify.outputs.code }}
+  card:
+    description: The path of the card as Markdown.
+    value: ${{ steps.identify.outputs.card }}
+
+runs:
+  using: composite
+  steps:
+    - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+    - id: identify
+      shell: bash
+      env:
+        RESULT: ${{ inputs.result }}
+        SKILL: ${{ inputs.skill }}
+        FAIL_ON: ${{ inputs.fail-on }}
+        PROJECT: ${{ github.action_path }}
+      run: |
+        card="$RUNNER_TEMP/mordecai-card.md"
+        args=(identify "$RESULT" --markdown "$card" --plain)
+        if [ -n "$SKILL" ]; then args+=(--skill "$SKILL"); fi
+        if [ -n "$FAIL_ON" ]; then args+=(--fail-on "$FAIL_ON"); fi
+        set +e
+        uv run --locked --no-dev --project "$PROJECT" mordecai "${args[@]}"
+        code=$?
+        set -e
+        # 2 means the input couldn't be read: there is no card to post.
+        if [ "$code" -ge 2 ]; then exit "$code"; fi
+        echo "code=$code" >> "$GITHUB_OUTPUT"
+        echo "card=$card" >> "$GITHUB_OUTPUT"
+    - if: inputs.comment == 'true' && github.event_name == 'pull_request'
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        CARD: ${{ steps.identify.outputs.card }}
+        PR: ${{ github.event.pull_request.number }}
+        REPO: ${{ github.repository }}
+      run: gh pr comment "$PR" --repo "$REPO" --body-file "$CARD"
+    - if: steps.identify.outputs.code == '1'
+      shell: bash
+      run: |
+        echo "mordecai: the verdict is one of fail-on"
+        exit 1

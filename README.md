@@ -91,7 +91,7 @@ uv run mordecai identify result.json --skill path/to/plugin --card card.json --m
 uv run mordecai check card.json --model claude-sonnet-5-5
 ```
 
-**`claude plugin eval` runs the plugin's code on your machine, as you,** so pass `--trust-plugin` only for a plugin you've reviewed. Mordecai never runs a plugin; it reads the result and hashes files. `--fail-on hurts,invalid` makes `identify` exit 1 for CI. [docs/usage.md](docs/usage.md) has the flags, exit codes, paths and a worked `check` example.
+**`claude plugin eval` runs the plugin's code on your machine, as you,** so pass `--trust-plugin` only for a plugin you've reviewed. Mordecai never runs a plugin; it reads the result and hashes files. `--fail-on hurts,invalid` makes `identify` exit 1 for CI. A [GitHub Action](docs/usage.md#github-action) posts the card on a pull request. [docs/usage.md](docs/usage.md) has the flags, exit codes, paths and a worked `check` example.
 
 ### From skill-creator's benchmark.json
 

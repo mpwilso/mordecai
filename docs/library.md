@@ -168,7 +168,7 @@ The reading tools are `open-world` because a GitHub source is fetched over the n
 - **The gate trusts committed result files.** It checks that a card matches its result and its version's files, not that the eval really ran. A fabricated result with a card made from it would pass.
 - **Cards are only as good as their cases.** A Helps card says the skill helped on those cases, with that model. See [the verdicts](../README.md#the-verdicts) and [known limits](../README.md#known-limits).
 - **Precedence is by rule, not merge.** The last source listed wins for each copy, and a variant behind its base is reported, not updated.
-- **Nothing writes to GitHub.** Releases are local tags, and pushing them is up to you. There is no GitHub Action yet that posts a card on a library pull request.
+- **Nothing writes to GitHub.** Releases are local tags, and pushing them is up to you. The [GitHub Action](usage.md#github-action) posts a card on a pull request, but only the card: it doesn't run the library's gate.
 - **The Hurts example is deliberately harmful.** `branch-naming`'s `camelcase` variant is planted suite H1, a convention built to fail its own eval's graders. It is never published, and every export refuses it.
 - **This repository publishes only one skill at its root,** `mordecai`, in [skills/](../skills/), for npx skills and APM. The seeded skills are demo content. Don't run `npx skills add --full-depth` on this repository: that searches everything, including the planted suites' deliberately harmful skills.
 - **Mordecai isn't a general package manager.** It installs only skills, only from Mordecai libraries, and keeps its own lockfile beside npx skills' and APM's without touching theirs.
