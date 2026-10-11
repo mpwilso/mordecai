@@ -2,6 +2,14 @@
 
 What the planted skills check ran, what it found, and the questions it leaves open. Details for every run are in [planted-skills-results.md](planted-skills-results.md). The predictions are in [planted-skills.md](planted-skills.md) for the first set and the sealed holdouts, and in [validation-skills.md](validation-skills.md) for V1 to V3 and H1.
 
+## What's next
+
+Moved from the README.
+
+1. Test Rarely fired again: measure a candidate skill's fire rate first, then freeze the suite and predict (R1, the first try, missed; see open question 1 below).
+2. A planted skill with a moderate effect, to check the simulation's +20 point finding on real runs.
+3. `mordecai measure`: run the eval with a pinned model and a cost cap, then write the card, in one step.
+
 ## What was run
 
 The check ran 12 planted suites, 15 runs in all, almost all on Claude Haiku 4.5, at a total of $20.60 at list price. Each suite compares 9 cases, with 3 runs per side. Every prediction was committed before its suite ran.

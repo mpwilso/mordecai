@@ -283,6 +283,6 @@ $ cat $DEMO/marketplace/.claude-plugin/marketplace.json
 
 ## What wasn't shown
 
-- **The MCP server.** `mordecai mcp` serves the same list, search, read, history, update check, install and uninstall operations over stdio; see the README for each tool's setup. Its tests drive it with the SDK's in-process client.
+- **The MCP server.** `mordecai mcp` serves the same list, search, read, history, update check, install and uninstall operations over stdio; see [library.md](library.md#setup) for each client's setup. Its tests drive it with the SDK's in-process client.
 - **GitHub sources.** A source can be `github = "owner/repo"`, fetched with Git over HTTPS into a cache. The tests use a local stand-in, so nothing here reached the network.
 - **A real managed Claude Code install** of the exported marketplace. The settings keys are from the Claude Code docs; the file hasn't been tried against a managed install.

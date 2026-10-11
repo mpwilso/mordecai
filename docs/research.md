@@ -117,6 +117,30 @@ From their public GitHub pages only.
 - [ISR](https://github.com/mpwilso/isr): a Claude Code skill that "Writes the acceptance script for an AI-built change: what the build proved, what a person still has to check, and what the business has to decide."
 - [Polarizer](https://github.com/mpwilso/polarizer): "A local MCP gateway: it sits between an AI agent and the MCP servers it uses". It pins the tool definitions you approved, holds risky calls for a person, and keeps a hash-chained ledger. Upstream servers are declared in `polarizer.toml` as `[upstream.<name>]` with `command` and `args`, and each tool gets a class such as `local-read`, `local-write` or `destructive`; a tool with no class is held on every call.
 
+## Prior art
+
+The short list that used to be in the README, for the verdicts as well as the library. First, why Mordecai exists:
+
+Many skills don't measurably help, and the usual tools don't flag it:
+
+- In SWE-Skills-Bench, 39 of 49 skills gave no gain in pass rate, and 24 of them passed every task without the skill. Token use moved between -78% and +451% with the results unchanged.
+- In SkillsBench, skills written by people added about 16 points on average, skills written by models about -1, and 16 of 84 tasks did worse with a skill.
+- `claude plugin eval` reports the change with and without a plugin, but its docs say "the with-minus-without delta is reported but never changes the exit code" ([Run evals in CI](https://code.claude.com/docs/en/plugin-evals#run-evals-in-ci)). The exit code depends on each case's score with the plugin against `--threshold`, so a skill that passes everything with or without it passes the gate. The same docs say a run that hits a usage or rate limit "usually scores 0", and the suite "isn't marked `partial`" ([Runs fail with a usage-limit or rate-limit error partway through](https://code.claude.com/docs/en/plugin-evals#runs-fail-with-a-usage-limit-or-rate-limit-error-partway-through)).
+
+Then the tools and studies it builds on or sits beside:
+
+- [`claude plugin eval`](https://code.claude.com/docs/en/plugin-evals) runs the cases, both arms and the graders. Mordecai only reads its result.
+- [SWE-Skills-Bench](https://arxiv.org/abs/2603.15401) and [SkillsBench](https://arxiv.org/abs/2602.12670) measured how often skills help, with and without.
+- [NVIDIA SkillEvaluator](https://developer.nvidia.com/blog/evaluating-ai-agent-skill-performance-with-nvidia-skillevaluator/) reports a with-minus-without "skill lift", and says it doesn't report confidence intervals. NVIDIA's [skills catalog](https://docs.nvidia.com/skills/evaluating-agent-skills) gates publication on a with-and-without eval, and [Tessl's registry](https://tessl.io/blog/introducing-task-evals-measure-whether-your-skills-actually-work/) shows with-and-without scores for each version.
+- [npx skills](https://github.com/vercel-labs/skills) and [APM](https://github.com/microsoft/apm) install skills with lockfiles. Mordecai's library coexists with both and doesn't replace them.
+- Skill MCP servers such as [agentskills-mcp](https://github.com/pinkpixel-dev/agentskills-mcp) and [tiger-skills-mcp-server](https://github.com/timescale/tiger-skills-mcp-server) list, read and install skills, and registries such as [Speakeasy's](https://www.speakeasy.com/docs/ai-control-plane/mcp-gateway/skills) track versions and drift. None of those gates an install on a measured result for that version's files. The tables above have the comparison.
+
+How each relates to Mordecai, which depends on none of them:
+
+- [Loupe](https://github.com/mpwilso/loupe) and [ISR](https://github.com/mpwilso/isr) are skills. A team could keep them in a Mordecai library and measure them; neither is in the seeded library.
+- [Parallax](https://github.com/mpwilso/parallax) runs agents that plan, build and check work in a sandbox. It doesn't install skills, and Mordecai doesn't run agents.
+- [Polarizer](https://github.com/mpwilso/polarizer) is a local MCP gateway that pins tool definitions, holds risky calls for a person and keeps a verifiable ledger. It can sit in front of `mordecai mcp`; [library.md](library.md#setup) has an unverified example.
+
 ## What Mordecai's library adds
 
 Plainly, and only against what was read above:

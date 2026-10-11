@@ -9,10 +9,12 @@ from conftest import ROOT
 from mordecai.cli import main
 
 README = (ROOT / "README.md").read_text(encoding="utf-8")
+# The second example card moved to the verdicts page when the README was trimmed.
+VERDICTS = (ROOT / "docs" / "verdicts.md").read_text(encoding="utf-8")
 
 
-def examples() -> list[tuple[list[str], str]]:
-    blocks = re.findall(r"```\n\$ uv run mordecai (identify [^\n]+)\n(.*?)\n```", README, re.S)
+def examples(text: str = README) -> list[tuple[list[str], str]]:
+    blocks = re.findall(r"```\n\$ uv run mordecai (identify [^\n]+)\n(.*?)\n```", text, re.S)
     return [(cmd.split(), shown + "\n") for cmd, shown in blocks]
 
 
@@ -36,11 +38,11 @@ def test_the_planted_card_is_printed_exactly(monkeypatch):
 
 
 def test_the_probe_card_is_the_start_of_what_the_tool_prints(monkeypatch):
-    """Only its warnings are cut, as the README says."""
-    argv, shown = examples()[1]
+    """Only its warnings are cut, as the page says."""
+    argv, shown = examples(VERDICTS)[0]
     assert argv[1] == "tests/fixtures/probe-result.json"
     assert printed(argv, monkeypatch).startswith(shown + "\nWarnings\n")
-    assert "Its warnings are cut here." in README
+    assert "Its warnings are cut here." in VERDICTS
 
 
 def test_the_planted_card_matches_the_recorded_one_but_for_the_result_hash(monkeypatch):
@@ -81,6 +83,9 @@ def test_no_em_or_en_dashes_in_the_readme_and_library_docs():
     docs = [
         "README.md",
         "examples/README.md",
+        "docs/verdicts.md",
+        "docs/testing.md",
+        "docs/usage.md",
         "docs/research.md",
         "docs/library-design.md",
         "docs/library-demo.md",

@@ -1,6 +1,6 @@
 # The skill library
 
-How to keep, release and install skills with Mordecai's library, in detail. The [README](../README.md#what-the-verdicts-govern-the-skill-library) has the short version, [library-design.md](library-design.md) the design and its reasons, [research.md](research.md) what other tools do, and [decisions.md](decisions.md) the choices made along the way.
+How to keep, release and install skills with Mordecai's library, in detail. The [README](../README.md#the-skill-library) has the short version, [library-design.md](library-design.md) the design and its reasons, [research.md](research.md) what other tools do, and [decisions.md](decisions.md) the choices made along the way.
 
 A library is a folder of skills in a Git repository. `mordecai library` installs a skill from it into the folder your AI coding tool reads, records where it came from, and refuses a version whose card says it hurts. `mordecai mcp` offers the same operations to MCP clients. It works for one person with a personal library, and for an organization with base skills and team variants.
 
@@ -165,6 +165,13 @@ The reading tools are `open-world` because a GitHub source is fetched over the n
 
 ## Limits
 
-The README's [limits of the library](../README.md#limits-of-the-library) apply. One more detail:
-
+- **The gate trusts committed result files.** It checks that a card matches its result and its version's files, not that the eval really ran. A fabricated result with a card made from it would pass.
+- **Cards are only as good as their cases.** A Helps card says the skill helped on those cases, with that model. See [the verdicts](../README.md#the-verdicts) and [known limits](../README.md#known-limits).
+- **Precedence is by rule, not merge.** The last source listed wins for each copy, and a variant behind its base is reported, not updated.
+- **Nothing writes to GitHub.** Releases are local tags, and pushing them is up to you. There is no GitHub Action yet that posts a card on a library pull request.
+- **The Hurts example is deliberately harmful.** `branch-naming`'s `camelcase` variant is planted suite H1, a convention built to fail its own eval's graders. It is never published, and every export refuses it.
+- **This repository publishes only one skill at its root,** `mordecai`, in [skills/](../skills/), for npx skills and APM. The seeded skills are demo content. Don't run `npx skills add --full-depth` on this repository: that searches everything, including the planted suites' deliberately harmful skills.
+- **Mordecai isn't a general package manager.** It installs only skills, only from Mordecai libraries, and keeps its own lockfile beside npx skills' and APM's without touching theirs.
+- **No size limit on fetches.** A Git fetch stops after five minutes, but can download a repository of any size into the cache before then.
+- **Tested offline only.** GitHub fetching was tested against a local stand-in, the MCP client snippets in the guide haven't been run in their clients, and the marketplace export hasn't been tried in a managed Claude Code install. A clone without the library's release tags reads every copy as untagged.
 - **Version stamps in frontmatter are optional.** The changelog is the record of versions and lineage. A skill measured before it joined the library, like the planted suites, can't carry stamps without changing the bytes its card measured. [decisions.md](decisions.md) has the reasoning (D4).
