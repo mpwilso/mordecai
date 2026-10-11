@@ -1,0 +1,3 @@
+# A benchmark.json fixture, written from the schema
+
+`benchmark.json` here was written by hand from the `benchmark.json` section of skill-creator's `references/schemas.md` in [anthropics/skills](https://github.com/anthropics/skills/blob/3d59511518591fa82e6cfcf0438d68dd5dad3e76/skills/skill-creator/references/schemas.md), at commit 3d59511. It is not the output of a real run: no model was called, and the pass rates were chosen so the card has something to read. One case leaves out `eval_name`, as skill-creator's `aggregate_benchmark.py` does. `release-notes/` is a demo skill that was never run.

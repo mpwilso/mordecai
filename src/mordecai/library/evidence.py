@@ -23,7 +23,7 @@ from mordecai.card import CardError, _validate
 from mordecai.library import LibraryError
 from mordecai.library.paths import no_links
 from mordecai.provenance import PathError, hash_cases, hash_skill, sha256, within
-from mordecai.result import ResultError, parse, read_json
+from mordecai.result import ResultError, parse_result, read_json
 from mordecai.verdict import DEFAULT_RULES, VERDICTS, Rules, read
 
 STATES = ("current", "cases-changed", "stale", "unmeasured", "broken")
@@ -108,7 +108,7 @@ def assess(card_dir: Path, version_folder: Path, source_root: Path) -> Evidence:
         result_doc, result_bytes = read_json(result_path, "an eval result")
         if sha256(result_bytes) != hashes.get("result"):
             raise CardError("result.json isn't the result this card was made from")
-        suite = parse(result_doc)
+        suite = parse_result(result_doc)
         suite = replace(suite, blocked_runs=_blocked(doc, suite))
         subject = doc.get("subject") if isinstance(doc.get("subject"), dict) else {}
         names = [s for s in subject.get("skills") or [] if isinstance(s, str)]

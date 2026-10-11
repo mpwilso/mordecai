@@ -1,4 +1,4 @@
-"""mordecai identify: read an eval result and print the card.
+"""mordecai identify: read an eval result (or a skill-creator benchmark.json) and print the card.
 mordecai check: say whether a card still matches the skill and cases it was measured on.
 mordecai lint: run the case-quality warnings on a plugin's eval cases before an eval.
 mordecai library and mordecai mcp: the skill library, in mordecai.library. They are handed over
@@ -34,7 +34,11 @@ def _parser() -> argparse.ArgumentParser:
     sub = p.add_subparsers(dest="command", required=True)
 
     i = sub.add_parser("identify", help="read a claude plugin eval result and print the card")
-    i.add_argument("result", type=Path, help="the JSON from claude plugin eval --json")
+    i.add_argument(
+        "result",
+        type=Path,
+        help="the JSON from claude plugin eval --json, or a skill-creator benchmark.json",
+    )
     i.add_argument(
         "--skill",
         type=Path,

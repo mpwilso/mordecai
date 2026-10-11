@@ -43,6 +43,7 @@ class Card:
     cases_root: str | None
     case_dirs: tuple[str, ...]
     rules: Rules
+    input: str = "plugin-eval"  # or "benchmark", a skill-creator benchmark.json
 
     @property
     def title(self) -> str:
@@ -90,11 +91,19 @@ def build(
     missing = []
     if not found:
         missing.append("the skill's files")
-    if cases_hash is None:
+    benchmark = suite.input == "benchmark"
+    if cases_hash is None and not benchmark:
         missing.append("the eval cases")
     runs = [r for c in suite.cases for r in c.with_runs + c.without_runs]
     unchecked = sum(1 for r in runs if r.denied is None)
-    if unchecked:
+    if benchmark:
+        # benchmark.json has no traces and no case folders; the stat block says what it lacks
+        reading = _with_warning(
+            reading,
+            "benchmark.json doesn't name its eval cases' files, so changes to the cases can't "
+            "be checked; only the skill's files are hashed.",
+        )
+    elif unchecked:
         reading = _with_warning(
             reading,
             f"Refused tool calls weren't checked for {unchecked} of {len(runs)} runs: their "
@@ -122,6 +131,7 @@ def build(
         cases_root=str(cases_root) if cases_hash else None,
         case_dirs=tuple(case_dirs),
         rules=rules,
+        input=suite.input,
     )
 
 
@@ -214,6 +224,8 @@ def to_json(card: Card, base: Path | None = None) -> str:
         },
         "rules": asdict(card.rules),
     }
+    if card.input == "benchmark":
+        doc["input"] = "skill-creator benchmark.json"
     return json.dumps(doc, indent=2, sort_keys=True) + "\n"
 
 

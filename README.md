@@ -93,6 +93,10 @@ uv run mordecai check card.json --model claude-sonnet-5-5
 
 **`claude plugin eval` runs the plugin's code on your machine, as you,** so pass `--trust-plugin` only for a plugin you've reviewed. Mordecai never runs a plugin; it reads the result and hashes files. `--fail-on hurts,invalid` makes `identify` exit 1 for CI. [docs/usage.md](docs/usage.md) has the flags, exit codes, paths and a worked `check` example.
 
+### From skill-creator's benchmark.json
+
+`identify` also reads the `benchmark.json` that Anthropic's skill-creator skill writes, told apart by its shape: each eval becomes a case, and its `with_skill` and `without_skill` runs the two arms, scored by `pass_rate`. It doesn't record whether the skill fired, cost, quiet cases or early stops, so the card says those weren't measured. [docs/usage.md](docs/usage.md#skill-creators-benchmarkjson) has the mapping.
+
 ## Known limits
 
 - **Hurts needs the skill to be opened.** Under 10% of the runs that need it is Rarely fired, not Hurts; between 10% and 50% the card warns. Suite 3 fired in 6 of 27 runs and reads Inconclusive. Check the "Fired in" line.

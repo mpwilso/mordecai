@@ -26,3 +26,21 @@ $ uv run mordecai check docs/planted-results/2-commits.card.json --model claude-
 Stale: docs/planted-results/2-commits.card.json
   - The card was measured on claude-haiku-4-5-20251001, not claude-sonnet-5-5.
 ```
+
+## skill-creator's benchmark.json
+
+`mordecai identify benchmark.json` reads the file that the benchmark mode of Anthropic's [skill-creator](https://github.com/anthropics/skills/tree/main/skills/skill-creator) skill writes, as its `references/schemas.md` describes it. Mordecai tells it from a `claude plugin eval` result by its shape (a `metadata` object and a `runs` list, no `schemaVersion`), so there is no flag. The mapping:
+
+| benchmark.json | Card |
+|---|---|
+| `runs[].eval_id`, `eval_name` | One case per eval, named by `eval_name`, or `eval N` when it's missing |
+| `runs[].configuration` `with_skill` / `without_skill` | The two arms. Any other configuration, such as `old_skill` and `new_skill`, is refused: that isn't a comparison with and without the skill |
+| `runs[].result.pass_rate` | The run's score, 0 to 1 |
+| `metadata.skill_name`, `skill_path` | The subject, and the folder hashed for the skill hash (or pass `--skill`) |
+| `metadata.executor_model`, `timestamp` | Tested on, and the date |
+| `run_summary`, `notes`, `expectations`, `time_seconds`, `tokens`, `tool_calls` | Not read. The card recomputes everything from the runs |
+| `result.errors` | Not read: it counts errors a run worked through, not a run that failed |
+
+What it doesn't record, the card shows as not measured, never guessed: whether the skill fired (so Never fired and Rarely fired can't be called), cases where the skill should stay quiet, cost and turns, refused tool calls, the judge model, Claude Code's version, and whether a run stopped early or hit a rate limit (so a limited run can't make the card Invalid). It names no case files, so the card has no cases hash and `mordecai check` reports it can't check the cases. The same verdict rules apply.
+
+The test fixture, [tests/fixtures/benchmark/](../tests/fixtures/benchmark/), was written by hand from the documented schema, not taken from a real run.

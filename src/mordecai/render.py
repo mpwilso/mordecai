@@ -146,6 +146,11 @@ def stat_block(card: Card) -> list[str]:
         if r.turns_with is not None and r.turns_without is not None:
             cost += f"{DOT}Turns {r.turns_with:.1f} with, {r.turns_without:.1f} without"
         lines.append(cost)
+    if card.input == "benchmark":
+        lines.append(
+            "Not measured in benchmark.json: whether the skill fired, quiet cases, cost per run, "
+            "turns, refused tool calls, early stops and rate limits"
+        )
     tested = [f"Tested on {card.model or 'the default model'}"]
     if card.judge_model:
         tested.append(f"judge {card.judge_model}")

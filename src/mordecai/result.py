@@ -1,4 +1,5 @@
-"""Reads the JSON result that `claude plugin eval --json` writes (schemaVersion 1).
+"""Reads the JSON result that `claude plugin eval --json` writes (schemaVersion 1), and the
+benchmark.json that Anthropic's skill-creator skill writes, told apart by their shape.
 
 Only the fields Mordecai uses are read. Unknown fields are ignored, as the format's docs ask,
 so a newer Claude Code that adds fields still parses. tests/fixtures/probe-result.json is a
@@ -7,6 +8,13 @@ real result from Claude Code 2.1.289.
 A result may come from someone else, so every field Mordecai uses is checked before it's used.
 A field of the wrong type, a score outside 0 to 1, or a cost or turn count that isn't a finite
 number at least zero is refused with a ResultError, never read as something else.
+
+benchmark.json (skill-creator's references/schemas.md) has runs with a configuration of
+with_skill or without_skill, an eval_id and a result.pass_rate. Each eval becomes a case and
+each run's pass_rate its score. It doesn't record whether the skill fired, cases where it should
+stay quiet, cost, turns, traces, the judge, or whether a run stopped early or hit a limit, so
+those stay None (not measured), never guessed. Its errors field counts errors a run worked
+through, not a run that failed, so it isn't read as one.
 """
 
 import json
@@ -79,6 +87,8 @@ class Suite:
     # Runs whose traces show the setup refusing them inside their own folder (D19). Set from
     # the traces when a card is made, and from the card when the library checks it.
     blocked_runs: int = 0
+    # Which format the result came in: "plugin-eval" or "benchmark" (skill-creator).
+    input: str = "plugin-eval"
 
 
 def _get(raw: dict, key: str, kind, where: str):
@@ -219,6 +229,100 @@ def parse(doc: dict) -> Suite:
     )
 
 
+BENCHMARK_ARMS = {"with_skill": "with", "without_skill": "without"}
+
+
+def _is_benchmark(doc) -> bool:
+    return (
+        isinstance(doc, dict)
+        and "schemaVersion" not in doc
+        and isinstance(doc.get("metadata"), dict)
+        and isinstance(doc.get("runs"), list)
+    )
+
+
+def parse_benchmark(doc: dict) -> Suite:
+    """A skill-creator benchmark.json as a suite: one case per eval, its with_skill and
+    without_skill runs as the two arms, each run's result.pass_rate as its score."""
+    meta = _get(doc, "metadata", dict, "benchmark.json") or {}
+    order: list = []
+    names: dict = {}
+    arms: dict = {}
+    for i, run in enumerate(_items(doc, "runs", "benchmark.json")):
+        where = f"benchmark.json run {i + 1}"
+        eval_id = run.get("eval_id")
+        if isinstance(eval_id, bool) or not isinstance(eval_id, int | str):
+            raise ResultError(f"{where}: eval_id should be a number or a string")
+        config = _get(run, "configuration", str, where)
+        if config not in BENCHMARK_ARMS:
+            raise ResultError(
+                f"{where}: configuration is {json.dumps(config)[:40]}; Mordecai compares only "
+                "with_skill and without_skill runs"
+            )
+        result = _get(run, "result", dict, where) or {}
+        score = _number(result, "pass_rate", where, high=1)
+        if score is None:
+            raise ResultError(f"{where}: the run has no pass_rate")
+        name = _get(run, "eval_name", str, where)
+        if eval_id not in arms:
+            order.append(eval_id)
+            arms[eval_id] = {"with": [], "without": []}
+        if name and eval_id not in names:
+            names[eval_id] = name
+        arms[eval_id][BENCHMARK_ARMS[config]].append(
+            Run(
+                score=score,
+                error=None,
+                skipped_paid=False,
+                cost_usd=None,
+                turns=None,
+                fired=None,
+                misfired=None,
+            )
+        )
+    skill = _get(meta, "skill_name", str, "benchmark.json metadata")
+    return Suite(
+        claude_version=None,
+        started_at=_get(meta, "timestamp", str, "benchmark.json metadata"),
+        partial=False,
+        partial_reason=None,
+        model=_get(meta, "executor_model", str, "benchmark.json metadata"),
+        judge_model=None,
+        root=None,
+        plugins=(
+            Plugin(
+                name=skill or "",
+                version=None,
+                path=_get(meta, "skill_path", str, "benchmark.json metadata"),
+            ),
+        ),
+        cases=tuple(
+            Case(
+                name=names.get(e) or f"eval {e}",
+                dir="",
+                prompt="",
+                trigger="unmeasured",
+                with_runs=tuple(arms[e]["with"]),
+                without_runs=tuple(arms[e]["without"]),
+            )
+            for e in order
+        ),
+        input="benchmark",
+    )
+
+
+def parse_result(doc) -> Suite:
+    """A claude plugin eval result or a skill-creator benchmark.json, by its shape."""
+    if _is_benchmark(doc):
+        return parse_benchmark(doc)
+    try:
+        return parse(doc)
+    except ResultError as e:
+        if str(e).startswith("not a claude plugin eval result"):
+            raise ResultError(f"{e}, or a skill-creator benchmark.json") from e
+        raise
+
+
 @dataclass(frozen=True)
 class Refusals:
     total: int  # tool calls permissions refused
@@ -346,4 +450,4 @@ def read_json(path: Path, what: str):
 def load(path: Path) -> tuple[Suite, bytes]:
     """The parsed suite, and the file's exact bytes, which the card hashes."""
     doc, data = read_json(path, "an eval result")
-    return parse(doc), data
+    return parse_result(doc), data

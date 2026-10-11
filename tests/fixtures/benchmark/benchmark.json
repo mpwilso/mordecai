@@ -1,0 +1,902 @@
+{
+  "metadata": {
+    "skill_name": "release-notes",
+    "skill_path": "tests/fixtures/benchmark/release-notes",
+    "executor_model": "claude-sonnet-4-20250514",
+    "analyzer_model": "most-capable-model",
+    "timestamp": "2026-01-15T10:30:00Z",
+    "evals_run": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "runs_per_configuration": 3
+  },
+  "runs": [
+    {
+      "eval_id": 1,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 7,
+        "failed": 0,
+        "total": 7,
+        "time_seconds": 41.0,
+        "tokens": 3100,
+        "tool_calls": 12,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Lists every change under a version heading",
+          "passed": true,
+          "evidence": "fixture"
+        }
+      ],
+      "notes": [],
+      "eval_name": "Patch release"
+    },
+    {
+      "eval_id": 1,
+      "configuration": "with_skill",
+      "run_number": 2,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 7,
+        "failed": 0,
+        "total": 7,
+        "time_seconds": 41.0,
+        "tokens": 3100,
+        "tool_calls": 12,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Lists every change under a version heading",
+          "passed": true,
+          "evidence": "fixture"
+        }
+      ],
+      "notes": [],
+      "eval_name": "Patch release"
+    },
+    {
+      "eval_id": 1,
+      "configuration": "with_skill",
+      "run_number": 3,
+      "result": {
+        "pass_rate": 0.86,
+        "passed": 6,
+        "failed": 1,
+        "total": 7,
+        "time_seconds": 41.0,
+        "tokens": 3100,
+        "tool_calls": 12,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Lists every change under a version heading",
+          "passed": true,
+          "evidence": "fixture"
+        }
+      ],
+      "notes": [],
+      "eval_name": "Patch release"
+    },
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.86,
+        "passed": 6,
+        "failed": 1,
+        "total": 7,
+        "time_seconds": 42.0,
+        "tokens": 3200,
+        "tool_calls": 12,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Lists every change under a version heading",
+          "passed": true,
+          "evidence": "fixture"
+        }
+      ],
+      "notes": [],
+      "eval_name": "Breaking change"
+    },
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 2,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 7,
+        "failed": 0,
+        "total": 7,
+        "time_seconds": 42.0,
+        "tokens": 3200,
+        "tool_calls": 12,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Lists every change under a version heading",
+          "passed": true,
+          "evidence": "fixture"
+        }
+      ],
+      "notes": [],
+      "eval_name": "Breaking change"
+    },
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 3,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 7,
+        "failed": 0,
+        "total": 7,
+        "time_seconds": 42.0,
+        "tokens": 3200,
+        "tool_calls": 12,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Lists every change under a version heading",
+          "passed": true,
+          "evidence": "fixture"
+        }
+      ],
+      "notes": [],
+      "eval_name": "Breaking change"
+    },
+    {
+      "eval_id": 3,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 7,
+        "failed": 0,
+        "total": 7,
+        "time_seconds": 43.0,
+        "tokens": 3300,
+        "tool_calls": 12,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Lists every change under a version heading",
+          "passed": true,
+          "evidence": "fixture"
+        }
+      ],
+      "notes": [],
+      "eval_name": "Security fix"
+    },
+    {
+      "eval_id": 3,
+      "configuration": "with_skill",
+      "run_number": 2,
+      "result": {
+        "pass_rate": 0.86,
+        "passed": 6,
+        "failed": 1,
+        "total": 7,
+        "time_seconds": 43.0,
+        "tokens": 3300,
+        "tool_calls": 12,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Lists every change under a version heading",
+          "passed": true,
+          "evidence": "fixture"
+        }
+      ],
+      "notes": [],
+      "eval_name": "Security fix"
+    },
+    {
+      "eval_id": 3,
+      "configuration": "with_skill",
+      "run_number": 3,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 7,
+        "failed": 0,
+        "total": 7,
+        "time_seconds": 43.0,
+        "tokens": 3300,
+        "tool_calls": 12,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Lists every change under a version heading",
+          "passed": true,
+          "evidence": "fixture"
+        }
+      ],
+      "notes": [],
+      "eval_name": "Security fix"
+    },
+    {
+      "eval_id": 4,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.71,
+        "passed": 5,
+        "failed": 2,
+        "total": 7,
+        "time_seconds": 44.0,
+        "tokens": 3400,
+        "tool_calls": 12,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Lists every change under a version heading",
+          "passed": false,
+          "evidence": "fixture"
+        }
+      ],
+      "notes": [],
+      "eval_name": "First release"
+    },
+    {
+      "eval_id": 4,
+      "configuration": "with_skill",
+      "run_number": 2,
+      "result": {
+        "pass_rate": 0.86,
+        "passed": 6,
+        "failed": 1,
+        "total": 7,
+        "time_seconds": 44.0,
+        "tokens": 3400,
+        "tool_calls": 12,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Lists every change under a version heading",
+          "passed": true,
+          "evidence": "fixture"
+        }
+      ],
+      "notes": [],
+      "eval_name": "First release"
+    },
+    {
+      "eval_id": 4,
+      "configuration": "with_skill",
+      "run_number": 3,
+      "result": {
+        "pass_rate": 0.86,
+        "passed": 6,
+        "failed": 1,
+        "total": 7,
+        "time_seconds": 44.0,
+        "tokens": 3400,
+        "tool_calls": 12,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Lists every change under a version heading",
+          "passed": true,
+          "evidence": "fixture"
+        }
+      ],
+      "notes": [],
+      "eval_name": "First release"
+    },
+    {
+      "eval_id": 5,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 7,
+        "failed": 0,
+        "total": 7,
+        "time_seconds": 45.0,
+        "tokens": 3500,
+        "tool_calls": 12,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Lists every change under a version heading",
+          "passed": true,
+          "evidence": "fixture"
+        }
+      ],
+      "notes": [],
+      "eval_name": "Docs only"
+    },
+    {
+      "eval_id": 5,
+      "configuration": "with_skill",
+      "run_number": 2,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 7,
+        "failed": 0,
+        "total": 7,
+        "time_seconds": 45.0,
+        "tokens": 3500,
+        "tool_calls": 12,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Lists every change under a version heading",
+          "passed": true,
+          "evidence": "fixture"
+        }
+      ],
+      "notes": [],
+      "eval_name": "Docs only"
+    },
+    {
+      "eval_id": 5,
+      "configuration": "with_skill",
+      "run_number": 3,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 7,
+        "failed": 0,
+        "total": 7,
+        "time_seconds": 45.0,
+        "tokens": 3500,
+        "tool_calls": 12,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Lists every change under a version heading",
+          "passed": true,
+          "evidence": "fixture"
+        }
+      ],
+      "notes": [],
+      "eval_name": "Docs only"
+    },
+    {
+      "eval_id": 6,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.86,
+        "passed": 6,
+        "failed": 1,
+        "total": 7,
+        "time_seconds": 46.0,
+        "tokens": 3600,
+        "tool_calls": 12,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Lists every change under a version heading",
+          "passed": true,
+          "evidence": "fixture"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 6,
+      "configuration": "with_skill",
+      "run_number": 2,
+      "result": {
+        "pass_rate": 0.71,
+        "passed": 5,
+        "failed": 2,
+        "total": 7,
+        "time_seconds": 46.0,
+        "tokens": 3600,
+        "tool_calls": 12,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Lists every change under a version heading",
+          "passed": false,
+          "evidence": "fixture"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 6,
+      "configuration": "with_skill",
+      "run_number": 3,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 7,
+        "failed": 0,
+        "total": 7,
+        "time_seconds": 46.0,
+        "tokens": 3600,
+        "tool_calls": 12,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Lists every change under a version heading",
+          "passed": true,
+          "evidence": "fixture"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.43,
+        "passed": 3,
+        "failed": 4,
+        "total": 7,
+        "time_seconds": 41.0,
+        "tokens": 3100,
+        "tool_calls": 12,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Lists every change under a version heading",
+          "passed": false,
+          "evidence": "fixture"
+        }
+      ],
+      "notes": [],
+      "eval_name": "Patch release"
+    },
+    {
+      "eval_id": 1,
+      "configuration": "without_skill",
+      "run_number": 2,
+      "result": {
+        "pass_rate": 0.29,
+        "passed": 2,
+        "failed": 5,
+        "total": 7,
+        "time_seconds": 41.0,
+        "tokens": 3100,
+        "tool_calls": 12,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Lists every change under a version heading",
+          "passed": false,
+          "evidence": "fixture"
+        }
+      ],
+      "notes": [],
+      "eval_name": "Patch release"
+    },
+    {
+      "eval_id": 1,
+      "configuration": "without_skill",
+      "run_number": 3,
+      "result": {
+        "pass_rate": 0.43,
+        "passed": 3,
+        "failed": 4,
+        "total": 7,
+        "time_seconds": 41.0,
+        "tokens": 3100,
+        "tool_calls": 12,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Lists every change under a version heading",
+          "passed": false,
+          "evidence": "fixture"
+        }
+      ],
+      "notes": [],
+      "eval_name": "Patch release"
+    },
+    {
+      "eval_id": 2,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.57,
+        "passed": 4,
+        "failed": 3,
+        "total": 7,
+        "time_seconds": 42.0,
+        "tokens": 3200,
+        "tool_calls": 12,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Lists every change under a version heading",
+          "passed": false,
+          "evidence": "fixture"
+        }
+      ],
+      "notes": [],
+      "eval_name": "Breaking change"
+    },
+    {
+      "eval_id": 2,
+      "configuration": "without_skill",
+      "run_number": 2,
+      "result": {
+        "pass_rate": 0.43,
+        "passed": 3,
+        "failed": 4,
+        "total": 7,
+        "time_seconds": 42.0,
+        "tokens": 3200,
+        "tool_calls": 12,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Lists every change under a version heading",
+          "passed": false,
+          "evidence": "fixture"
+        }
+      ],
+      "notes": [],
+      "eval_name": "Breaking change"
+    },
+    {
+      "eval_id": 2,
+      "configuration": "without_skill",
+      "run_number": 3,
+      "result": {
+        "pass_rate": 0.43,
+        "passed": 3,
+        "failed": 4,
+        "total": 7,
+        "time_seconds": 42.0,
+        "tokens": 3200,
+        "tool_calls": 12,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Lists every change under a version heading",
+          "passed": false,
+          "evidence": "fixture"
+        }
+      ],
+      "notes": [],
+      "eval_name": "Breaking change"
+    },
+    {
+      "eval_id": 3,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.29,
+        "passed": 2,
+        "failed": 5,
+        "total": 7,
+        "time_seconds": 43.0,
+        "tokens": 3300,
+        "tool_calls": 12,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Lists every change under a version heading",
+          "passed": false,
+          "evidence": "fixture"
+        }
+      ],
+      "notes": [],
+      "eval_name": "Security fix"
+    },
+    {
+      "eval_id": 3,
+      "configuration": "without_skill",
+      "run_number": 2,
+      "result": {
+        "pass_rate": 0.43,
+        "passed": 3,
+        "failed": 4,
+        "total": 7,
+        "time_seconds": 43.0,
+        "tokens": 3300,
+        "tool_calls": 12,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Lists every change under a version heading",
+          "passed": false,
+          "evidence": "fixture"
+        }
+      ],
+      "notes": [],
+      "eval_name": "Security fix"
+    },
+    {
+      "eval_id": 3,
+      "configuration": "without_skill",
+      "run_number": 3,
+      "result": {
+        "pass_rate": 0.29,
+        "passed": 2,
+        "failed": 5,
+        "total": 7,
+        "time_seconds": 43.0,
+        "tokens": 3300,
+        "tool_calls": 12,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Lists every change under a version heading",
+          "passed": false,
+          "evidence": "fixture"
+        }
+      ],
+      "notes": [],
+      "eval_name": "Security fix"
+    },
+    {
+      "eval_id": 4,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.57,
+        "passed": 4,
+        "failed": 3,
+        "total": 7,
+        "time_seconds": 44.0,
+        "tokens": 3400,
+        "tool_calls": 12,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Lists every change under a version heading",
+          "passed": false,
+          "evidence": "fixture"
+        }
+      ],
+      "notes": [],
+      "eval_name": "First release"
+    },
+    {
+      "eval_id": 4,
+      "configuration": "without_skill",
+      "run_number": 2,
+      "result": {
+        "pass_rate": 0.71,
+        "passed": 5,
+        "failed": 2,
+        "total": 7,
+        "time_seconds": 44.0,
+        "tokens": 3400,
+        "tool_calls": 12,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Lists every change under a version heading",
+          "passed": false,
+          "evidence": "fixture"
+        }
+      ],
+      "notes": [],
+      "eval_name": "First release"
+    },
+    {
+      "eval_id": 4,
+      "configuration": "without_skill",
+      "run_number": 3,
+      "result": {
+        "pass_rate": 0.57,
+        "passed": 4,
+        "failed": 3,
+        "total": 7,
+        "time_seconds": 44.0,
+        "tokens": 3400,
+        "tool_calls": 12,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Lists every change under a version heading",
+          "passed": false,
+          "evidence": "fixture"
+        }
+      ],
+      "notes": [],
+      "eval_name": "First release"
+    },
+    {
+      "eval_id": 5,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.43,
+        "passed": 3,
+        "failed": 4,
+        "total": 7,
+        "time_seconds": 45.0,
+        "tokens": 3500,
+        "tool_calls": 12,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Lists every change under a version heading",
+          "passed": false,
+          "evidence": "fixture"
+        }
+      ],
+      "notes": [],
+      "eval_name": "Docs only"
+    },
+    {
+      "eval_id": 5,
+      "configuration": "without_skill",
+      "run_number": 2,
+      "result": {
+        "pass_rate": 0.43,
+        "passed": 3,
+        "failed": 4,
+        "total": 7,
+        "time_seconds": 45.0,
+        "tokens": 3500,
+        "tool_calls": 12,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Lists every change under a version heading",
+          "passed": false,
+          "evidence": "fixture"
+        }
+      ],
+      "notes": [],
+      "eval_name": "Docs only"
+    },
+    {
+      "eval_id": 5,
+      "configuration": "without_skill",
+      "run_number": 3,
+      "result": {
+        "pass_rate": 0.57,
+        "passed": 4,
+        "failed": 3,
+        "total": 7,
+        "time_seconds": 45.0,
+        "tokens": 3500,
+        "tool_calls": 12,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Lists every change under a version heading",
+          "passed": false,
+          "evidence": "fixture"
+        }
+      ],
+      "notes": [],
+      "eval_name": "Docs only"
+    },
+    {
+      "eval_id": 6,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.29,
+        "passed": 2,
+        "failed": 5,
+        "total": 7,
+        "time_seconds": 46.0,
+        "tokens": 3600,
+        "tool_calls": 12,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Lists every change under a version heading",
+          "passed": false,
+          "evidence": "fixture"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 6,
+      "configuration": "without_skill",
+      "run_number": 2,
+      "result": {
+        "pass_rate": 0.43,
+        "passed": 3,
+        "failed": 4,
+        "total": 7,
+        "time_seconds": 46.0,
+        "tokens": 3600,
+        "tool_calls": 12,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Lists every change under a version heading",
+          "passed": false,
+          "evidence": "fixture"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 6,
+      "configuration": "without_skill",
+      "run_number": 3,
+      "result": {
+        "pass_rate": 0.43,
+        "passed": 3,
+        "failed": 4,
+        "total": 7,
+        "time_seconds": 46.0,
+        "tokens": 3600,
+        "tool_calls": 12,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Lists every change under a version heading",
+          "passed": false,
+          "evidence": "fixture"
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 0.9211,
+        "stddev": 0.1011,
+        "min": 0.71,
+        "max": 1.0
+      }
+    },
+    "without_skill": {
+      "pass_rate": {
+        "mean": 0.4456,
+        "stddev": 0.1165,
+        "min": 0.29,
+        "max": 0.71
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.48"
+    }
+  },
+  "notes": [
+    "A fixture written by hand from the documented schema, not a real benchmark run."
+  ]
+}
