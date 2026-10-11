@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+The verdict rules changed, so the version is 0.5.0. Not yet tagged or released.
+
+- **Rules change: when every compared case has the same change and every run agrees, the card counts cases (D22).** The bootstrap could only return one number there, so cards showed a "90% interval" such as +100 to +100. Now the card says "9 of 9 cases" with an exact one-sided Clopper-Pearson bound, at the rules' confidence, on the share of cases like these that could differ (23% for 9 cases at 90%), and its JSON has `numbers.agreement` with `interval` null. Verdicts are decided as before. Chosen by the owner after seeing the collapsed cards, so those cards aren't evidence for it.
+- **Rules change: No effect and Already handled need at least 10 compared cases (D22).** With fewer, the card is Inconclusive and says why. Helps and Hurts keep the minimum of 5. The threshold is a constant, not a `Rules` field, so existing library cards still pass D20's equal-rules check. Of the recorded cards, 5a-twin (Already handled), 5b-filler and holdout 7 (No effect) move to Inconclusive; no Helps or Hurts card moves. All 15 recorded cards and the library's two were rebuilt; docs/planted-skills-results.md lists every card that moved. In scripts/simulate.py only the 5-case null calls moved, and its non-monotonic placebo row (59%, 27%, 64% under 0.4.0) turned out real, not a bug.
+- `identify` also reads skill-creator's `benchmark.json`, told apart by its shape. What it doesn't record (whether the skill fired, quiet cases, cost, turns, refused calls, early stops and limits) shows as not measured on the card. See [docs/usage.md](docs/usage.md#skill-creators-benchmarkjson).
+- A composite GitHub Action, [action.yml](action.yml), runs `identify` on a result and posts the card on the pull request, with `fail-on` passed through. CI runs its identify step on every push; posting is untested until it's used on a real pull request.
+- A release workflow publishes `mordecai-skills` to PyPI with trusted publishing when a GitHub release is published. It hasn't run; [docs/releasing.md](docs/releasing.md) has the one-time setup.
+- The README is about a quarter of its old length. How it was tested, the verdict details, command details and prior art moved to docs/testing.md, docs/verdicts.md, docs/usage.md and docs/research.md.
+- Removed the brand tooling nothing used: `scripts/frames.py`, the social preview PNG (never uploaded), `brand.py --png` and the `visual` (playwright) dependency group.
+
 ## 0.4.0 (2026-10-11)
 
 The verdict rules changed, so this is 0.4.0. Cards built by 0.3.0 keep their verdicts except V1's (see below).
