@@ -13,6 +13,7 @@ import re
 from dataclasses import replace
 
 from mordecai.card import Card
+from mordecai.verdict import pts as _pts
 
 DOT = " " + chr(0xB7) + " "  # a middle dot between facts on one line
 
@@ -101,10 +102,6 @@ def md_text(text: str) -> str:
 
 def _pct(x: float | None) -> str:
     return "?" if x is None else f"{round(x * 100)}%"
-
-
-def _pts(x: float) -> str:
-    return f"{round(x * 100):+d}"
 
 
 def _usd(x: float | None) -> str:

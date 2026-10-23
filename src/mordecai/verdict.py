@@ -114,7 +114,8 @@ def _mean(xs) -> float | None:
     return sum(xs) / len(xs) if xs else None
 
 
-def _pts(x: float) -> str:
+def pts(x: float) -> str:
+    """A change in score as signed points, 0.123 -> "+12". render.py uses it too."""
     return f"{round(x * 100):+d}"
 
 
@@ -356,7 +357,7 @@ def read(
         moved = f"{abs(round(same * 100))} points in {n} of {n} cases"
         lowered = f"The skill lowered the score by {moved}.{tail}"
         raised = f"The skill raised the score by {moved}.{tail}"
-        change_was = f"the change was {_pts(same)} points in {n} of {n} cases"
+        change_was = f"the change was {pts(same)} points in {n} of {n} cases"
         handled = f", and {change_was}.{tail}"
         flat = f"The {change_was[4:]}, inside plus or minus {minimum}.{tail}"
         few = (
@@ -365,7 +366,7 @@ def read(
     else:
         lo, hi = shown = interval(effect, rules)
         agreement = None
-        span = f"{_pts(lo)} to {_pts(hi)} points"
+        span = f"{pts(lo)} to {pts(hi)} points"
         lowered = f"The skill lowered the score: {conf} interval {span}."
         raised = f"The skill raised the score: {conf} interval {span}."
         handled = f", and the {conf} interval ({span}) rules out a gain or a loss of {minimum}."
@@ -392,12 +393,12 @@ def read(
             return null("already-handled", "Already handled", scored + handled)
         return call(
             "inconclusive",
-            f"{scored}, but the {conf} interval ({_pts(lo)} to {_pts(hi)} points) doesn't rule "
+            f"{scored}, but the {conf} interval ({pts(lo)} to {pts(hi)} points) doesn't rule "
             f"out a loss of {minimum}.",
         )
     if lo > -rules.min_effect and hi < rules.min_effect:
         return null("no-effect", "No effect", flat)
     return call(
         "inconclusive",
-        f"The {conf} interval runs {_pts(lo)} to {_pts(hi)} points, too wide to call.",
+        f"The {conf} interval runs {pts(lo)} to {pts(hi)} points, too wide to call.",
     )

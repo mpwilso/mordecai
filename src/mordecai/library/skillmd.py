@@ -77,6 +77,9 @@ def _load_yaml(head: str) -> dict:
 
 
 def frontmatter(text: str) -> tuple[dict, str]:
+    """(fields, body) of a SKILL.md, parsed with strictyaml. The engine's mordecai.lint.frontmatter
+    is a separate, smaller reader for eval case files, kept apart on purpose: the engine stays
+    standard library only, and SKILL.md's frontmatter has to match the spec's validator."""
     head, body = split(text)
     return _load_yaml(head), body
 

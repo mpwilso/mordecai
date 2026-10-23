@@ -154,6 +154,13 @@ def skill_graders(case: dict) -> tuple[set[str], set[str]]:
     return fire, silent
 
 
+def case_trigger(fire: set[str], silent: set[str]) -> str:
+    """A case's trigger from its Skill graders (skill_graders): "should-not-fire" when one expects
+    the skill to stay quiet, else "should-fire" when one expects it to fire, else "unmeasured".
+    lint.py uses it on case files, so a case reads the same before and after the eval."""
+    return "should-not-fire" if silent else "should-fire" if fire else "unmeasured"
+
+
 def _run(raw: dict, fire: set[str], silent: set[str], arm: str, where: str) -> Run:
     score = _number(raw, "score", where, high=1)
     if score is None:
@@ -184,7 +191,6 @@ def _case(raw: dict) -> Case:
         raise ResultError("a case has no name")
     where = f"case {name!r}"
     fire, silent = skill_graders(raw)
-    trigger = "should-not-fire" if silent else "should-fire" if fire else "unmeasured"
     arms = _get(raw, "arms", dict, where) or {}
 
     def runs(arm):
@@ -198,7 +204,7 @@ def _case(raw: dict) -> Case:
         name=name,
         dir=_get(raw, "dir", str, where) or "",
         prompt=_get(raw, "promptMarkdown", str, where) or "",
-        trigger=trigger,
+        trigger=case_trigger(fire, silent),
         with_runs=runs("with"),
         without_runs=runs("without"),
     )

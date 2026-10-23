@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from mordecai.provenance import skill_names, within
-from mordecai.result import Case, skill_graders
+from mordecai.result import Case, case_trigger, skill_graders
 from mordecai.verdict import DEFAULT_RULES, case_warnings
 
 SKIP = {"results", "mocks"}
@@ -35,7 +35,12 @@ def _read(path: Path, plugin: Path) -> str:
 
 def frontmatter(text: str) -> tuple[dict, str]:
     """A small reader for the flat YAML frontmatter these files use: key: value pairs,
-    [a, b] lists, quoted strings, integers, and | blocks. Returns the fields and the body."""
+    [a, b] lists, quoted strings, integers, and | blocks. Returns the fields and the body.
+
+    The library has its own frontmatter reader, mordecai.library.skillmd.frontmatter, and the
+    two stay separate on purpose: that one parses SKILL.md with strictyaml, which the engine
+    can't depend on (tests/test_engine_boundary.py keeps lint standard library only), and the
+    eval case files read here are flat enough not to need it."""
     if not text.startswith("---"):
         return {}, text
     head, _, body = text[3:].partition("\n---")
@@ -92,12 +97,11 @@ def read_case(path: Path, plugin: Path) -> CaseFile:
         config = {k: v for k, v in gf.items() if k not in ("type", "weight", "arm")}
         graders.append({"name": g.stem, "type": gf.get("type"), "config": config})
     fire, silent = skill_graders({"graders": graders})
-    trigger = "should-not-fire" if silent else "should-fire" if fire else "unmeasured"
     case = Case(
         name=str(fields.get("name") or path.name),
         dir=path.as_posix(),
         prompt=body.strip(),
-        trigger=trigger,
+        trigger=case_trigger(fire, silent),
         with_runs=(),
         without_runs=(),
     )
