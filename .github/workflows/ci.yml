@@ -30,14 +30,13 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          # The full history, so the test that checks the commits the docs cite can run.
-          fetch-depth: 0
       - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
           version: "0.12.19"
           python-version: ${{ matrix.python-version }}
       # The engine on its own: no library extra, so the library's tests skip and
-      # tests/test_engine_boundary.py shows identify, check and lint work without it.
+      # tests/test_engine_boundary.py shows identify, check and lint work without it. The
+      # checkout is shallow, so tests/test_docs_commits.py skips here and runs in the library job.
       - name: Install
         run: uv sync --locked
       - name: Tests
@@ -79,25 +78,32 @@ jobs:
         if: steps.failing.outcome != 'failure'
         run: exit 1
 
+  # The whole suite once, with the library extra, on the oldest supported Python; the checks job
+  # covers the other versions for the engine. This job also has the full history and reports
+  # coverage.
   library:
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.11", "3.12", "3.13"]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          # The full history, so tests/test_docs_commits.py can check the commits the docs cite.
           fetch-depth: 0
       - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
           version: "0.12.19"
-          python-version: ${{ matrix.python-version }}
+          python-version: "3.11"
       # The library extra (the MCP SDK and strictyaml) and the reference validator, so every
       # library and MCP test runs.
       - name: Install
         run: uv sync --locked --extra library --group spec
-      - name: Tests
-        run: uv run pytest
+      - name: Tests, under coverage
+        run: uv run coverage run -m pytest
+      - name: Coverage report in the job summary
+        run: |
+          {
+            echo '```'
+            uv run coverage report
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

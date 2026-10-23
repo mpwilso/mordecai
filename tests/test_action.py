@@ -49,6 +49,22 @@ def test_ci_runs_the_actions_identify_step_without_commenting():
     assert "steps.failing.outcome != 'failure'" in ci
 
 
+def test_ci_runs_the_full_suite_with_coverage_once_and_fetches_history_once():
+    """The checks job's matrix covers the Python versions for the engine; the library job runs the
+    whole suite once, on the oldest supported Python, under coverage, with the report in the job
+    summary, and is the one job with the full history for tests/test_docs_commits.py."""
+    ci = (ROOT / ".github" / "workflows" / "ci.yml").read_text()
+    checks, library = ci.split("\n  library:\n")
+    assert 'python-version: ["3.11", "3.12", "3.13"]' in checks
+    assert "fetch-depth: 0" not in checks
+    assert "matrix" not in library
+    assert 'python-version: "3.11"' in library
+    assert library.count("fetch-depth: 0") == 1
+    assert "run: uv run coverage run -m pytest" in library
+    report = library[library.index("uv run coverage report") :]
+    assert '} >> "$GITHUB_STEP_SUMMARY"' in report
+
+
 def test_release_publishes_with_trusted_publishing_from_one_job():
     """PyPI trusted publishing (#18): only the publish job, in the pypi environment, can ask
     for an OIDC token, and nothing stores a PyPI token."""
