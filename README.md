@@ -9,7 +9,7 @@
 
 <p align="center"><a href="https://github.com/mpwilso/mordecai/actions/workflows/ci.yml"><img src="https://github.com/mpwilso/mordecai/actions/workflows/ci.yml/badge.svg" alt="CI status"></a></p>
 
-Status: a portfolio project, built to show how I design, test and judge an AI tool. Version 0.5.0. The rules were checked on simulated skills and on 12 planted skill suites run for real, almost all on Claude Haiku 4.5; of the five blind ones, 3 got their predicted verdict. The library was tested offline only. Every result, misses included, is in [docs/testing.md](docs/testing.md).
+Status: a portfolio project, built to show how I design, test and judge an AI tool. Version 0.5.0. The rules were checked on simulated skills and on 13 planted skill suites run for real, almost all on Claude Haiku 4.5; of the five blind ones, 3 got their predicted verdict. The library was tested offline only. Every result, misses included, is in [docs/testing.md](docs/testing.md).
 
 Mordecai is for teams that share Claude skills. `claude plugin eval` runs a skill's cases with and without it, but the difference never decides its exit code, and studies such as SWE-Skills-Bench found most skills give no measurable gain ([why it exists](docs/research.md#prior-art)). Mordecai reads the eval result and decides, in code, what the skill can honestly claim: it helps, it hurts, the model already handles it, or there isn't enough to tell. Its card is tied by hash to the skill, cases and model it was measured on, so a team can see when a claim goes stale.
 
@@ -67,8 +67,6 @@ The library keeps skills in Git, each with a base, named variants and a version 
 `--crawl` prints the same card as loot, in honor of Matt Dinniman's *Dungeon Crawler Carl*. The jokes are fixed templates around the plain stat block and can't change a number or a verdict.
 
 <p align="center"><img src="docs/brand/crawl-card.svg" alt="Crawl mode: a pixel treasure chest shakes, opens and lifts out a red potion, beside the card mordecai identify --crawl prints for a demo skill that helps" width="900"></p>
-
-<p align="center"><sub>A demo skill with simulated results. The text is printed by the same code as the command.</sub></p>
 
 <p align="center"><sub>A demo skill with simulated results, printed by the command's own code. A fan nod, not affiliated with or endorsed by the author or publisher.</sub></p>
 

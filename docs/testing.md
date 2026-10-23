@@ -36,7 +36,7 @@ What these show:
 - **Hurts was detected once, and it depends on the skill being opened.** The only Hurts on a harmful skill was H1, a suite designed after seeing results so that its skill would fire in every run. When a harmful skill fired in 6 of 27 runs (suite 3, blind) or 1 of 27 (V1), the rules didn't call Hurts. Those cards said Already handled and Inconclusive. This doesn't show that Hurts detection is reliable.
 - **Real runs were much less noisy than the simulation assumed.** In the first set, all 3 runs of a side agreed in 94% of case-and-side cells.
 
-Total cost of the planted runs: $20.60 at list price, across 15 runs, one of them a $0.25 pilot.
+Total cost of the planted runs: $22.11 at list price, across 16 runs, one of them a $0.25 pilot.
 
 ## Model comparisons
 

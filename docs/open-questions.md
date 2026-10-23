@@ -12,7 +12,7 @@ Moved from the README.
 
 ## What was run
 
-The check ran 12 planted suites, 15 runs in all, almost all on Claude Haiku 4.5, at a total of $20.60 at list price. Each suite compares 9 cases, with 3 runs per side. Every prediction was committed before its suite ran.
+The check ran 13 planted suites, 16 runs in all, almost all on Claude Haiku 4.5, at a total of $22.11 at list price. Each suite compares 9 cases, with 3 runs per side. Every prediction was committed before its suite ran.
 
 **Only some suites were blind.** The first set (suites 1 to 5b) and holdouts 6 and 7 were written before any result existed. V1, V2, V3, H1 and both Sonnet reruns were designed or predicted after seeing earlier results.
 

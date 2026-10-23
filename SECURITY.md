@@ -11,10 +11,13 @@ Mordecai reads eval results, cards and plugin directories that someone else may 
 - A result, card or plugin that makes `mordecai identify`, `check` or `lint` read, hash or follow a path outside the current directory or a directory you passed with `--skill` or `--cases-root`.
 - Text from a result or card that reaches the terminal as control characters or escape sequences, or reaches `--markdown` output as HTML, a link, an image or a mention.
 - A malformed input that gives a wrong verdict instead of an error, or that crashes, hangs or exhausts memory.
-- Anything in `.github/workflows/` that could expose a token or run untrusted code with write access.
+- Anything in `.github/workflows/` or [action.yml](action.yml) that could expose a token or run untrusted code with write access, including an action input that reaches a shell unquoted.
+- `mordecai library` and the `mordecai mcp` server: an install, fork or release that writes outside the target folder you named or the library's own store, follows a link out of it, runs a Git hook, or reads a source over anything but https or the local disk; a source, lockfile or catalog entry that makes an installed copy differ from what its recorded commit holds.
+- A GitHub token from `MORDECAI_GITHUB_TOKEN` or `GITHUB_TOKEN` reaching a log, a card, a lockfile, a command line or anything else on disk.
 
 ## Out of scope
 
 - What `claude plugin eval` does when it runs a plugin. It runs the plugin's code on your machine; that's Claude Code's to answer, and only evaluate plugins you trust.
 - Whether a verdict is statistically right. That's a design question; open an issue.
+- The text of a third-party skill that `get_skill` returns. It is data for your agent to read, not instructions for Mordecai, and [docs/library.md](docs/library.md) says so.
 - The sibling projects named in the README. Each has its own repository.
