@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- The package's PyPI description is [docs/pypi.md](docs/pypi.md), a short page that links to GitHub with absolute URLs, since README.md's relative links and images wouldn't render on pypi.org.
+- CI's library job runs the suite once, on Python 3.11, under `coverage`, with the report in the job summary, and is the one job with the full history; the checks job's matrix still covers 3.11, 3.12 and 3.13 for the engine.
+
 ## 0.5.0 (2026-10-11)
 
 The verdict rules changed, so this is 0.5.0. It is the version prepared for PyPI, as mordecai-skills.

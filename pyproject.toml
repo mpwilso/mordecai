@@ -2,7 +2,9 @@
 name = "mordecai-skills"
 version = "0.5.0"
 description = "Reads a skill's eval results and says what the skill can honestly claim: helps, hurts, already handled, or can't tell yet."
-readme = "README.md"
+# The PyPI page. README.md is written for GitHub, with relative links and images that pypi.org
+# wouldn't render; docs/pypi.md is short and links to GitHub with absolute URLs.
+readme = "docs/pypi.md"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "Matt Wilson", email = "198815669+mpwilso@users.noreply.github.com" }]

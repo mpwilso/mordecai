@@ -4,6 +4,8 @@
 
 It has never run. Until the steps below are done and a release goes through, the README's install lines stay as they are (a clone and `uv sync`).
 
+The package's description on pypi.org is [docs/pypi.md](pypi.md), set as `readme` in `pyproject.toml`, not README.md: the README's relative links and images are for GitHub and wouldn't render on PyPI, so the PyPI page is short and links to GitHub with absolute URLs.
+
 ## One-time setup
 
 1. **On pypi.org**, signed in as the owner: Account settings, Publishing, "Add a new pending publisher", GitHub tab. A pending publisher reserves the name and creates the project on the first upload. Enter exactly:
