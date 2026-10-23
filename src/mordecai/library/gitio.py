@@ -26,6 +26,8 @@ TOKEN_VARS = ("MORDECAI_GITHUB_TOKEN", "GITHUB_TOKEN")
 SAFE = ["-c", "core.fsmonitor=false", "-c", "protocol.ext.allow=never"]
 # The most bytes a source's materialized files may take, across one command.
 MAX_TREE_BYTES = 200 * 1024 * 1024
+# Seconds a git command may take, whether it answers with output or with an exit code.
+TIMEOUT = 300
 
 
 def token() -> str | None:
@@ -62,30 +64,38 @@ def _env(auth: bool) -> dict[str, str]:
     return env
 
 
-def git(repo: Path | None, *args: str, auth: bool = False, check: bool = True, config=()) -> str:
-    """git's standard output. A failure is a LibraryError with git's message, token removed.
-    config is extra -c settings, as a flat list."""
+def _run(
+    repo: Path | None, *args: str, auth: bool = False, config=()
+) -> subprocess.CompletedProcess:
+    """One git command, finished or cut off after TIMEOUT seconds. config is extra -c settings,
+    as a flat list."""
     cmd = ["git", *SAFE, *config] + (["-C", str(repo)] if repo is not None else []) + list(args)
     try:
-        done = subprocess.run(cmd, capture_output=True, env=_env(auth), timeout=300, check=False)
+        return subprocess.run(
+            cmd, capture_output=True, env=_env(auth), timeout=TIMEOUT, check=False
+        )
     except FileNotFoundError as e:
         raise LibraryError("git isn't installed or isn't on PATH") from e
     except subprocess.TimeoutExpired as e:
-        raise LibraryError(f"git {args[0]} took more than five minutes") from e
+        raise LibraryError(f"git {args[0]} took more than {TIMEOUT:g} seconds") from e
+
+
+def git(repo: Path | None, *args: str, auth: bool = False, check: bool = True, config=()) -> str:
+    """git's standard output. A failure is a LibraryError with git's message, token removed."""
+    done = _run(repo, *args, auth=auth, config=config)
     if check and done.returncode != 0:
         msg = _scrub(done.stderr.decode("utf-8", "replace").strip()).splitlines()
         raise LibraryError(f"git {args[0]} failed: {msg[-1] if msg else done.returncode}")
     return done.stdout.decode("utf-8", "replace")
 
 
+def ok(repo: Path | None, *args: str) -> bool:
+    """Whether git exits 0, under the same time limit as git()."""
+    return _run(repo, *args).returncode == 0
+
+
 def is_repo(path: Path) -> bool:
-    done = subprocess.run(
-        ["git", *SAFE, "-C", str(path), "rev-parse", "--git-dir"],
-        capture_output=True,
-        env=_env(False),
-        check=False,
-    )
-    return done.returncode == 0
+    return ok(path, "rev-parse", "--git-dir")
 
 
 def toplevel(path: Path) -> Path:
@@ -136,13 +146,7 @@ def library_tags(repo: Path, within: str | None = None) -> list[Tag]:
 
 
 def has_path(repo: Path, commit: str, path: str) -> bool:
-    done = subprocess.run(
-        ["git", *SAFE, "-C", str(repo), "cat-file", "-e", f"{commit}:{path}"],
-        capture_output=True,
-        env=_env(False),
-        check=False,
-    )
-    return done.returncode == 0
+    return ok(repo, "cat-file", "-e", f"{commit}:{path}")
 
 
 @dataclass(frozen=True)
@@ -191,7 +195,9 @@ class Reader:
             env=_env(False),
         )
 
-    def read(self, sha: str) -> bytes:
+    def read(self, sha: str, limit: int | None = None) -> bytes:
+        """The blob's bytes. With a limit, a blob bigger than it is refused from the size in the
+        batch header, before any of its content is read."""
         assert self.proc.stdin and self.proc.stdout
         self.proc.stdin.write(sha.encode() + b"\n")
         self.proc.stdin.flush()
@@ -199,14 +205,24 @@ class Reader:
         if len(header) != 3 or header[1] != "blob":
             raise LibraryError(f"git couldn't read object {sha}")
         size = int(header[2])
+        if limit is not None and size > limit:
+            raise LibraryError("the source is too large to read")
         data = self.proc.stdout.read(size)
         self.proc.stdout.read(1)
         return data
 
     def close(self) -> None:
+        # Closing the read end too: after a refused blob, git may still be writing its content,
+        # and would otherwise block on a full pipe instead of exiting.
         if self.proc.stdin:
             self.proc.stdin.close()
-        self.proc.wait(timeout=30)
+        if self.proc.stdout:
+            self.proc.stdout.close()
+        try:
+            self.proc.wait(timeout=30)
+        except subprocess.TimeoutExpired:
+            self.proc.kill()
+            self.proc.wait()
 
     def __enter__(self):
         return self
@@ -218,7 +234,8 @@ class Reader:
 def materialize(repo: Path, commit: str, prefix: str, dest: Path, budget: list[int]) -> None:
     """Write the files under prefix in commit into dest, at the same relative paths. Links are
     written as links and never followed; submodules are left out. budget is a one-item list of
-    bytes still allowed, shared across calls."""
+    bytes still allowed, shared across calls; a blob that would take it below zero is refused
+    from its size, before its content is read."""
     entries = tree(repo, commit, prefix)
     with Reader(repo) as reader:
         for e in entries:
@@ -226,10 +243,8 @@ def materialize(repo: Path, commit: str, prefix: str, dest: Path, budget: list[i
             target = dest.joinpath(*rel.parts)
             if e.kind != "blob" or target.exists() or target.is_symlink():
                 continue
-            data = reader.read(e.sha)
+            data = reader.read(e.sha, limit=budget[0])
             budget[0] -= len(data)
-            if budget[0] < 0:
-                raise LibraryError("the source is too large to read")
             # A link written earlier is never gone through: on a case-insensitive file system
             # a link "A" and a file "a/b" from one tree would otherwise meet.
             no_links(dest, target.parent)

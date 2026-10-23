@@ -4,6 +4,7 @@
 
 - The package's PyPI description is [docs/pypi.md](docs/pypi.md), a short page that links to GitHub with absolute URLs, since README.md's relative links and images wouldn't render on pypi.org.
 - CI's library job runs the suite once, on Python 3.11, under `coverage`, with the report in the job summary, and is the one job with the full history; the checks job's matrix still covers 3.11, 3.12 and 3.13 for the engine.
+- Fixes in the library's Git reader: a source file over the 200 MB budget is refused from its size in `git cat-file`'s header, before its content is read (it was read in full, then refused), and the repository and path checks have the same five-minute limit as every other git call (they had none).
 
 ## 0.5.0 (2026-10-11)
 

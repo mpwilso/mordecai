@@ -335,13 +335,75 @@ def test_the_fetch_allows_only_https_and_no_submodules_or_hooks(monkeypatch, git
     assert fetch.index("--") < fetch.index("https://github.com/acme/skills.git")
 
 
-def test_git_calls_have_a_time_limit_and_reads_a_size_limit(setup, monkeypatch):
-    import inspect
+def test_a_hung_git_is_cut_off_whether_it_answers_with_output_or_an_exit_code(gitenv, monkeypatch):
+    """Reproduced: is_repo and has_path ran git with no time limit, while git() had one. A git
+    on PATH that never answers stands in for a hung one; the limit is shortened for the test."""
+    import stat
 
-    assert "timeout=300" in inspect.getsource(gitio.git)
+    fake = gitenv / "bin"
+    fake.mkdir()
+    (fake / "git").write_text("#!/bin/sh\nexec sleep 30\n")
+    (fake / "git").chmod((fake / "git").stat().st_mode | stat.S_IXUSR)
+    monkeypatch.setenv("PATH", f"{fake}{os.pathsep}{os.environ['PATH']}")
+    assert gitio.TIMEOUT == 300
+    monkeypatch.setattr(gitio, "TIMEOUT", 0.2)
+    for call in (
+        lambda: gitio.git(gitenv, "status"),
+        lambda: gitio.is_repo(gitenv),
+        lambda: gitio.has_path(gitenv, "HEAD", "x"),
+    ):
+        with pytest.raises(LibraryError, match="took more than 0.2 seconds"):
+            call()
+
+
+def test_a_blob_over_the_size_budget_is_refused_before_its_bytes_are_read(setup, monkeypatch):
+    """Reproduced: Reader.read took the whole blob from git and checked the budget afterwards.
+    Now the size in cat-file's batch header decides, and the content stays unread."""
     repo, _, _ = setup
+    big = 300 * 1024
+    (repo / "library" / "aaa-big.bin").write_bytes(b"x" * big)  # sorts before greeting/
+    commit(repo, "a big file")
+    counters = []
+
+    class Counting:
+        def __init__(self, raw):
+            self.raw, self.n = raw, 0
+
+        def readline(self):
+            data = self.raw.readline()
+            self.n += len(data)
+            return data
+
+        def read(self, size=-1):
+            data = self.raw.read(size)
+            self.n += len(data)
+            return data
+
+        def close(self):
+            self.raw.close()
+
+        @property
+        def closed(self):
+            return self.raw.closed
+
+    real_popen = subprocess.Popen
+
+    class spy_popen(real_popen):
+        def __init__(self, cmd, *a, **kw):
+            super().__init__(cmd, *a, **kw)
+            if "--batch" in cmd:  # the Reader's cat-file; the other git calls stay as they are
+                self.stdout = Counting(self.stdout)
+                counters.append(self.stdout)
+
+    monkeypatch.setattr(gitio.subprocess, "Popen", spy_popen)
+    dest = repo.parent / "d"
     with pytest.raises(LibraryError, match="too large"):
-        gitio.materialize(repo, gitio.resolve(repo, "HEAD"), "library", repo.parent / "d", [10])
+        gitio.materialize(repo, gitio.resolve(repo, "HEAD"), "library", dest, [1000])
+    assert counters and sum(c.n for c in counters) < 1000
+    assert not dest.exists()
+    # The budget still holds for the files that fit: the same tree reads with room to spare.
+    gitio.materialize(repo, gitio.resolve(repo, "HEAD"), "library", dest, [10**9])
+    assert (dest / "library" / "aaa-big.bin").stat().st_size == big
 
 
 # The token -------------------------------------------------------------------------------------
