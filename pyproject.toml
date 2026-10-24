@@ -42,7 +42,7 @@ mordecai = "mordecai.cli:main"
 dev = [
     "coverage==7.16.2",
     "pytest==9.1.1",
-    "ruff==0.16.10",
+    "ruff==0.17.1",
 ]
 # The reference validator, used by a test to cross-check every stored and exported skill:
 #   uv sync --extra library --group spec
