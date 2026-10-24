@@ -10,3 +10,6 @@ __pycache__/
 /frames/
 # Where the MCP server in .mcp.json installs when you try it.
 /.mcp-demo/
+# Local secrets never leave this machine.
+.env
+.env.*
