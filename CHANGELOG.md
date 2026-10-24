@@ -1,21 +1,19 @@
 # Changelog
 
-## Unreleased
+## Unreleased (0.5.0)
 
+The verdict rules changed, so the next version is 0.5.0. It is on master, prepared for PyPI as mordecai-skills, and not released: the release workflow hasn't run, and the latest release is 0.4.0.
+
+- The README was restructured to the same order as the author's other tools and cut to about half its length. The verdict table moved to docs/verdicts.md, the full list of limits to docs/testing.md, the fixture note under the example card to docs/usage.md, and the GitHub Action's inputs and outputs are a table there. tests/test_readme_rules.py holds the README to under 155 shown lines, no dashes, links that resolve, no bare placeholders and no "only", "first" or "best" in prose.
 - The package's PyPI description is [docs/pypi.md](docs/pypi.md), a short page that links to GitHub with absolute URLs, since README.md's relative links and images wouldn't render on pypi.org.
 - CI's library job runs the suite once, on Python 3.11, under `coverage`, with the report in the job summary, and is the one job with the full history; the checks job's matrix still covers 3.11, 3.12 and 3.13 for the engine.
 - Fixes in the library's Git reader: a source file over the 200 MB budget is refused from its size in `git cat-file`'s header, before its content is read (it was read in full, then refused), and the repository and path checks have the same five-minute limit as every other git call (they had none).
-
-## 0.5.0 (2026-10-11)
-
-The verdict rules changed, so this is 0.5.0. It is the version prepared for PyPI, as mordecai-skills.
-
 - **Rules change: when every compared case has the same change and every run agrees, the card counts cases (D22).** The bootstrap could only return one number there, so cards showed a "90% interval" such as +100 to +100. Now the card says "9 of 9 cases" with an exact one-sided Clopper-Pearson bound, at the rules' confidence, on the share of cases like these that could differ (23% for 9 cases at 90%), and its JSON has `numbers.agreement` with `interval` null. Verdicts are decided as before. Chosen by the owner after seeing the collapsed cards, so those cards aren't evidence for it.
 - **Rules change: No effect and Already handled need at least 10 compared cases (D22).** With fewer, the card is Inconclusive and says why. Helps and Hurts keep the minimum of 5. The threshold is a constant, not a `Rules` field, so existing library cards still pass D20's equal-rules check. Of the recorded cards, 5a-twin (Already handled), 5b-filler and holdout 7 (No effect) move to Inconclusive; no Helps or Hurts card moves. All 15 recorded cards and the library's two were rebuilt; docs/planted-skills-results.md lists every card that moved. In scripts/simulate.py only the 5-case null calls moved, and its non-monotonic placebo row (59%, 27%, 64% under 0.4.0) turned out real, not a bug.
 - `identify` also reads skill-creator's `benchmark.json`, told apart by its shape. What it doesn't record (whether the skill fired, quiet cases, cost, turns, refused calls, early stops and limits) shows as not measured on the card. See [docs/usage.md](docs/usage.md#skill-creators-benchmarkjson).
 - A composite GitHub Action, [action.yml](action.yml), runs `identify` on a result and posts the card on the pull request, with `fail-on` passed through. CI runs its identify step on every push; posting is untested until it's used on a real pull request.
 - A release workflow publishes `mordecai-skills` to PyPI with trusted publishing when a GitHub release is published. It hasn't run; [docs/releasing.md](docs/releasing.md) has the one-time setup.
-- The README is about a quarter of its old length. How it was tested, the verdict details, command details and prior art moved to docs/testing.md, docs/verdicts.md, docs/usage.md and docs/research.md.
+- The README was cut to about a quarter of its old length. How it was tested, the verdict details, command details and prior art moved to docs/testing.md, docs/verdicts.md, docs/usage.md and docs/research.md.
 - Removed the brand tooling nothing used: `scripts/frames.py`, the social preview PNG (never uploaded), `brand.py --png` and the `visual` (playwright) dependency group.
 
 ## 0.4.0 (2026-10-11)

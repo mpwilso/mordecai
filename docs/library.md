@@ -1,6 +1,6 @@
 # The skill library
 
-How to keep, release and install skills with Mordecai's library, in detail. The [README](../README.md#the-skill-library) has the short version, [library-design.md](library-design.md) the design and its reasons, [research.md](research.md) what other tools do, and [decisions.md](decisions.md) the choices made along the way.
+How to keep, release and install skills with Mordecai's library, in detail. The [README](../README.md#what-it-does) has the short version, [library-design.md](library-design.md) the design and its reasons, [research.md](research.md) what other tools do, and [decisions.md](decisions.md) the choices made along the way.
 
 A library is a folder of skills in a Git repository. `mordecai library` installs a skill from it into the folder your AI coding tool reads, records where it came from, and refuses a version whose card says it hurts. `mordecai mcp` offers the same operations to MCP clients. It works for one person with a personal library, and for an organization with base skills and team variants.
 
@@ -166,7 +166,7 @@ The reading tools are `open-world` because a GitHub source is fetched over the n
 ## Limits
 
 - **The gate trusts committed result files.** It checks that a card matches its result and its version's files, not that the eval really ran. A fabricated result with a card made from it would pass.
-- **Cards are only as good as their cases.** A Helps card says the skill helped on those cases, with that model. See [the verdicts](../README.md#the-verdicts) and [known limits](../README.md#known-limits).
+- **Cards are only as good as their cases.** A Helps card says the skill helped on those cases, with that model. See [the verdicts](verdicts.md#the-rules) and [known limits](testing.md#known-limits).
 - **Precedence is by rule, not merge.** The last source listed wins for each copy, and a variant behind its base is reported, not updated.
 - **Nothing writes to GitHub.** Releases are local tags, and pushing them is up to you. The [GitHub Action](usage.md#github-action) posts a card on a pull request, but only the card: it doesn't run the library's gate.
 - **The Hurts example is deliberately harmful.** `branch-naming`'s `camelcase` variant is planted suite H1, a convention built to fail its own eval's graders. It is never published, and every export refuses it.

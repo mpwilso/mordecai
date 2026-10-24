@@ -1,5 +1,7 @@
 # mordecai-skills
 
+This is the PyPI description for a release that has not been published yet: the package isn't on PyPI, and `pip install mordecai-skills` won't work until it is. Install from GitHub instead, as the README says.
+
 Mordecai reads a skill's `claude plugin eval` results and says what the skill can honestly claim: it helps, it hurts, the model already handles it, or there isn't enough to tell. Code decides the verdict, never a model. The card is tied by hash to the skill, cases and model it was measured on, so a team can see when a claim goes stale.
 
 This page is the package's description on PyPI. The README, with an example card, the verdict rules, the skill library and the known limits, is at https://github.com/mpwilso/mordecai.

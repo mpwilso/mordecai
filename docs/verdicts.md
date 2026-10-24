@@ -1,6 +1,25 @@
 # The verdicts in detail
 
-The README has the [verdict table](../README.md#the-verdicts). This page has the rest: how the interval works, the warnings, how refusals are read, a second example card, and every change to the rules. The rules themselves are [src/mordecai/verdict.py](../src/mordecai/verdict.py), and each change has a decision in [decisions.md](decisions.md).
+The README lists the verdicts in a sentence. This page has the table, how the interval works, the warnings, how refusals are read, a second example card, and every change to the rules. The rules themselves are [src/mordecai/verdict.py](../src/mordecai/verdict.py), and each change has a decision in [decisions.md](decisions.md).
+
+## The rules
+
+Code decides, not a model. The rules run in this order, and the earliest one that applies wins.
+
+| Verdict | When |
+|---|---|
+| Invalid | The eval stopped early, a run hit a usage or rate limit, judge graders were skipped, or nothing ran without the skill |
+| Never fired | The skill didn't fire in any run where it should have |
+| Rarely fired | The skill fired in under 10% of the runs where it should have |
+| Inconclusive | Fewer than 5 cases were compared |
+| Hurts | The whole 90% interval for the change is below zero |
+| Helps | The whole interval is above zero, and the change is at least 10 points |
+| Already handled | At least 10 cases, the model scores at least 90% without the skill, and the interval rules out both a 10-point gain and a 10-point loss |
+| Inconclusive | The model scores at least 90% without the skill, but the interval doesn't rule out a 10-point loss |
+| No effect | At least 10 cases, and the interval stays inside plus or minus 10 points |
+| Inconclusive | Anything else: the interval is too wide to call |
+
+Warnings never change the verdict.
 
 ## The interval
 

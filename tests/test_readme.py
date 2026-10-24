@@ -52,7 +52,8 @@ def test_the_planted_card_matches_the_recorded_one_but_for_the_result_hash(monke
     for key in ("skill", "cases"):
         assert recorded["hashes"][key][:19] in shown
     assert recorded["hashes"]["result"][:19] not in shown
-    assert recorded["hashes"]["result"][7:19] in README
+    usage = (ROOT / "docs" / "usage.md").read_text(encoding="utf-8")
+    assert recorded["hashes"]["result"][7:19] in usage
     assert recorded["verdict"] == "helps"
 
 
@@ -69,13 +70,8 @@ def _slugs(text: str) -> set[str]:
     return out
 
 
-def test_every_anchor_link_in_the_readme_has_a_heading():
-    links = set(re.findall(r"\]\(#([^)]+)\)", README))
-    assert links and links <= _slugs(README), links - _slugs(README)
-
-
-def test_the_readme_links_all_four_sibling_tools():
-    for tool in ("loupe", "parallax", "isr", "polarizer"):
+def test_the_readme_links_the_five_sibling_tools():
+    for tool in ("loupe", "parallax", "isr", "polarizer", "Project-Max-Q"):
         assert f"https://github.com/mpwilso/{tool})" in README
 
 

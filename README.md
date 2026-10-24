@@ -5,19 +5,15 @@
   </picture>
 </p>
 
-<p align="center"><b>Reads a skill's eval results and says what the skill can honestly claim.</b></p>
+<p align="center"><a href="https://github.com/mpwilso/mordecai/actions/workflows/ci.yml"><img src="https://github.com/mpwilso/mordecai/actions/workflows/ci.yml/badge.svg" alt="CI"></a></p>
 
-<p align="center"><a href="https://github.com/mpwilso/mordecai/actions/workflows/ci.yml"><img src="https://github.com/mpwilso/mordecai/actions/workflows/ci.yml/badge.svg" alt="CI status"></a></p>
+<p align="center"><b>Mordecai reads a Claude skill's test results and says whether the skill helps, hurts or does nothing, with the numbers behind it.</b></p>
 
-Status: a portfolio project, built to show how I design, test and judge an AI tool. Version 0.5.0. The rules were checked on simulated skills and on 13 planted skill suites run for real, almost all on Claude Haiku 4.5; of the five blind ones, 3 got their predicted verdict. The library was tested offline only. Every result, misses included, is in [docs/testing.md](docs/testing.md).
-
-Mordecai is for teams that share Claude skills. `claude plugin eval` runs a skill's cases with and without it, but the difference never decides its exit code, and studies such as SWE-Skills-Bench found most skills give no measurable gain ([why it exists](docs/research.md#prior-art)). Mordecai reads the eval result and decides, in code, what the skill can honestly claim: it helps, it hurts, the model already handles it, or there isn't enough to tell. Its card is tied by hash to the skill, cases and model it was measured on, so a team can see when a claim goes stale.
-
-Jump to [a card](#what-a-card-looks-like), [the verdicts](#the-verdicts), [setup](#setup) or [the limits](#known-limits).
+Status: a portfolio project, built to show how I design, test and judge an AI tool. The verdict rules were checked on 13 planted skill suites run for real, almost all on Claude Haiku 4.5; of the blind suites, 3 of the original 5 and both sealed holdouts got their predicted verdict ([docs/testing.md](docs/testing.md), misses included). 0.5.0 is on master and unreleased; the latest release is [v0.4.0](https://github.com/mpwilso/mordecai/releases/tag/v0.4.0).
 
 ## What a card looks like
 
-Planted suite 1, a made-up branch convention Claude Haiku 4.5 can't know without the skill, from its real eval result ([recorded card](docs/planted-results/1-convention.card.json)):
+Planted suite 1, a made-up branch convention Claude Haiku 4.5 can't know without the skill, from its real eval result ([recorded card](docs/planted-results/1-convention.card.json); [why the hash and warning differ](docs/usage.md#the-readme-example-card)):
 
 ```
 $ uv run mordecai identify tests/fixtures/suite1-result.json --skill evals/planted/1-convention
@@ -37,42 +33,17 @@ Warnings
 Next: Keep it.
 ```
 
-The fixture is the raw result with local paths replaced, so its result hash differs from the recorded card's (`sha256:06cf8a473864`) and its traces aren't beside it, hence the warning. Everything else matches.
+## What it does
 
-## The verdicts
+`claude plugin eval` runs a skill's cases with and without it, but the difference never decides its exit code, and studies have found most skills give no measurable gain ([why it exists](docs/research.md#prior-art)). Mordecai reads the result and decides, in code, what the skill can claim, on a card tied by hash to the skill, cases and model it was measured on.
 
-Code decides, not a model. The rules run in this order, and the first one that applies wins.
+The verdicts, in the order the rules run: Invalid (the eval stopped early, or a run hit a limit), Never fired and Rarely fired (the skill didn't open where it should have), Inconclusive (under 5 cases), Hurts (the whole 90% interval is below zero), Helps (the whole interval is above zero and the change is at least 10 points), Already handled and No effect (at least 10 cases, and the interval rules out a 10-point change), or Inconclusive again when the interval is too wide to call. The interval is a bootstrap with a fixed seed; when every case agrees, the card counts cases instead. [docs/verdicts.md](docs/verdicts.md) has the table, the warnings and every rule change.
 
-| Verdict | When |
-|---|---|
-| Invalid | The eval stopped early, a run hit a usage or rate limit, judge graders were skipped, or nothing ran without the skill |
-| Never fired | The skill didn't fire in any run where it should have |
-| Rarely fired | The skill fired in under 10% of the runs where it should have |
-| Inconclusive | Fewer than 5 cases were compared |
-| Hurts | The whole 90% interval for the change is below zero |
-| Helps | The whole interval is above zero, and the change is at least 10 points |
-| Already handled | At least 10 cases, the model scores at least 90% without the skill, and the interval rules out both a 10-point gain and a 10-point loss |
-| Inconclusive | The model scores at least 90% without the skill, but the interval doesn't rule out a 10-point loss |
-| No effect | At least 10 cases, and the interval stays inside plus or minus 10 points |
-| Inconclusive | Anything else: the interval is too wide to call |
+The skill library keeps skills in Git, each with a base, named variants and a version history, installs them where your coding tool reads them, and refuses a version whose card says Hurts or Invalid or doesn't match its files ([guide](docs/library.md), [demo](docs/library-demo.md), no model needed).
 
-The interval is a bootstrap with a fixed seed, so a result always gives the same card. When every case agrees, the card counts cases instead, with a binomial bound on how many could differ. Warnings never change the verdict. [docs/verdicts.md](docs/verdicts.md) has the details and every rule change.
+## Try it
 
-## The skill library
-
-The library keeps skills in Git, each with a base, named variants and a version history, and installs them where your AI coding tool reads them. Install reruns each version's card against its result and files, and refuses Hurts, Invalid or a card that doesn't match. It can also export a plugin marketplace and serve over MCP. [Guide](docs/library.md), [demo](docs/library-demo.md) (seconds, no model), [design](docs/library-design.md).
-
-## Crawl mode
-
-`--crawl` prints the same card as loot, in honor of Matt Dinniman's *Dungeon Crawler Carl*. The jokes are fixed templates around the plain stat block and can't change a number or a verdict.
-
-<p align="center"><img src="docs/brand/crawl-card.svg" alt="Crawl mode: a pixel treasure chest shakes, opens and lifts out a red potion, beside the card mordecai identify --crawl prints for a demo skill that helps" width="900"></p>
-
-<p align="center"><sub>A demo skill with simulated results, printed by the command's own code. A fan nod, not affiliated with or endorsed by the author or publisher.</sub></p>
-
-## Setup
-
-Requires Python 3.11 or later and [uv](https://docs.astral.sh/uv/).
+Requires Python 3.11 or later and [uv](https://docs.astral.sh/uv/). This installs master, which is 0.5.0 unreleased and prints the card above; `git checkout v0.4.0` gives the latest release.
 
 ```
 git clone https://github.com/mpwilso/mordecai
@@ -80,39 +51,49 @@ cd mordecai
 uv sync
 ```
 
-`identify`, `check` and `lint` use only the standard library; the skill library needs `uv sync --extra library`. Check your cases, run the eval with a pinned model, then read it:
+Run the eval with a pinned model, read it, then check the card later:
 
 ```
-uv run mordecai lint path/to/plugin
 claude plugin eval path/to/plugin --trust-plugin --model claude-sonnet-5-5 --json result.json --no-publish --max-cost-usd 5
 uv run mordecai identify result.json --skill path/to/plugin --card card.json --markdown card.md
 uv run mordecai check card.json --model claude-sonnet-5-5
 ```
 
-**`claude plugin eval` runs the plugin's code on your machine, as you,** so pass `--trust-plugin` only for a plugin you've reviewed. Mordecai never runs a plugin; it reads the result and hashes files. `--fail-on hurts,invalid` makes `identify` exit 1 for CI. A [GitHub Action](docs/usage.md#github-action) posts the card on a pull request. [docs/usage.md](docs/usage.md) has the flags, exit codes, paths and a worked `check` example.
+**`claude plugin eval` runs the plugin's code on your machine, as you,** so pass `--trust-plugin` for a plugin you've reviewed. Mordecai never runs a plugin; it reads the result and hashes files. `mordecai lint` checks the cases before an eval, `identify` also reads skill-creator's `benchmark.json` and says on the card what that file doesn't record, `--fail-on hurts,invalid` makes `identify` exit 1 for CI, and a [GitHub Action](docs/usage.md#github-action) posts the card on a pull request. [docs/usage.md](docs/usage.md) has the flags, exit codes, paths, the benchmark.json mapping and a worked `check` example.
 
-### From skill-creator's benchmark.json
+## What was measured
 
-`identify` also reads the `benchmark.json` that Anthropic's skill-creator skill writes, told apart by its shape: each eval becomes a case, and its `with_skill` and `without_skill` runs the two arms, scored by `pass_rate`. It doesn't record whether the skill fired, cost, quiet cases or early stops, so the card says those weren't measured. [docs/usage.md](docs/usage.md#skill-creators-benchmarkjson) has the mapping.
+- 13 planted skill suites with predictions committed before they ran: 16 runs, $22.11 at list price, almost all on Claude Haiku 4.5. Two suites reran on Claude Sonnet 5.5 and neither verdict moved ([docs/testing.md](docs/testing.md#planted-skills-run-for-real)).
+- Of the blind suites, 3 of the original 5 and both sealed holdouts got their predicted verdict. The rest were designed after seeing results. No placebo was called Helps or Hurts, but one placebo ran on noisy runs.
+- In simulation at the agreement rate real runs showed, a +20 point skill was called Helps in 13%, 36% and 56% of suites at 5, 10 and 15 cases ([docs/simulation.md](docs/simulation.md)).
+- Every verdict and warning has a unit test on a constructed result, and none calls a model. The library was tested offline, never on a live eval ([docs/testing.md](docs/testing.md#unit-tests)).
 
-## Known limits
+## Limits
 
-- **Hurts needs the skill to be opened.** Under 10% of the runs that need it is Rarely fired, not Hurts; between 10% and 50% the card warns. Suite 3 fired in 6 of 27 runs and reads Inconclusive. Check the "Fired in" line.
-- **Rules chosen after seeing results.** The 0.2.0, 0.4.0 and 0.5.0 rule changes were each designed after seeing the cards they fixed, so those cards aren't evidence for them. Rarely fired's first test, R1, missed.
-- **9 of 9 cases is still only 9 cases.** Helps and Hurts need only 5; a 5 of 5 card's bound is 37%.
-- **One small model,** regex and tool-use graders only ([what wasn't checked](docs/testing.md#what-wasnt-checked)).
-- **One plugin per result.** Cards name the first plugin in the suite.
-- **Refused tool calls are seen only in kept traces,** inside the current directory or `--skill`.
-- **Cost, not tokens.** Results report list-price cost per run, so that's what the card compares.
-- **Links aren't followed.** A symbolic link in a skill is hashed as its target path, never opened.
-- **The library trusts committed result files:** it checks a card matches its result and files, not that the eval ran. More in [docs/library.md](docs/library.md#limits).
+- **Hurts needs the skill to open.** Under 10% of the runs that need it is Rarely fired, not Hurts; between 10% and 50% the card warns. Suite 3's skill fired in 6 of 27 runs, and its card never said Hurts.
+- **Rules chosen after seeing results.** The 0.2.0, 0.4.0 and 0.5.0 rule changes were each designed after seeing the cards they fixed, so those cards aren't evidence for them. Rarely fired's one test run, R1, missed.
+- **One small model,** regex and tool-use graders, and two domains.
 
-## More
+The full list, with what wasn't checked: [docs/testing.md](docs/testing.md#known-limits).
 
-[How it was tested](docs/testing.md) · [the verdicts in detail](docs/verdicts.md) · [simulation](docs/simulation.md) · [planted skills results](docs/planted-skills-results.md) · [decisions](docs/decisions.md) · [open questions and what's next](docs/open-questions.md) · [prior art](docs/research.md#prior-art) · [changelog](CHANGELOG.md)
+## Crawl mode
 
-It sits beside [Loupe](https://github.com/mpwilso/loupe), [Parallax](https://github.com/mpwilso/parallax), [ISR](https://github.com/mpwilso/isr) and [Polarizer](https://github.com/mpwilso/polarizer), the author's other tools, and has no dependency on any of them ([how they relate](docs/research.md#the-authors-other-tools)).
+`--crawl` prints the same card as loot, in honor of Matt Dinniman's *Dungeon Crawler Carl*. The jokes are fixed templates around the stat block and can't change a number or a verdict.
+
+<p align="center"><img src="docs/brand/crawl-card.svg" alt="Crawl mode: a pixel treasure chest shakes, opens and lifts out a red potion, beside the card mordecai identify --crawl prints for a demo skill that helps" width="900"></p>
+
+<p align="center"><sub>A demo skill with simulated results, printed by the command's own code. A fan nod, not affiliated with or endorsed by the author or publisher.</sub></p>
+
+## How it was built
+
+Claude Code wrote most of the code. I wrote the rules it had to follow, decided what it could and couldn't decide on its own, and held it to one standard: any bug found in real data got a test before we moved on. Built on personal time and equipment, independent of any employer.
+
+More: [decisions](docs/decisions.md) · [open questions and what's next](docs/open-questions.md) · [changelog](CHANGELOG.md)
+
+## The other tools
+
+This is one of six tools. Three run in order: [Loupe](https://github.com/mpwilso/loupe) writes the story, [Parallax](https://github.com/mpwilso/parallax) builds it in a sandbox and keeps the record, and [ISR](https://github.com/mpwilso/isr) tells the person accepting it what is left to check. Three stand alone: [Polarizer](https://github.com/mpwilso/polarizer) holds an agent's risky tool calls until a person approves them, Mordecai judges whether a Claude skill helps, and [Max Q](https://github.com/mpwilso/Project-Max-Q) ranks job postings against a profile. Each runs on its own. The three were run in order once, on one change: [ISR's run log](https://github.com/mpwilso/isr/blob/master/docs/run-log.md).
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+[MIT](LICENSE).

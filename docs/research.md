@@ -116,6 +116,7 @@ From their public GitHub pages only.
 - [Parallax](https://github.com/mpwilso/parallax): a local tool where agents plan, build and check work in a sandbox, and the person makes the calls.
 - [ISR](https://github.com/mpwilso/isr): a Claude Code skill that "Writes the acceptance script for an AI-built change: what the build proved, what a person still has to check, and what the business has to decide."
 - [Polarizer](https://github.com/mpwilso/polarizer): "A local MCP gateway: it sits between an AI agent and the MCP servers it uses". It pins the tool definitions you approved, holds risky calls for a person, and keeps a hash-chained ledger. Upstream servers are declared in `polarizer.toml` as `[upstream.<name>]` with `command` and `args`, and each tool gets a class such as `local-read`, `local-write` or `destructive`; a tool with no class is held on every call.
+- [Max Q](https://github.com/mpwilso/Project-Max-Q): Max Q reads job postings straight from company careers sites, filters out the ones that don't fit, and gives you a short list to decide on. It never applies for you.
 
 ## Prior art
 
@@ -140,6 +141,7 @@ How each relates to Mordecai, which depends on none of them:
 - [Loupe](https://github.com/mpwilso/loupe) and [ISR](https://github.com/mpwilso/isr) are skills. A team could keep them in a Mordecai library and measure them; neither is in the seeded library.
 - [Parallax](https://github.com/mpwilso/parallax) runs agents that plan, build and check work in a sandbox. It doesn't install skills, and Mordecai doesn't run agents.
 - [Polarizer](https://github.com/mpwilso/polarizer) is a local MCP gateway that pins tool definitions, holds risky calls for a person and keeps a verifiable ledger. It can sit in front of `mordecai mcp`; [library.md](library.md#setup) has an unverified example.
+- [Max Q](https://github.com/mpwilso/Project-Max-Q) ranks job postings against a profile. It has no skills to measure and shares no code with Mordecai.
 
 ## What Mordecai's library adds
 

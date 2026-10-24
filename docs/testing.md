@@ -54,6 +54,20 @@ Two suites were rerun on Claude Sonnet 5.5 (`claude-sonnet-5-5`). Neither verdic
 
 Each verdict and warning has a test on a constructed result, along with hashing, staleness, relative card paths, `lint`, `check --model` and the command line. Others feed in hostile input: malformed results and cards, paths and links that lead outside the plugin, and names carrying terminal escapes or Markdown. One test is built from the real suite 3 result, and others check that the example cards in the README and [verdicts.md](verdicts.md) are what the tool prints. The library's tests cover every command, including hostile sources and targets (path traversal, links, malformed frontmatter, a name that doesn't match its folder, a card that doesn't match its version's files or its result), the byte-for-byte install, the seeded library, and the MCP server through the SDK's in-process client and over stdio. `uv run pytest` passes 217 tests without the library extra (the library's test files skip), and 413 with it (`uv sync --extra library --group spec`), as of 0.5.0. None call a model or reach the network. CI ([.github/workflows/ci.yml](../.github/workflows/ci.yml)) runs the tests, lint, the format check, `scripts/brand.py --check`, `scripts/planted.py --check` and the [GitHub Action](usage.md#github-action)'s identify step on Python 3.11, 3.12 and 3.13, on every push and on pull requests from forks. A second job runs the tests once more on Python 3.11 with the library extra, under `coverage`, and writes the coverage report to the job summary. Live eval runs are never part of CI: they call a model and cost money, and CI has no secrets. The result format comes from a real `claude plugin eval` run, not from the docs alone.
 
+## Known limits
+
+The README keeps three of these. The full list, moved here from it:
+
+- **Hurts needs the skill to be opened.** Under 10% of the runs that need it is Rarely fired, not Hurts; between 10% and 50% the card warns. Suite 3 fired in 6 of 27 runs and reads Inconclusive. Check the "Fired in" line.
+- **Rules chosen after seeing results.** The 0.2.0, 0.4.0 and 0.5.0 rule changes were each designed after seeing the cards they fixed, so those cards aren't evidence for them. Rarely fired's one test run, R1, missed.
+- **9 of 9 cases is still 9 cases.** Helps and Hurts need 5; a 5 of 5 card's bound is 37%.
+- **One small model,** regex and tool-use graders, and two domains (git workflow and Python project setup); see [what wasn't checked](#what-wasnt-checked).
+- **One plugin per result.** Cards name the plugin listed first in the suite.
+- **Refused tool calls are seen in kept traces alone,** inside the current directory or `--skill`.
+- **Cost, not tokens.** Results report list-price cost per run, so that's what the card compares.
+- **Links aren't followed.** A symbolic link in a skill is hashed as its target path, never opened ([usage.md](usage.md#paths)).
+- **The library trusts committed result files:** it checks a card matches its result and files, not that the eval ran. It was tested offline, never on a live eval. More in [library.md](library.md#limits).
+
 ## What wasn't checked
 
 - **Other models.** Everything ran on Claude Haiku 4.5, except two suites rerun on Claude Sonnet 5.5.

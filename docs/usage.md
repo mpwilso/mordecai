@@ -1,6 +1,6 @@
 # Using Mordecai
 
-The README has setup and the four commands. This page has the rest: what each command exits with, how paths are read, and a worked `check` example.
+The README has setup and the three commands a visitor needs. This page has the rest: what each command exits with, how paths are read, a worked `check` example, why the README's example card differs from the recorded one, skill-creator's benchmark.json and the GitHub Action.
 
 ## Trust
 
@@ -26,6 +26,10 @@ $ uv run mordecai check docs/planted-results/2-commits.card.json --model claude-
 Stale: docs/planted-results/2-commits.card.json
   - The card was measured on claude-haiku-4-5-20251001, not claude-sonnet-5-5.
 ```
+
+## The README example card
+
+The README's card is printed from [tests/fixtures/suite1-result.json](../tests/fixtures/suite1-result.json), planted suite 1's raw result with local paths replaced, so its result hash differs from the recorded card's (`sha256:06cf8a473864` in [docs/planted-results/1-convention.card.json](planted-results/1-convention.card.json)) and its traces aren't beside it, hence the warning about refused tool calls. Everything else matches. tests/test_readme.py checks that the README shows exactly what the command prints.
 
 ## skill-creator's benchmark.json
 
@@ -66,6 +70,19 @@ jobs:
           fail-on: hurts,invalid
 ```
 
-Inputs: `result` (required), `skill`, `fail-on`, `comment` (`"true"` by default; `"false"` only writes the card) and `github-token`. Outputs: `card`, the Markdown file's path, and `verdict-exit-code`. The result file has to be committed or made earlier in the job: the action never runs `claude plugin eval`.
+The result file has to be committed or made earlier in the job: the action never runs `claude plugin eval`. Its inputs and outputs, from action.yml:
+
+| Input | Required | Default | What it is |
+|---|---|---|---|
+| `result` | yes | | The `claude plugin eval --json` result, or a skill-creator benchmark.json, relative to the workspace |
+| `skill` | no | empty | The plugin or skill folder, if the result's path doesn't lead to it |
+| `fail-on` | no | empty | Comma-separated verdicts that fail the step, such as `hurts,invalid`; passed to `--fail-on` |
+| `comment` | no | `"true"` | Post the card as a pull request comment; `"false"` writes the card and posts nothing. Needs `pull-requests: write` |
+| `github-token` | no | `github.token` | The token `gh` uses to comment |
+
+| Output | What it is |
+|---|---|
+| `card` | The path of the card as Markdown |
+| `verdict-exit-code` | `identify`'s exit code, 0 or 1 (1 when the verdict is in `fail-on`) |
 
 **The posting step is untested.** This repository's CI runs the action on a recorded result on every push, with `comment: "false"`, and checks the card and the `fail-on` failure. It can't test posting: a push has no pull request, and a pull request from this repository doesn't run CI (only one from a fork does, with a read-only token that can't comment). A pull request from a fork gets that read-only token in your repository too, so the comment step fails there unless you set `comment: "false"`.
