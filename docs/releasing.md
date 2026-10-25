@@ -2,7 +2,7 @@
 
 [.github/workflows/release.yml](../.github/workflows/release.yml) publishes the package `mordecai-skills` to PyPI when a GitHub release is published. It uses PyPI's trusted publishing, so no PyPI token is stored in the repository or its secrets: PyPI trusts a short-lived token that GitHub issues to that one workflow, in that one environment.
 
-It has never run. Until the steps below are done and a release goes through, the README's install lines stay as they are (a clone and `uv sync`).
+The v0.5.0 release is its first run. The README's install lines stay a clone and `uv sync` until a version is on PyPI.
 
 The package's description on pypi.org is [docs/pypi.md](pypi.md), set as `readme` in `pyproject.toml`, not README.md: the README's relative links and images are for GitHub and wouldn't render on PyPI, so the PyPI page is short and links to GitHub with absolute URLs.
 

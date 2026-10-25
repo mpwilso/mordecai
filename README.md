@@ -9,7 +9,7 @@
 
 <p align="center"><b>Mordecai reads a Claude skill's test results and says whether the skill helps, hurts or does nothing, with the numbers behind it.</b></p>
 
-Status: a portfolio project, built to show how I design, test and judge an AI tool. The verdict rules were checked on 13 planted skill suites run for real, almost all on Claude Haiku 4.5; of the blind suites, 3 of the original 5 and both sealed holdouts got their predicted verdict ([docs/testing.md](docs/testing.md), misses included). 0.5.0 is on master and unreleased; the latest release is [v0.4.0](https://github.com/mpwilso/mordecai/releases/tag/v0.4.0).
+Status: a portfolio project, built to show how I design, test and judge an AI tool. The verdict rules were checked on 13 planted skill suites run for real, almost all on Claude Haiku 4.5; of the blind suites, 3 of the original 5 and both sealed holdouts got their predicted verdict ([docs/testing.md](docs/testing.md), misses included). The latest release is [v0.5.0](https://github.com/mpwilso/mordecai/releases/tag/v0.5.0).
 
 ## What a card looks like
 
@@ -43,7 +43,7 @@ The skill library keeps skills in Git, each with a base, named variants and a ve
 
 ## Try it
 
-Requires Python 3.11 or later and [uv](https://docs.astral.sh/uv/). This installs master, which is 0.5.0 unreleased and prints the card above; `git checkout v0.4.0` gives the latest release.
+Requires Python 3.11 or later and [uv](https://docs.astral.sh/uv/). This installs master, which prints the card above; `git checkout v0.5.0` gives the latest release.
 
 ```
 git clone https://github.com/mpwilso/mordecai
