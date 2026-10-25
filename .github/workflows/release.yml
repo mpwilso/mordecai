@@ -1,9 +1,10 @@
 name: Release
 
-# Publishes mordecai-skills to PyPI when a GitHub release is published, with PyPI's trusted
-# publishing: no token is stored anywhere. Only the publish job can ask for an OIDC token, and
-# only in the pypi environment. docs/releasing.md has the one-time setup on pypi.org. Third-party
-# actions are pinned to full commit SHAs, with the version in a comment.
+# Builds the wheel and sdist for a published GitHub release, after checking that the release
+# tag names the version in pyproject.toml, and keeps them as the run's artifact
+# (docs/releasing.md). Publishing to PyPI was set up here on 2026-10-11, never used, and
+# dropped on 2026-10-24. Third-party actions are pinned to full commit SHAs, with the version
+# in a comment.
 on:
   release:
     types: [published]
@@ -39,18 +40,3 @@ jobs:
           path: dist/
           if-no-files-found: error
 
-  publish:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: pypi
-      url: https://pypi.org/project/mordecai-skills/
-    permissions:
-      # Trusted publishing: PyPI accepts the OIDC token this job mints, so no API token is stored.
-      id-token: write
-    steps:
-      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
-        with:
-          name: dist
-          path: dist/
-      - uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2

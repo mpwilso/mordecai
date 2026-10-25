@@ -65,18 +65,18 @@ def test_ci_runs_the_full_suite_with_coverage_once_and_fetches_history_once():
     assert '} >> "$GITHUB_STEP_SUMMARY"' in report
 
 
-def test_release_publishes_with_trusted_publishing_from_one_job():
-    """PyPI trusted publishing (#18): only the publish job, in the pypi environment, can ask
-    for an OIDC token, and nothing stores a PyPI token."""
+def test_release_builds_with_a_read_only_token_and_cannot_publish():
+    """The release workflow has one job, which checks the tag and builds the wheel and sdist
+    with a read-only token. PyPI trusted publishing (#18) was set up, never used, and dropped
+    on 2026-10-24: nothing in the workflow can mint an OIDC token or reach PyPI."""
     release = (ROOT / ".github" / "workflows" / "release.yml").read_text()
     assert re.search(r"^on:\n  release:\n    types: \[published\]$", release, re.M)
     assert re.search(r"^permissions:\n  contents: read$", release, re.M)
-    assert release.count("id-token: write") == 1
-    publish = release[release.index("\n  publish:\n") :]
-    assert "id-token: write" in publish and "name: pypi" in publish
-    assert "pypa/gh-action-pypi-publish@" in publish
+    assert re.findall(r"^  ([a-z]+):\n", release[release.index("\njobs:\n") :], re.M) == ["build"]
+    assert "id-token" not in release and "environment:" not in release
+    assert "pypa/" not in release and "pypi.org" not in release
     assert "password" not in release and "secrets." not in release
-    assert "uv build" in release
+    assert "uv build" in release and '"$TAG" != "v$version"' in release
 
 
 def test_no_one_line_run_holds_a_colon_and_space():

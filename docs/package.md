@@ -2,17 +2,19 @@
 
 Mordecai reads a skill's `claude plugin eval` results and says what the skill can honestly claim: it helps, it hurts, the model already handles it, or there isn't enough to tell. Code decides the verdict, never a model. The card is tied by hash to the skill, cases and model it was measured on, so a team can see when a claim goes stale.
 
-This page is the package's description on PyPI. The README, with an example card, the verdict rules, the skill library and the known limits, is at https://github.com/mpwilso/mordecai.
+This page is the package's long description, the `readme` in its metadata; the package is not on PyPI. The README, with an example card, the verdict rules, the skill library and the known limits, is at https://github.com/mpwilso/mordecai.
 
 ## Setup
 
-Requires Python 3.11 or later.
+Requires Python 3.11 or later and uv. This installs master; `git checkout v0.5.0` gives the latest release.
 
 ```
-pip install mordecai-skills
+git clone https://github.com/mpwilso/mordecai
+cd mordecai
+uv sync
 ```
 
-`identify`, `check` and `lint` use the standard library alone. The skill library and its MCP server need the extra: `pip install "mordecai-skills[library]"`.
+`identify`, `check` and `lint` use the standard library alone. The skill library and its MCP server need the `library` extra, which `uv sync` installs.
 
 Check your cases, run the eval with a pinned model, then read it:
 

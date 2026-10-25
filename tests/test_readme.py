@@ -75,17 +75,17 @@ def test_the_readme_links_the_five_sibling_tools():
         assert f"https://github.com/mpwilso/{tool})" in README
 
 
-def test_the_pypi_page_is_the_long_description_and_links_to_github_with_absolute_urls():
-    """README.md has relative links and images, which pypi.org doesn't render, so the package's
-    readme is docs/pypi.md, which has none."""
+def test_the_package_page_is_the_long_description_and_links_to_github_with_absolute_urls():
+    """README.md has relative links and images, which only GitHub renders, so the package's
+    readme is docs/package.md, which has none and says the package is not on PyPI."""
     pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
-    assert re.search(r'^readme = "docs/pypi.md"$', pyproject, re.M)
-    page = (ROOT / "docs" / "pypi.md").read_text(encoding="utf-8")
+    assert re.search(r'^readme = "docs/package.md"$', pyproject, re.M)
+    page = (ROOT / "docs" / "package.md").read_text(encoding="utf-8")
     targets = re.findall(r"\]\(([^)\s]+)\)", page) + re.findall(r'(?:src|href)="([^"]+)"', page)
     assert targets
     assert all(t.startswith("https://github.com/mpwilso/mordecai") for t in targets), targets
     assert "https://github.com/mpwilso/mordecai." in page
-    assert "pip install mordecai-skills" in page
+    assert "not on PyPI" in page and "pip install" not in page
     assert "<" not in page
 
 
@@ -93,7 +93,7 @@ def test_no_em_or_en_dashes_in_the_readme_and_library_docs():
     docs = [
         "README.md",
         "examples/README.md",
-        "docs/pypi.md",
+        "docs/package.md",
         "docs/verdicts.md",
         "docs/testing.md",
         "docs/usage.md",
