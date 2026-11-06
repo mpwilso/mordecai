@@ -10,8 +10,9 @@ The README has setup and the three commands a visitor needs. This page has the r
 
 - `lint` exits 1 if the case files would get any warning.
 - `identify` prints the card, and can write it as JSON and as Markdown for a pull request. `--fail-on hurts,invalid` makes it exit 1 on those verdicts, for CI. `--crawl` or `MORDECAI_MODE=crawl` prints crawl mode, and `--plain` overrides the variable.
+- `measure <plugin> --model <id> --max-cost-usd <n>` runs `claude plugin eval <plugin> --trust-plugin --model <id> --json result.json --no-publish --max-cost-usd <n>`, the line the README shows, then runs `identify` on the result with the plugin as the skill. Both flags are required and never defaulted, since the run spends money; `--result` names the result file (`result.json` by default, and an existing file is never overwritten), `--skill` names the skill folder when it isn't the plugin folder, and `--card`, `--markdown`, `--crawl`, `--plain` and `--fail-on` are `identify`'s. Everything that can refuse does so before the eval starts, with exit 2. It exits 3 when the eval didn't finish: `claude` isn't on PATH, exited non-zero, or wrote no result. It never retries, and it passes `--trust-plugin`, so run it on a plugin you've reviewed (see Trust above).
 - `check` exits 1 when the skill or its cases have changed since the card was written. With `--model`, it also exits 1 when the card was measured on a different model.
-- Every command exits 2 when it can't read its input or won't use it, with one line saying why.
+- Every command exits 2 when it can't read its input or won't use it, with one line saying why. `measure` is the one command that exits 3, when the eval it ran gave it nothing to read.
 
 ## Paths
 

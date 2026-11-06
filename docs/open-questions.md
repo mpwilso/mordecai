@@ -8,7 +8,8 @@ Moved from the README.
 
 1. Test Rarely fired again: measure a candidate skill's fire rate first, then freeze the suite and predict (R1, the first try, missed; see open question 1 below).
 2. A planted skill with a moderate effect, to check the simulation's +20 point finding on real runs.
-3. `mordecai measure`: run the eval with a pinned model and a cost cap, then write the card, in one step.
+
+Built since this list was written: `mordecai measure`, which runs the eval with a pinned model and a cost cap, then writes the card, in one step ([usage](usage.md#commands-and-exit-codes), [D23](decisions.md#d23-measure-requires-the-model-and-the-cap-and-keeps-an-existing-result)). It has run on the fake `claude` its tests use and on no live eval yet.
 
 ## What was run
 

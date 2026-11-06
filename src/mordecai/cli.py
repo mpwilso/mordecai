@@ -1,15 +1,19 @@
 """mordecai identify: read an eval result (or a skill-creator benchmark.json) and print the card.
+mordecai measure: run claude plugin eval with a pinned model and a cost cap, then identify.
 mordecai check: say whether a card still matches the skill and cases it was measured on.
 mordecai lint: run the case-quality warnings on a plugin's eval cases before an eval.
 mordecai library and mordecai mcp: the skill library, in mordecai.library. They are handed over
 before this module parses anything, so the engine never imports the library.
 
 Exit codes: 0 for a clean result, 1 for what the command checks for (a --fail-on verdict, a
-stale card, lint warnings), and 2 for input Mordecai can't read or won't use.
+stale card, lint warnings), 2 for input Mordecai can't read or won't use, and 3 when measure's
+eval didn't finish, so there is no result to read.
 """
 
 import argparse
 import os
+import shutil
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -44,27 +48,31 @@ def _parser() -> argparse.ArgumentParser:
         type=Path,
         help="the plugin directory, if it has moved or is outside the current directory",
     )
-    i.add_argument("--card", type=Path, help="also write the card as JSON here")
-    i.add_argument("--markdown", type=Path, help="also write the card as Markdown here")
-    mode = i.add_mutually_exclusive_group()
-    mode.add_argument(
-        "--crawl",
-        action="store_true",
-        default=os.environ.get("MORDECAI_MODE") == "crawl",
-        help="dungeon mode: the same card, with loot and commentary (or MORDECAI_MODE=crawl)",
+    _card_options(i)
+
+    m = sub.add_parser(
+        "measure",
+        help="run claude plugin eval with a pinned model and a cost cap, then print the card",
     )
-    mode.add_argument(
-        "--plain",
-        dest="crawl",
-        action="store_false",
-        help="the plain card, even when MORDECAI_MODE=crawl is set",
+    m.add_argument("plugin", type=Path, help="the plugin directory claude plugin eval runs")
+    m.add_argument("--model", help="the model to run on; required, since a live run spends money")
+    m.add_argument(
+        "--max-cost-usd",
+        metavar="USD",
+        help="the cost cap passed to claude plugin eval; required, for the same reason",
     )
-    i.add_argument(
-        "--fail-on",
-        default="",
-        metavar="VERDICTS",
-        help=f"exit 1 on these verdicts, comma-separated: {', '.join(VERDICTS)}",
+    m.add_argument(
+        "--result",
+        type=Path,
+        default=Path("result.json"),
+        help="where the eval writes its result (default: result.json; an existing file is kept)",
     )
+    m.add_argument(
+        "--skill",
+        type=Path,
+        help="the skill directory to hash, if it isn't the plugin directory",
+    )
+    _card_options(m)
 
     c = sub.add_parser(
         "check", help="exit 1 if a card's skill, cases or (with --model) model have changed"
@@ -87,6 +95,45 @@ def _parser() -> argparse.ArgumentParser:
     return p
 
 
+def _card_options(p: argparse.ArgumentParser) -> None:
+    """The options identify and measure share: where the card goes, its mode, and --fail-on."""
+    p.add_argument("--card", type=Path, help="also write the card as JSON here")
+    p.add_argument("--markdown", type=Path, help="also write the card as Markdown here")
+    mode = p.add_mutually_exclusive_group()
+    mode.add_argument(
+        "--crawl",
+        action="store_true",
+        default=os.environ.get("MORDECAI_MODE") == "crawl",
+        help="dungeon mode: the same card, with loot and commentary (or MORDECAI_MODE=crawl)",
+    )
+    mode.add_argument(
+        "--plain",
+        dest="crawl",
+        action="store_false",
+        help="the plain card, even when MORDECAI_MODE=crawl is set",
+    )
+    p.add_argument(
+        "--fail-on",
+        default="",
+        metavar="VERDICTS",
+        help=f"exit 1 on these verdicts, comma-separated: {', '.join(VERDICTS)}",
+    )
+
+
+def _fail_on(args) -> set[str] | None:
+    """The verdicts --fail-on names, or None after saying why they can't be used."""
+    fail_on = {v.strip() for v in args.fail_on.split(",") if v.strip()}
+    unknown = fail_on - set(VERDICTS)
+    if unknown:
+        print(
+            f"mordecai: unknown verdict(s) for --fail-on: {clean(', '.join(sorted(unknown)))}. "
+            f"Use {', '.join(VERDICTS)}.",
+            file=sys.stderr,
+        )
+        return None
+    return fail_on
+
+
 def _color_ok(stream) -> bool:
     return stream.isatty() and "NO_COLOR" not in os.environ and os.environ.get("TERM") != "dumb"
 
@@ -100,14 +147,8 @@ def _open_box(stream, sleep=time.sleep) -> None:
 
 
 def identify(args, out) -> int:
-    fail_on = {v.strip() for v in args.fail_on.split(",") if v.strip()}
-    unknown = fail_on - set(VERDICTS)
-    if unknown:
-        print(
-            f"mordecai: unknown verdict(s) for --fail-on: {clean(', '.join(sorted(unknown)))}. "
-            f"Use {', '.join(VERDICTS)}.",
-            file=sys.stderr,
-        )
+    fail_on = _fail_on(args)
+    if fail_on is None:
         return 2
     try:
         suite, data = load(args.result)
@@ -127,6 +168,82 @@ def identify(args, out) -> int:
     else:
         out.write(plain(card))
     return 1 if card.reading.verdict in fail_on else 0
+
+
+# What measure runs, with the plugin, model, result path and cap filled in: the command the
+# README shows, so a measured card comes from the same run a person would make by hand.
+EVAL = ("plugin", "eval", "--trust-plugin", "--no-publish")
+
+
+def eval_argv(claude: str, plugin: Path, model: str, result: Path, cap: str) -> list[str]:
+    return [claude, *EVAL, str(plugin), "--model", model, "--json", str(result)] + [
+        "--max-cost-usd",
+        cap,
+    ]
+
+
+def _cost_cap(text: str) -> str | None:
+    """The cap as given, when it is a finite number above zero; None otherwise."""
+    try:
+        value = float(text)
+    except ValueError:
+        return None
+    return text if 0 < value < float("inf") else None
+
+
+def measure(args, out) -> int:
+    """claude plugin eval with a pinned model and a cost cap, then identify on what it wrote.
+    Everything that can refuse does so before the eval starts, since the eval spends money."""
+    if not args.model or args.max_cost_usd is None:
+        print(
+            "mordecai: measure needs --model and --max-cost-usd, since a live run spends money.",
+            file=sys.stderr,
+        )
+        return 2
+    cap = _cost_cap(args.max_cost_usd)
+    if cap is None:
+        print(
+            "mordecai: --max-cost-usd must be a number above zero, "
+            f"not {clean(args.max_cost_usd)}.",
+            file=sys.stderr,
+        )
+        return 2
+    if _fail_on(args) is None:
+        return 2
+    if not args.plugin.is_dir():
+        print(f"mordecai: {clean(str(args.plugin))} is not a directory.", file=sys.stderr)
+        return 2
+    if args.result.exists():
+        print(
+            f"mordecai: {clean(str(args.result))} already exists; move it, or name another "
+            "file with --result.",
+            file=sys.stderr,
+        )
+        return 2
+    claude = shutil.which("claude")
+    if claude is None:
+        print(
+            "mordecai: claude is not on PATH; install Claude Code, then measure.",
+            file=sys.stderr,
+        )
+        return 3
+    done = subprocess.run(eval_argv(claude, args.plugin, args.model, args.result, cap))
+    if done.returncode != 0:
+        print(
+            f"mordecai: claude plugin eval exited {done.returncode}; no card was written.",
+            file=sys.stderr,
+        )
+        return 3
+    if not args.result.is_file():
+        print(
+            f"mordecai: claude plugin eval exited 0 but wrote no {clean(str(args.result))}; "
+            "no card was written.",
+            file=sys.stderr,
+        )
+        return 3
+    if args.skill is None:
+        args.skill = args.plugin
+    return identify(args, out)
 
 
 def check_card(args, out) -> int:
@@ -188,6 +305,8 @@ def main(argv: list[str] | None = None, out=None) -> int:
     out = out or sys.stdout
     if args.command == "identify":
         return identify(args, out)
+    if args.command == "measure":
+        return measure(args, out)
     if args.command == "lint":
         return lint_plugins(args, out)
     return check_card(args, out)

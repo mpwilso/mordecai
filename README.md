@@ -59,7 +59,7 @@ uv run mordecai identify result.json --skill path/to/plugin --card card.json --m
 uv run mordecai check card.json --model claude-sonnet-5-5
 ```
 
-**`claude plugin eval` runs the plugin's code on your machine, as you,** so pass `--trust-plugin` for a plugin you've reviewed. Mordecai never runs a plugin; it reads the result and hashes files. `mordecai lint` checks the cases before an eval, `identify` also reads skill-creator's `benchmark.json` and says on the card what that file doesn't record, `--fail-on hurts,invalid` makes `identify` exit 1 for CI, and a [GitHub Action](docs/usage.md#github-action) posts the card on a pull request. [docs/usage.md](docs/usage.md) has the flags, exit codes, paths, the benchmark.json mapping and a worked `check` example.
+**`claude plugin eval` runs the plugin's code on your machine, as you,** so pass `--trust-plugin` for a plugin you've reviewed. Mordecai never runs a plugin; it reads the result and hashes files. `mordecai measure path/to/plugin --model claude-sonnet-5-5 --max-cost-usd 5` does the eval and `identify` in one step, with the same flags, and refuses to run without a model and a cap. `mordecai lint` checks the cases before an eval, `identify` also reads skill-creator's `benchmark.json` and says on the card what that file doesn't record, `--fail-on hurts,invalid` makes `identify` exit 1 for CI, and a [GitHub Action](docs/usage.md#github-action) posts the card on a pull request. [docs/usage.md](docs/usage.md) has the flags, exit codes, paths, the benchmark.json mapping and a worked `check` example.
 
 ## What was measured
 
