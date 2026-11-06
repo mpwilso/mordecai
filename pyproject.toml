@@ -40,7 +40,7 @@ mordecai = "mordecai.cli:main"
 
 [dependency-groups]
 dev = [
-    "coverage==7.16.2",
+    "coverage==7.17.0",
     "pytest==9.1.1",
     "ruff==0.17.2",
 ]
