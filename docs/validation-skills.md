@@ -112,3 +112,61 @@ Written on 2026-10-11, after every earlier result and after the Rarely fired rul
 - The verdict follows from the fire count by construction, so what this tests is whether a skill can be designed to land in the band on new runs, and whether a Rarely fired card says something more useful than the interval verdict it replaces. One suite can't show that the 10% threshold is right.
 - R1 runs once, on `claude-haiku-4-5-20251001` with the same model as judge, 3 runs per side, with a $3 cap, the spend ceiling the owner set for it. It is not rerun to get a better answer. If a case file has a real defect, the original result is recorded, the fix goes in a separate commit, and one labeled second attempt is allowed if it fits under the same $3.
 - Claude Code is now 2.1.296, against 2.1.289 when suite 3 ran. A change in how it offers skills could move the fire rate either way.
+
+## R2: a skill meant to fire rarely, measured first (`r2-rarely-fires`, skill `project-background`)
+
+Written on 2026-11-05, after R1 missed, to do what [open question 1](open-questions.md) says: measure a candidate skill's fire rate first, then freeze the suite and predict. **Not blind:** the design uses R1's result and its per-case fire counts. The rules are the 0.6.0 rules, unchanged since 0.5.0 (D22). Claude Code is 2.1.310.
+
+**The candidate pool.** 15 questions about suite 3's small uv project (pyproject.toml, a Makefile, a README, uv.lock), in R1's wording: "Look at the project in the current directory and tell me ... Reply with only the answer." R1's nine questions, plus six more the repo answers on its own: the project's name, the linter's line length, the test directory, the one runtime dependency, the dev dependency group, and which tool wrote the lock file. The skill's body is R1's, correct and the same as the repo, so following it can't change a score. Its description is "Background on how the tally project in this workspace is set up.": it names the project but no task, to sit between R1's description (named every task; fired 15 of 27) and suite 4's "General notes." (fired 0 of 27). 3 quiet cases, R1's.
+
+**The pilot.** The whole pool runs once as one plugin, `evals/pilot/r2-candidates`, with the skill arm only (`--ablation none`), 3 runs per case, on `claude-haiku-4-5-20251001`, with a $1.50 cap. It is the fire-rate measurement, nothing more: its scores are not a card.
+
+**The selection rule, fixed before the pilot runs.**
+
+1. Count fires per compared case, out of 3 runs.
+2. Take the 9 cases with the fewest fires, ties broken by pool order (the order in `R2_POOL`).
+3. If those 9 total 0 fires and some other case fired exactly once, swap that case in for the last one chosen, so the suite has 1 expected fire.
+4. The frozen suite is those 9 cases plus the 3 quiet cases, under the name `validation/r2-rarely-fires`, written by `scripts/planted.py` from `R2_CHOSEN`.
+5. If the 9 chosen total 0 fires with no swap possible, or 3 or more, the pool cannot land in the band. The pilot is recorded as the finding and R2 stops without a frozen run.
+
+**Prediction, to be completed from the pilot's counts before the frozen run.** The frozen suite fires in the band 1 to 2 of 27 runs that need it, its verdict is Rarely fired, and the quiet cases fire 0 of 9. The exact expected count is the chosen cases' pilot total, and is written in below once known.
+
+**What would make it a miss.**
+
+- 0 of 27: Never fired, the rule not exercised.
+- 3 or more of 27: the verdict comes from the interval, with D21's warning under half. The rule not exercised.
+- Invalid: no reading. Recorded, not counted either way.
+
+**Pass criterion.**
+
+- R2 must fire in 1 or 2 of 27 runs and read Rarely fired. Anything else is a miss, reported with the card, the per-case fire counts and a diagnosis.
+- The frozen suite runs once, on `claude-haiku-4-5-20251001` with the same model as judge, 3 runs per side, with a $3 cap, the ceiling the owner set for it on 2026-11-05. No rerun to get a better answer.
+- Since the cases were chosen on the pilot's counts, a match shows that a fire rate measured for the same skill on the same questions carries over to a second run, which R1 could not show. It does not show that the 10% threshold is right.
+
+## M1: a moderate effect by design (`m1-moderate`, skill `commit-types`)
+
+Written on 2026-11-05, to check [open question 2](open-questions.md): in simulation, a skill worth +20 points is called Helps in 36% of suites at 10 cases and 56% at 15, and no planted skill so far had a true effect between +10 and +30. **Not blind:** the design uses the commit-message results from suite 2, V2 and V3. The rules are the 0.6.0 rules, unchanged since 0.5.0. Claude Code is 2.1.310.
+
+**The setup.** 15 compared cases, not 9: suite 2's nine commit-message changes and the first six of the V2 pool. The skill's description is suite 2's ("Use when writing a git commit message."), which fired 27 of 27 there. Its body teaches the Conventional Commits type prefix, `<type>: <summary>`, with the type list and the summary rules, and says nothing about a scope. **The grader requires more than the skill teaches:** a type and a scope in parentheses, `type(scope): summary`. 3 quiet cases, suite 2's.
+
+**Why a partial effect.** Without a skill, Haiku almost never writes a scoped prefix: 0 of 27 runs in suite 2, 1 of 27 in V2 and 1 of 27 in V3. With suite 2's skill, whose body shows the scope as optional, it wrote one in 14 of 27 runs, and the count varied inside cases (0, 2, 3, 0, 1, 2, 1, 2, 3 of 3 across the nine cases). A body that leaves the scope out should produce scopes less often than that body did, so the with-skill pass rate should land between the baseline's near zero and 52%. The effect is partial because the model has to add the scope on its own once it is writing in the format, and the runs should disagree inside cases, as they did in suite 2. That is the shape the simulation modeled.
+
+**Prediction.**
+
+- **Change: between +10 and +30 points.** With the skill, scoped prefixes in 15% to 45% of the 45 compared runs; without it, 0 to 2 of 45.
+- **Verdict: Helps or Inconclusive.** Both are what the simulation says a +20 point skill gets at 15 cases, about half each. Which one depends on whether the bootstrap interval clears zero, which 15 cases may or may not do. A miss is any other verdict.
+- **Fired:** 45 of 45, since the description is suite 2's. If it fires in under half the runs, the test is weak and is reported that way.
+- **Quiet cases:** 0 misfires in 9 runs.
+
+**What would make it a miss.**
+
+- A change under +10: the model doesn't add scopes once in the format, and the card reads No effect or Inconclusive with an interval around zero. A prediction miss about the model, not a rule miss, unless the numbers support a different verdict than the rules gave.
+- A change over +30: the type prefix pulls the scope with it more often than suite 2's optional mention did. A prediction miss; the suite then measured a large effect, not a moderate one.
+- Hurts, Already handled, Never fired or Rarely fired: reported with a case-level diagnosis.
+- Invalid: no reading. Recorded, not counted either way.
+
+**Pass criterion.**
+
+- M1 passes if the change is between +10 and +30 and the verdict is Helps or Inconclusive. Each is scored on its own: a +25 change called Helps is a full match; a +25 change called Inconclusive is a full match; a +35 change called Helps is a miss on the change.
+- M1 runs once, on `claude-haiku-4-5-20251001` with the same model as judge, 3 runs per side, 18 cases, with a $3 cap, the ceiling the owner set for it on 2026-11-05. No rerun to get a better answer. If a case file has a real defect, the original result is recorded, the fix goes in a separate commit, and one labeled second attempt is allowed if it fits under the same cap.
+- One run cannot check the simulation's rate (Helps about half the time). What it can check is whether a real partial effect lands where the simulation puts it: inside the band, with the verdict one of the two the rate allows.

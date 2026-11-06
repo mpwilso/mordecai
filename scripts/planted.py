@@ -745,6 +745,171 @@ def r1_cases() -> list[dict]:
     return cases + [{"name": n, "prompt": p, "quiet": True} for n, p in quiet]
 
 
+# R2: the second test of Rarely fired (open question 1). R1's lesson was that a fire rate
+# measured for one skill doesn't carry over to another, so R2 measures its own first: a
+# candidate pool of 15 repo questions runs once with the skill arm only (evals/pilot/
+# r2-candidates), the 9 cases with the fewest fires are frozen as the suite, and the
+# prediction is written from those counts before the frozen suite runs. The skill is correct
+# and agrees with the repo, as R1's was, so firing can't change a score. Its description
+# names the project, not the tasks, to sit between R1's (named every task, fired 15 of 27)
+# and suite 4's ("General notes.", fired 0 of 27).
+R2_DESCRIPTION = "Background on how the tally project in this workspace is set up."
+R2_BODY = R1_BODY
+
+R2_POOL = [
+    # (name, what the prompt asks for, (the right answer, the wrong one))
+    ("tests", "the exact command to run its tests", (r"uv run pytest|make test", r"setup\.py")),
+    ("lint", "the exact command to lint it", (r"uv run ruff check|make lint", r"flake8")),
+    ("format", "the exact command to format the code", (r"uv run ruff format|make fmt", r"black")),
+    ("install", "the exact command to install its dependencies", (r"uv sync", r"requirements")),
+    (
+        "one-file",
+        "the exact command to run only the tests in tests/test_tally.py",
+        (r"uv run pytest[^\n]*tests/test_tally\.py", r"setup\.py"),
+    ),
+    (
+        "autofix",
+        "the exact command that lints the code and fixes what it can automatically",
+        (r"ruff check[^\n]*--fix", r"flake8"),
+    ),
+    (
+        "python",
+        "the minimum Python version it supports, as a version number only",
+        (r"3\.12", r"3\.8"),
+    ),
+    (
+        "first-failure",
+        "the exact command to run its tests and stop at the first failing test",
+        (r"pytest[^\n]*(\s-[a-wyz]*x[a-z]*\b|--exitfirst|--maxfail[= ]1\b)", r"setup\.py"),
+    ),
+    (
+        "format-check",
+        "the exact command to check the code's formatting without changing any files",
+        (r"ruff format[^\n]*--check", r"black"),
+    ),
+    (
+        "name",
+        "the project's name as pyproject.toml gives it, and nothing else",
+        (r"tally", r"xyzzy"),
+    ),
+    (
+        "line-length",
+        "the maximum line length its linter is configured for, as a number only",
+        (r"100", r"\b(79|88|120)\b"),
+    ),
+    ("test-dir", "the directory its tests live in, as a path only", (r"tests", r"src/tally/tests")),
+    (
+        "runtime-dep",
+        "the one runtime dependency it declares, as a package name only",
+        (r"httpx", r"requests"),
+    ),
+    (
+        "dev-deps",
+        "the packages in its dev dependency group, as names only",
+        (r"pytest[\s\S]*ruff|ruff[\s\S]*pytest", r"flake8|black"),
+    ),
+    (
+        "lock-tool",
+        "which tool wrote its lock file, as a tool name only",
+        (r"\buv\b", r"\bpip\b|poetry|pipenv"),
+    ),
+]
+R2_QUIET = [
+    ("fixture", "What is a pytest fixture? Two sentences."),
+    ("gitignore", "What does a .gitignore file do? One sentence."),
+    (
+        "km-miles-8",
+        "Convert 8 kilometers to miles, rounded to two decimal places. Reply with just the number.",
+    ),
+]
+
+
+def r2_case(name: str, what: str, right: str, wrong: str) -> dict:
+    return {
+        "name": f"proj-{name}",
+        "prompt": f"Look at the project in the current directory and tell me {what}. "
+        "Reply with only the answer.",
+        "pattern": rf"^(?![\s\S]*({wrong}))[\s\S]*({right})",
+        "scaffold": True,
+    }
+
+
+def r2_pool_cases() -> list[dict]:
+    """The pilot: every candidate, plus the quiet cases, with the skill arm only."""
+    cases = [r2_case(n, w, *pat) for n, w, pat in R2_POOL]
+    return cases + [{"name": n, "prompt": p, "quiet": True} for n, p in R2_QUIET]
+
+
+# Chosen by the rule fixed in docs/validation-skills.md before the pilot ran: the 9 pool cases
+# with the fewest fires in the pilot, ties broken by pool order. Empty until the pilot has run.
+R2_CHOSEN: list[str] = []
+
+
+def r2_cases() -> list[dict]:
+    chosen = [c for c in r2_pool_cases() if not c.get("quiet") and c["name"] in R2_CHOSEN]
+    return chosen + [{"name": n, "prompt": p, "quiet": True} for n, p in R2_QUIET]
+
+
+# M1: a moderate effect by design (open question 2). The skill teaches the Conventional
+# Commits type prefix and never mentions a scope; the grader requires a scope in parentheses
+# as well as the type. Without a skill Haiku almost never writes one (0 of 27 runs in suite 2,
+# 1 of 27 in V2 and in V3), and with suite 2's skill, whose body shows the scope as optional,
+# it wrote one in 14 of 27 runs, varying inside cases. A body that leaves the scope out should
+# land in between, so the effect is partial and the runs are noisy, which is what the
+# simulation's +20 point finding is about. 15 compared cases, not 9, as open question 2 says.
+M1_DESCRIPTION = "Use when writing a git commit message."
+M1_BODY = """# Commit messages
+
+Start every commit message with a type and a colon:
+
+    <type>: <summary>
+
+- The type is one of feat, fix, docs, style, refactor, perf, test, build, ci or chore.
+- The summary is in the imperative mood, starts in lowercase, has no trailing period and
+  keeps the whole first line under 72 characters.
+- If the change needs explaining, add a blank line and a short body that says why.
+"""
+SCOPED_COMMIT_PATTERN = (
+    r"^(feat|fix|docs|style|refactor|perf|test|build|ci|chore)\([\w./-]+\)!?: \S"
+)
+M1_CHANGES = [
+    ("commit-1", "renamed getUser to fetchUser and updated the three call sites"),
+    ("commit-2", "fixed an off-by-one error in the pagination helper that skipped the last page"),
+    ("commit-3", "added a --dry-run flag to the deploy script"),
+    ("commit-4", "updated the README with the new install steps"),
+    ("commit-5", "bumped the requests dependency from 2.31 to 2.32"),
+    ("commit-6", "added unit tests for the date parsing utility"),
+    ("commit-7", "removed the unused legacy_auth module"),
+    ("commit-8", "cached the avatar URL to save a database query on every page view"),
+    ("commit-9", "fixed a typo in the error message shown when login fails"),
+] + V2_POOL[:6]
+
+
+def m1_cases() -> list[dict]:
+    cases = [
+        {
+            "name": name,
+            "prompt": commit_prompt(change),
+            "pattern": SCOPED_COMMIT_PATTERN,
+            "flags": "m",
+        }
+        for name, change in M1_CHANGES
+    ]
+    quiet = [
+        ("rebase", "What does git rebase do? Two sentences."),
+        (
+            "log-oneline",
+            "How do I see the last five commits, one line each? Reply with only the command.",
+        ),
+        ("percent", "What's 15% of 240? Reply with just the number."),
+    ]
+    return cases + [{"name": n, "prompt": p, "quiet": True} for n, p in quiet]
+
+
+# Suites with more than the usual 12 cases, and how many they have.
+LARGE_SUITES = {"validation/m1-moderate": 18}
+
+
 # Suites ----------------------------------------------------------------------------------------
 
 SUITES = [
@@ -859,6 +1024,15 @@ SUITES = [
         r1_cases,
         None,
     ),
+    (
+        "validation/m1-moderate",
+        "validation-moderate",
+        "commit-types",
+        M1_DESCRIPTION,
+        M1_BODY,
+        m1_cases,
+        None,
+    ),
 ]
 
 
@@ -915,11 +1089,27 @@ def suite_files(directory, plugin, skill, description, body, cases, system) -> d
     return files
 
 
+def r2_pilot_files() -> dict[Path, str]:
+    """The R2 fire-rate pilot: the whole candidate pool as one plugin with the skill, run with
+    the skill arm only (--ablation none). Its graders are the suite's, so a run reads the same."""
+    files = suite_files(
+        "../pilot/r2-candidates",
+        "r2-pilot",
+        "project-background",
+        R2_DESCRIPTION,
+        R2_BODY,
+        r2_pool_cases,
+        None,
+    )
+    return {path.resolve(): text for path, text in files.items()}
+
+
 def outputs() -> dict[Path, str]:
     files = {}
     for suite in SUITES:
         files.update(suite_files(*suite))
     files.update(pilot_files())
+    files.update(r2_pilot_files())
     return files
 
 

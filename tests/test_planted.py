@@ -1,5 +1,6 @@
 """The planted skills check: its files are what scripts/planted.py writes, every suite has 12
-cases with 3 quiet ones, and mordecai lint finds nothing to warn about."""
+cases with 3 quiet ones (M1 has 18, as LARGE_SUITES says), and mordecai lint finds nothing to
+warn about."""
 
 import importlib.util
 
@@ -23,7 +24,8 @@ def test_every_suite_is_lint_clean_with_12_cases():
     for suite in SUITES:
         files, warnings = lint(suite)
         assert warnings == [], suite
-        assert len(files) == 12, suite
+        name = suite.relative_to(ROOT / "evals" / "planted").as_posix()
+        assert len(files) == planted.LARGE_SUITES.get(name, 12), suite
         assert sum(f.case.trigger == "should-not-fire" for f in files) == 3, suite
 
 
