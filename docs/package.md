@@ -6,7 +6,7 @@ This page is the package's long description, the `readme` in its metadata; the p
 
 ## Setup
 
-Requires Python 3.11 or later and uv. This installs master; `git checkout v0.5.0` gives the latest release.
+Requires Python 3.11 or later and uv. This installs master; `git checkout v0.6.0` gives the latest release.
 
 ```
 git clone https://github.com/mpwilso/mordecai

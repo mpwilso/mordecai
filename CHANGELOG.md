@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased
+## 0.6.0 (2026-11-05)
+
+The verdict rules are unchanged; the version is for the new command.
 
 - `mordecai measure <plugin> --model <id> --max-cost-usd <n>`: the eval and the card in one step. It runs the `claude plugin eval` line the README shows (`--trust-plugin`, `--json`, `--no-publish`, the model and the cap), then `identify` on the result with the plugin as the skill, taking `identify`'s `--card`, `--markdown`, `--crawl`, `--plain` and `--fail-on`. The model and the cap are required and never defaulted, since the run spends money; a bad `--fail-on`, a missing plugin folder or an existing result file refuses before the eval starts, with exit 2; an eval that didn't finish (no `claude` on PATH, a non-zero exit, no result written) exits 3, a new code, with no card and no retry. Tests run a fake `claude` on PATH and check the exact arguments; none calls a model. The third item of [docs/open-questions.md](docs/open-questions.md)'s What's next, and [D23](docs/decisions.md).
 
