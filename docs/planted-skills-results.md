@@ -51,12 +51,16 @@ The ceiling for this check is $35. Before each run, the spend so far plus that r
 | 16 | R1 r1-rarely-fires | claude-haiku-4-5-20251001 | $3 | $1.51 | $22.10 |
 | 17 | R2 fire-rate pilot (15 candidates, skill arm only, `--ablation none`) | claude-haiku-4-5-20251001 | $1.50 | $1.21 | $23.31 |
 | 18 | M1 m1-moderate | claude-haiku-4-5-20251001 | $3 | $1.97 | $25.28 |
+| 19 | R3 fire-rate pilot (15 candidates, skill arm only, `--ablation none`) | claude-haiku-4-5-20251001 | $1.50 | $1.08 | $26.36 |
+| 20 | M2 m2-moderate | claude-haiku-4-5-20251001 | $2.50 | $1.96 | $28.32 |
 
-Spent so far sums the unrounded `costUsd` of each result, so it can differ by a cent from adding the rounded costs shown: those add to $25.30, and the unrounded total is $25.2757. The totals were rechecked against the results on 2026-11-06; before that, several rows were a cent off both ways, and the total read $25.29. The second stage's ceiling was set from the first stage's total as it then read, $10.83, and is left as set.
+Spent so far sums the unrounded `costUsd` of each result, so it can differ by a cent from adding the rounded costs shown: those add to $28.34, and the unrounded total is $28.3167. The totals were rechecked against the results on 2026-11-06; before that, several rows were a cent off both ways, and the total read $25.29. The second stage's ceiling was set from the first stage's total as it then read, $10.83, and is left as set.
 
 Run 16 is outside the second stage: the owner approved it on 2026-10-11 with its own $3 ceiling, as the test of the Rarely fired rule (D21). The total stays under the $35 ceiling.
 
 Runs 17 and 18 are a third stage, which the owner approved on 2026-11-05 with an $8 ceiling: $1.50 for the R2 pilot, $3 for the frozen R2 suite and $3 for M1. The frozen R2 run, which would have been run 19, was not made, because the pilot found no case set in the band. $3.18 of the $8 was spent, and the total stays under the $35 ceiling.
+
+Runs 19 and 20 are a fourth stage, which the owner approved on 2026-11-07 with a $6 ceiling, every call capped: $1.50 for the R3 pilot, $2 for the frozen R3 suite and $2.50 for M2. The three caps add to the $6, so no run could take the stage past it. The frozen R3 run, which would have been run 21, was not made, because the pilot found no case set in the band. $3.04 of the $6 was spent ($3.0409 unrounded), and the total, $28.32, stays under the $35 ceiling.
 
 Not counted above: the one-case run on 2026-10-05 that captured the result format ($0.07, before this check), and a first attempt at runs 17 and 18 on 2026-11-06, which stopped before any case ran because Claude Code's login had expired ($0; the Invalid card it gave was not kept).
 
@@ -275,3 +279,16 @@ Both predictions are in [validation-skills.md](validation-skills.md), committed 
 **R2 pilot.** Fires per candidate, out of 3: 0 on every one of the 15 (tests, lint, format, install, one-file, autofix, python, first-failure, format-check, name, line-length, test-dir, runtime-dep, dev-deps, lock-tool). The quiet cases never fired. The pilot ran the skill arm only, so it has no card. Diagnosis in [validation-skills.md](validation-skills.md#r2-result-the-pilot-fired-in-none-of-45-runs-so-no-suite-was-frozen).
 
 **M1: No effect, a miss.** [Card](planted-results/m1-moderate.card.json). The skill fired in all 45 runs that needed it, and every with-skill run wrote a type prefix and no scope, so every with-skill run failed the grader. Without the skill, bump-pytest passed once in 3 and every other case failed every run. Run agreement was 29 of 30 case-and-side cells. Diagnosis in [validation-skills.md](validation-skills.md#m1-result-no-effect-a-miss): a prediction miss about the model, not a rule miss.
+
+## R3 pilot and M2 (0.6.1 rules, predictions committed in da79bbf)
+
+Both predictions are in [validation-skills.md](validation-skills.md), committed and pushed in da79bbf before either ran, with R3's selection rule. Both ran on 2026-11-07 (UTC) on `claude-haiku-4-5-20251001`, Claude Code 2.1.310. The 0.6.1 rules are 0.5.0's, unchanged.
+
+| Run | Predicted | Result | Score | Fired | Cost |
+|---|---|---|---|---|---|
+| R3 pilot | A 9-case set firing 1 or 2 of 27 times | 21 of 45 runs fired; the 9 that fired least total 4 | No suite to freeze (selection rule, step 5) | 21 of 45; 0 of 9 quiet | $1.08 |
+| M2 m2-moderate | +15 to +40; Helps likelier, or Inconclusive | Helps (+62, interval +44 to +80) | Verdict: match. Change: miss, over +40 | 45 of 45; 0 of 9 quiet | $1.96 |
+
+**R3 pilot.** Fires per candidate, out of 3: autofix 3, format 3, format-check 3, lint 3, one-file 3, first-failure 2, install 2, tests 2, and 0 on python, name, line-length, test-dir, runtime-dep, dev-deps and lock-tool. The quiet cases never fired. The 9 cases with the fewest fires are the seven at 0, then tests and install, for 4 fires, so step 5 of the selection rule stopped R3 before a frozen run. The pilot ran the skill arm only, so it has no card. Diagnosis in [validation-skills.md](validation-skills.md#r3-result-the-pilot-fired-on-every-named-command-and-on-nothing-else-so-no-suite-was-frozen).
+
+**M2: Helps, the change a miss.** [Card](planted-results/m2-moderate.card.json). The skill fired in all 45 runs that needed it. The four dependency and test cases passed every run with the skill, and 17 of the 33 with-skill runs on the other 11 cases wrote a scope the body said to leave out. Without the skill, bump-pytest passed once in 3 and every other case failed every run. Run agreement was 23 of 30 case-and-side cells. Diagnosis in [validation-skills.md](validation-skills.md#m2-result-helps-62-points-the-verdict-matched-and-the-change-missed): a prediction miss about the model, not a rule miss.

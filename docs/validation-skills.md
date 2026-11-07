@@ -228,6 +228,14 @@ Written on 2026-11-07, after the R2 pilot, to try [open question 1](open-questio
 - The frozen suite runs once, on `claude-haiku-4-5-20251001` with the same model as judge, 3 runs per side, with a $2 cap, its share of the $6 ceiling the owner set on 2026-11-07. No rerun to get a better answer. If a case file has a real defect, the original result is recorded, the fix goes in a separate commit, and one labeled second attempt is allowed only if it fits under the ceiling.
 - A match shows that a fire rate measured for one skill on these questions carries over to a second run of the same skill. It does not show that the 10% threshold is right.
 
+### R3 result: the pilot fired on every named command and on nothing else, so no suite was frozen
+
+The pilot ran once on 2026-11-07 (UTC), on `claude-haiku-4-5-20251001`, Claude Code 2.1.310, skill arm only, 3 runs per case, for $1.08 under its $1.50 cap. **The skill fired in 21 of the 45 runs that needed it, and in 0 of the 9 quiet runs.** Fires per candidate, out of 3: autofix 3, format 3, format-check 3, lint 3, one-file 3, first-failure 2, install 2, tests 2, and 0 on python, name, line-length, test-dir, runtime-dep, dev-deps and lock-tool. By the selection rule, the 9 cases with the fewest fires are the seven at 0, then tests and install (2 each, earliest in pool order): 4 fires in all. Step 5 applies, since that is 3 or more: the pool can't land in the band, and R3 stops here without a frozen run. The $2 set aside for that run was not spent.
+
+**The fire rate split by question, not by degree.** On the 8 commands the description names, the skill fired in 21 of 24 runs (88%), more often than R1's description, which named its tasks after "Use when answering how to", did on its questions (15 of 27). On the 7 questions it doesn't name, it fired in 0 of 21, as R2's did. No candidate landed in between: every one fired in 0 or in at least 2 of its 3 runs. So for this skill on these questions, naming a task in the description turned firing on for that task, without a "Use when" clause, and leaving a task out kept it off. A 9-case suite from this pool holds at most 7 cases that never fire, so it needs 2 that fire rarely, and the pool had none. The answers came from the repo whatever the skill did: every outcome grader passed, in all 45 runs. One pilot can't separate the description from the Claude Code version, which was 2.1.296 for R1 and 2.1.310 here.
+
+**What this leaves.** Rarely fired is still untested on runs it wasn't designed from. Three descriptions of the same correct skill have now run on this project: one naming no task (R2, 0 of 45), one naming every task with "Use when" (R1, 15 of 27), and one naming four tasks as background (R3, 21 of 24 on those tasks and 0 of 21 on the rest). On these questions, firing looks close to all or nothing per question, set by whether the description names the task. A suite that fires rarely would need questions the description matches only loosely, and this pool had none.
+
 ## M2: a moderate effect, with the scope in the template (`m2-moderate`, skill `commit-scopes`)
 
 Written on 2026-11-07, after M1, to try [open question 2](open-questions.md) again with M1's lesson applied. **Not blind:** the design uses the commit-message results from suite 2, V2, V3 and M1. The rules are the 0.6.1 rules, 0.5.0's unchanged. Claude Code is 2.1.310.
@@ -255,3 +263,22 @@ Written on 2026-11-07, after M1, to try [open question 2](open-questions.md) aga
 - M2 passes if the change is between +15 and +40 and the verdict is Helps or Inconclusive. Each is scored on its own, as in M1.
 - M2 runs once, on `claude-haiku-4-5-20251001` with the same model as judge, 3 runs per side, 18 cases, with a $2.50 cap, its share of the $6 ceiling the owner set on 2026-11-07. No rerun to get a better answer. If a case file has a real defect, the original result is recorded, the fix goes in a separate commit, and one labeled second attempt is allowed only if it fits under the ceiling.
 - One run can't check the simulation's rate. What it can check is whether a real partial effect lands where the simulation puts it: inside the band, with one of the two verdicts the rate allows.
+
+### M2 result: Helps, +62 points; the verdict matched and the change missed
+
+M2 ran once on 2026-11-07 (UTC), on `claude-haiku-4-5-20251001` with the same model as judge, Claude Code 2.1.310, for $1.96 under its $2.50 cap. [Card](planted-results/m2-moderate.card.json).
+
+| Predicted | Card | Score | Better / same / worse | With / without | Fired | Run agreement |
+|---|---|---|---|---|---|---|
+| +15 to +40; Helps likelier, or Inconclusive | Helps (+62, interval +44 to +80) | Verdict: match, and the point prediction held. Change: miss, over +40 | 13 / 2 / 0 | 64% / 2% | 45 of 45; 0 of 9 quiet | 23 of 30 cells |
+
+**The four cases the body names passed in every run** (commit-5, commit-6, bump-pytest and csv-tests, 12 of 12). **But the scope spread to cases the body says to leave unscoped: 17 of the 33 with-skill runs on the other 11 cases wrote one,** with an area the model chose itself. `fix(pagination)`, `feat(deploy)` and `perf(avatar)` came in all 3 runs of their cases; `chore(legacy_auth)`, `fix(config)`, `docs(README)`, `fix(README)`, `fix(login)` and `ci(workflows)` in some. Only commit-1 (the rename) and docstring-typo never got one. Of the 29 scoped with-skill replies, 9 used a scope the body names (`deps` 6 times, `tests` 3); the other 20 made one up, including `test(date-parsing)`, `test(csv)` and `test(csv-export)` on the test cases. Without the skill, 1 of 45 runs wrote a scope: bump-pytest run 1, `chore(deps): upgrade pytest from 7.4 to 8.2`, as in M1.
+
+**Diagnosis: a prediction miss about the model, the reverse of M1's. The rules read the numbers correctly.**
+
+- **Haiku follows the template's shape more than the prose around it.** M1's template had no scope slot, and no reply had a scope. M2's has the slot, and the sentence limiting it to two areas held in 16 of the 33 runs on the other cases. The prediction's +27 assumed that sentence would hold. Under the miss conditions committed beforehand, this is the case "the template's scope slot spread to changes the body says to leave unscoped", and the suite measured a large effect, not a moderate one.
+- **The effect was partial, but large.** 29 of 45 with-skill runs passed, and 6 of the 15 with-skill cells split (ci-workflow, commit-4, commit-7, commit-9, empty-config and readme-link), far noisier than M1's 29 of 30 agreeing cells. The runs disagreed inside cases, the shape the simulation modeled, but the size was +62, above its +40 row.
+- **Helps is what these numbers support.** 13 of 15 cases were better and none worse, and the interval, +44 to +80, clears both zero and the 10-point minimum. The verdict was the point prediction, and it holds; the band is what missed.
+- One baseline run (csv-tests) hit the 4-turn cap. It scored 0, as every baseline run of that case did, and the card warns.
+
+**What this leaves.** The simulation's +20 point finding is still untested on real runs. Two tries planted a partial effect through the template's wording and got 0 points (M1) and +62 (M2). In both, what the template showed decided more than what the prose said. A next try would need a template that sets the scope on some changes and not others by itself, such as an example line per kind of change, rather than a sentence of exceptions.

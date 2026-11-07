@@ -13,7 +13,7 @@ It's for people who build Claude skills. A skill is a folder of written instruct
 
 **What it found in simulation:** with 10 test cases, a skill that really raises the score by 20 points is called Helps about one time in three (36% of simulated suites), and Inconclusive almost every other time. A modest gain needs more cases than that to show ([docs/simulation.md](docs/simulation.md)).
 
-Status: a portfolio project, built to show how I design, test and judge an AI tool. It was tried on 14 test skills I wrote with a known intended effect, almost all on one small model, Claude Haiku 4.5, and several of my predictions for them were wrong ([docs/testing.md](docs/testing.md), misses included). The latest release is [v0.6.1](https://github.com/mpwilso/mordecai/releases/tag/v0.6.1).
+Status: a portfolio project, built to show how I design, test and judge an AI tool. It was tried on 15 test skills I wrote with a known intended effect, almost all on one small model, Claude Haiku 4.5, and several of my predictions for them were wrong ([docs/testing.md](docs/testing.md), misses included). The latest release is [v0.6.1](https://github.com/mpwilso/mordecai/releases/tag/v0.6.1).
 
 ## What a card looks like
 
@@ -69,17 +69,17 @@ uv run mordecai check card.json --model claude-sonnet-5-5
 
 ## What was measured
 
-- 14 test skills I wrote with a known intended effect, each with its prediction committed before it ran: 18 runs, $25.28 at list price, almost all on Claude Haiku 4.5. Two reran on Claude Sonnet 5.5 and neither verdict moved ([docs/testing.md](docs/testing.md#planted-skills-run-for-real)).
+- 15 test skills I wrote with a known intended effect, each with its prediction committed before it ran: 20 runs, $28.32 at list price, almost all on Claude Haiku 4.5. Two reran on Claude Sonnet 5.5 and neither verdict moved ([docs/testing.md](docs/testing.md#planted-skills-run-for-real)).
 - Seven were predicted before any result existed. Of the original five, 3 got their predicted verdict. Of the two kept back and run once at the end, the informative one matched; the other was a do-nothing skill on a task no run could pass, so it couldn't have failed. The rest were designed after seeing results. No do-nothing skill was called Helps or Hurts, but one ran on noisy runs.
-- Claude Haiku copies a skill's template word for word. In the test of a moderate effect, every reply that used the skill was its `<type>: <summary>` line exactly, so none added the scope the test graded, and the card read No effect ([results](docs/validation-skills.md#m1-result-no-effect-a-miss)).
-- A description's wording alone decided whether a skill opened. The same correct skill, on the same project and mostly the same questions, fired in 15 of the 27 runs that needed it when its description named each task, and in 0 of 45 when it named the project and no task ([results](docs/planted-skills-results.md#r2-pilot-and-m1-060-rules-predictions-committed-in-b4012d7)).
-- In simulation at the agreement rate real runs showed, a +20 point skill was called Helps in 13%, 36% and 56% of suites at 5, 10 and 15 cases ([docs/simulation.md](docs/simulation.md)). The test built to check that on real runs had no effect on what it graded, so it is still unchecked.
+- Claude Haiku copies a skill's template word for word. In the test of a moderate effect, every reply that used the skill was its `<type>: <summary>` line exactly, so none added the scope the test graded, and the card read No effect ([results](docs/validation-skills.md#m1-result-no-effect-a-miss)). With a scope slot in the template and a sentence limiting it to two areas, the scope spread to most other changes too, and the card read Helps, +62 points, not the moderate gain planned ([results](docs/validation-skills.md#m2-result-helps-62-points-the-verdict-matched-and-the-change-missed)).
+- A description's wording alone decided whether a skill opened. The same correct skill, on the same project and mostly the same questions, fired in 15 of the 27 runs that needed it when its description named each task, and in 0 of 45 when it named the project and no task ([results](docs/planted-skills-results.md#r2-pilot-and-m1-060-rules-predictions-committed-in-b4012d7)). With four task names added, it fired in 21 of 24 runs on those tasks and 0 of 21 on the rest ([results](docs/validation-skills.md#r3-result-the-pilot-fired-on-every-named-command-and-on-nothing-else-so-no-suite-was-frozen)).
+- In simulation at the agreement rate real runs showed, a +20 point skill was called Helps in 13%, 36% and 56% of suites at 5, 10 and 15 cases ([docs/simulation.md](docs/simulation.md)). The two tests built to check that on real runs came out at 0 and +62 points, so it is still unchecked.
 - Every verdict and warning has a unit test on a constructed result, and none calls a model. The library was tested offline, never on a live eval ([docs/testing.md](docs/testing.md#unit-tests)).
 
 ## Limits
 
 - **Hurts needs the skill to open.** Under 10% of the runs that need it is Rarely fired, not Hurts; between 10% and 50% the card warns. One harmful test skill fired in 6 of 27 runs, and its card never said Hurts.
-- **Rules chosen after seeing results.** The 0.2.0, 0.4.0 and 0.5.0 rule changes were each designed after seeing the cards they fixed, so those cards aren't evidence for them. The one test run of Rarely fired missed, and the pilot for a second never fired.
+- **Rules chosen after seeing results.** The 0.2.0, 0.4.0 and 0.5.0 rule changes were each designed after seeing the cards they fixed, so those cards aren't evidence for them. The one test run of Rarely fired missed, and the pilots for two more found no suite that fired rarely.
 - **One small model,** regex and tool-use graders, and two domains.
 
 The full list, with what wasn't checked: [docs/testing.md](docs/testing.md#known-limits).

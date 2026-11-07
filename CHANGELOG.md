@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Two more planted runs on Claude Haiku 4.5, each with its prediction committed before it ran, for $3.04 of the $6 the owner approved. **R3**, the third test of Rarely fired, measured its fire rate first with R2's skill and questions and a description that adds four task names: the skill fired in 21 of 24 pilot runs on the named tasks and 0 of 21 on the rest, so the selection rule stopped it before a frozen run. **M2**, a moderate effect planted with the scope slot in the template and two scopes named, read Helps, +62 points (interval +44 to +80): the verdict matched its prediction and the change missed its +15 to +40 band, because the scope spread to changes the skill said to leave unscoped. Neither is a rule miss, so Rarely fired and the simulation's +20 point finding are still untested on real runs. No verdict rule changed. The M2 card is in docs/planted-results; the planted test allows M2's 18 cases.
+
 ## 0.6.1 (2026-11-06)
 
 The verdict rules are unchanged. `measure` now needs `--trust-plugin`, so a 0.6.0 `measure` command without it exits 2.

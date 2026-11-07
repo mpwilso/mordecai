@@ -869,14 +869,10 @@ def r3_pool_cases() -> list[dict]:
     return cases + [{"name": n, "prompt": p, "quiet": True} for n, p in R3_QUIET]
 
 
-# Chosen by the rule fixed in docs/validation-skills.md before the pilot ran. Empty until the
-# pilot has run; the frozen suite joins SUITES only once it holds 9 names.
-R3_CHOSEN: list[str] = []
-
-
-def r3_cases() -> list[dict]:
-    chosen = [c for c in r3_pool_cases() if not c.get("quiet") and c["name"] in R3_CHOSEN]
-    return chosen + [{"name": n, "prompt": p, "quiet": True} for n, p in R3_QUIET]
+# No R3 suite was frozen. The pilot fired in 21 of its 45 runs: in 21 of the 24 on the eight
+# commands the description names and in none of the 21 on the seven questions it doesn't. The
+# 9 cases with the fewest fires (those seven, then tests and install at 2 each) total 4, so
+# the selection rule in docs/validation-skills.md stopped R3 (docs/planted-skills-results.md).
 
 
 # M1: a moderate effect by design (open question 2). The skill teaches the Conventional
