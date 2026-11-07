@@ -1,6 +1,6 @@
 [project]
 name = "mordecai-skills"
-version = "0.6.0"
+version = "0.6.1"
 description = "Reads a skill's eval results and says what the skill can honestly claim: helps, hurts, already handled, or can't tell yet."
 # The package's long description. README.md is written for GitHub, with relative links and
 # images; docs/package.md is short and links to GitHub with absolute URLs.

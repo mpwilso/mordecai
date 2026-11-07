@@ -13,7 +13,7 @@ It's for people who build Claude skills. A skill is a folder of written instruct
 
 **What it found in simulation:** with 10 test cases, a skill that really raises the score by 20 points is called Helps about one time in three (36% of simulated suites), and Inconclusive almost every other time. A modest gain needs more cases than that to show ([docs/simulation.md](docs/simulation.md)).
 
-Status: a portfolio project, built to show how I design, test and judge an AI tool. It was tried on 14 test skills I wrote with a known intended effect, almost all on one small model, Claude Haiku 4.5, and several of my predictions for them were wrong ([docs/testing.md](docs/testing.md), misses included). The latest release is [v0.6.0](https://github.com/mpwilso/mordecai/releases/tag/v0.6.0).
+Status: a portfolio project, built to show how I design, test and judge an AI tool. It was tried on 14 test skills I wrote with a known intended effect, almost all on one small model, Claude Haiku 4.5, and several of my predictions for them were wrong ([docs/testing.md](docs/testing.md), misses included). The latest release is [v0.6.1](https://github.com/mpwilso/mordecai/releases/tag/v0.6.1).
 
 ## What a card looks like
 
@@ -49,7 +49,7 @@ The skill library keeps skills in Git, each with a base, named variants and a ve
 
 ## Try it
 
-Requires Python 3.11 or later and [uv](https://docs.astral.sh/uv/). This installs master, which prints the card above; `git checkout v0.6.0` gives the latest release.
+Requires Python 3.11 or later and [uv](https://docs.astral.sh/uv/). This installs master, which prints the card above; `git checkout v0.6.1` gives the latest release.
 
 ```
 git clone https://github.com/mpwilso/mordecai

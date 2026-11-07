@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased
+## 0.6.1 (2026-11-06)
+
+The verdict rules are unchanged. `measure` now needs `--trust-plugin`, so a 0.6.0 `measure` command without it exits 2.
 
 - **Behavior change: `measure` needs `--trust-plugin` (D24, the owner's decision).** It runs `claude plugin eval`, which runs the plugin's code as you, so it now refuses with exit 2, before the eval, unless you pass `--trust-plugin`: the rule `claude plugin eval` itself applies under `--json`. 0.6.0 passed the flag for you. The README and docs/usage.md no longer say Mordecai never runs a plugin in the paragraph that introduces `measure`; they say `measure` does, through `claude plugin eval`, and so needs `--trust-plugin` from you.
 - **Fix: on Windows, an `&` in an argument could drop the cost cap (D25).** When `claude` is a `.cmd` or `.bat` file, as npm installs it, its arguments pass through cmd.exe unescaped: `--result C:\x\R&D\result.json` ended the command at the `&`, and claude ran with no `--max-cost-usd`, and `%NAME%` expanded. `measure` now refuses, with exit 2 before the eval, any argument holding a character cmd.exe acts on (`& | < > ^ % ! " ( )` or a line break) when `claude` is such a file. It runs `claude` by its absolute path and puts `--max-cost-usd` and `--model` before every path, so a cut can't drop them.
