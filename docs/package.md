@@ -25,7 +25,7 @@ mordecai identify result.json --skill path/to/plugin --card card.json --markdown
 mordecai check card.json --model claude-sonnet-5-5
 ```
 
-**`claude plugin eval` runs the plugin's code on your machine, as you,** so pass `--trust-plugin` for a plugin you've reviewed. Mordecai never runs a plugin; it reads the result and hashes files. `--fail-on hurts,invalid` makes `identify` exit 1 for CI.
+**`claude plugin eval` runs the plugin's code on your machine, as you,** so pass `--trust-plugin` for a plugin you've reviewed. `identify` and `check` never run a plugin; they read the result and hash files. `mordecai measure` runs `claude plugin eval` for you, which runs the plugin's code as you, so it needs `--trust-plugin` from you. `--fail-on hurts,invalid` makes `identify` exit 1 for CI.
 
 ## More
 

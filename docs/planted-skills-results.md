@@ -25,6 +25,8 @@ The other cards (2-commits, 3-outdated, 4-vague, R1, V1, V2, V3) keep their verd
 
 Every run: `claude plugin eval <suite> --model <pinned ID> --judge-model <same ID> --no-publish --max-cost-usd <cap> --scaffold -j 2 --threshold 0`, 3 runs per side, temporary files kept inside the repo so the traces could be checked. Costs are Claude Code's list-price estimates (`costUsd` in the result).
 
+**Dates.** Run dates and times in these run records (this page, [validation-skills.md](validation-skills.md), [open-questions.md](open-questions.md) and [testing.md](testing.md)) are UTC, from each result's `startedAt`, as on the cards. The dates a prediction was written, a run approved or a version released are the author's local date, US Eastern. So the R2 pilot and M1, run on the evening of 2026-11-06 Eastern, are dated 2026-11-07, and a prediction written on 2026-11-05 Eastern ran about a day later.
+
 ## Spend
 
 The ceiling for this check is $35. Before each run, the spend so far plus that run's cap must stay under it. The second stage (runs 8 onward) has its own ceiling of $12 on top of the first stage's $10.83, so the running total must stay under $22.83.
@@ -35,20 +37,22 @@ The ceiling for this check is $35. Before each run, the spend so far plus that r
 | 2 | 5a-twin | claude-haiku-4-5-20251001 | $3 | $1.26 | $2.72 |
 | 3 | 5b-filler | claude-haiku-4-5-20251001 | $3 | $1.45 | $4.17 |
 | 4 | 2-commits | claude-haiku-4-5-20251001 | $3 | $1.32 | $5.49 |
-| 5 | 3-outdated | claude-haiku-4-5-20251001 | $5 | $1.58 | $7.07 |
-| 6 | 4-vague | claude-haiku-4-5-20251001 | $3 | $1.99 | $9.06 |
-| 7 | 1-convention (drift demo) | claude-sonnet-5-5 | $6 | $1.77 | $10.83 |
-| 8 | V2 pilot (no skill, 1 run per case, `--ablation none`) | claude-haiku-4-5-20251001 | $0.30 | $0.25 | $11.08 |
+| 5 | 3-outdated | claude-haiku-4-5-20251001 | $5 | $1.58 | $7.08 |
+| 6 | 4-vague | claude-haiku-4-5-20251001 | $3 | $1.99 | $9.07 |
+| 7 | 1-convention (drift demo) | claude-sonnet-5-5 | $6 | $1.77 | $10.84 |
+| 8 | V2 pilot (no skill, 1 run per case, `--ablation none`) | claude-haiku-4-5-20251001 | $0.30 | $0.25 | $11.09 |
 | 9 | V1 v1-outdated | claude-haiku-4-5-20251001 | $3 | $1.54 | $12.62 |
 | 10 | V2 v2-noisy-placebo | claude-haiku-4-5-20251001 | $3 | $1.23 | $13.85 |
 | 11 | V3 v3-inert-placebo | claude-haiku-4-5-20251001 | $3 | $1.24 | $15.09 |
 | 12 | holdout 6-convention | claude-haiku-4-5-20251001 | $3 | $1.28 | $16.37 |
 | 13 | holdout 7-filler | claude-haiku-4-5-20251001 | $3 | $1.30 | $17.67 |
-| 14 | H1 h1-must-fire | claude-haiku-4-5-20251001 | $3 | $1.24 | $18.91 |
-| 15 | 2-commits (drift demo 2) | claude-sonnet-5-5 | $3 | $1.69 | $20.60 |
-| 16 | R1 r1-rarely-fires | claude-haiku-4-5-20251001 | $3 | $1.51 | $22.11 |
-| 17 | R2 fire-rate pilot (15 candidates, skill arm only, `--ablation none`) | claude-haiku-4-5-20251001 | $1.50 | $1.21 | $23.32 |
-| 18 | M1 m1-moderate | claude-haiku-4-5-20251001 | $3 | $1.97 | $25.29 |
+| 14 | H1 h1-must-fire | claude-haiku-4-5-20251001 | $3 | $1.24 | $18.90 |
+| 15 | 2-commits (drift demo 2) | claude-sonnet-5-5 | $3 | $1.69 | $20.59 |
+| 16 | R1 r1-rarely-fires | claude-haiku-4-5-20251001 | $3 | $1.51 | $22.10 |
+| 17 | R2 fire-rate pilot (15 candidates, skill arm only, `--ablation none`) | claude-haiku-4-5-20251001 | $1.50 | $1.21 | $23.31 |
+| 18 | M1 m1-moderate | claude-haiku-4-5-20251001 | $3 | $1.97 | $25.28 |
+
+Spent so far sums the unrounded `costUsd` of each result, so it can differ by a cent from adding the rounded costs shown: those add to $25.30, and the unrounded total is $25.2757. The totals were rechecked against the results on 2026-11-06; before that, several rows were a cent off both ways, and the total read $25.29. The second stage's ceiling was set from the first stage's total as it then read, $10.83, and is left as set.
 
 Run 16 is outside the second stage: the owner approved it on 2026-10-11 with its own $3 ceiling, as the test of the Rarely fired rule (D21). The total stays under the $35 ceiling.
 
@@ -209,7 +213,7 @@ Both run once each on Haiku under the 0.2.0 rules (64a7701).
 
 **Holdout 7: No effect, a match, read with the caveat written before it ran.** Every run on both sides scored 0 on the compared cases, so the change was exactly 0. The skill fired in all 27 runs that needed it. As the note said, a baseline at 0 leaves the skill's plain-language instructions no way to change the score: this shows that the rules don't invent a gain on a floor, and nothing more. Four runs hit the 4-turn cap and scored 0, like every other run of their cases. [Card](planted-results/holdout-7-filler.card.json).
 
-**Both sealed holdouts matched.** They were written before any result existed and run exactly once.
+**Both sealed holdouts matched, but holdout 6 is the informative one.** Holdout 7 couldn't have failed: no run could pass its grader, with the skill or without it, so the change was 0 by construction. They were written before any result existed and run exactly once.
 
 | Suite | Predicted | Actual | Match | Better / same / worse | With / without | Fired | Run agreement | Cost | Run (UTC) |
 |---|---|---|---|---|---|---|---|---|---|
@@ -261,7 +265,7 @@ Fires per case, out of 3 with-skill runs: proj-autofix 3, proj-install 3, proj-f
 
 ## R2 pilot and M1 (0.6.0 rules, predictions committed in b4012d7)
 
-Both predictions are in [validation-skills.md](validation-skills.md), committed and pushed in b4012d7 before either ran, with the R2 selection rule. Both ran on 2026-11-07 on `claude-haiku-4-5-20251001`, Claude Code 2.1.310. The 0.6.0 rules are 0.5.0's, unchanged.
+Both predictions are in [validation-skills.md](validation-skills.md), committed and pushed in b4012d7 before either ran, with the R2 selection rule. Both ran on 2026-11-07 (UTC) on `claude-haiku-4-5-20251001`, Claude Code 2.1.310. The 0.6.0 rules are 0.5.0's, unchanged.
 
 | Run | Predicted | Result | Score | Fired | Cost |
 |---|---|---|---|---|---|

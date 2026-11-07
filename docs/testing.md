@@ -17,7 +17,7 @@ Each planted skill has a known intended effect, and every prediction was committ
 | 5a. A twin placebo | Not Helps or Hurts | Already handled | Match. Every run agreed, so there was no noise to misread |
 | 5b. A filler placebo | Not Helps or Hurts | No effect | Match. Every run agreed |
 
-**Later suites, 0.2.0 rules, frozen at 64a7701.** V1, V2, V3 and H1 were written after the first results, so they are not blind. Holdouts 6 and 7 were written with the first set, before any result, and each ran once.
+**Later suites, 0.2.0 rules, frozen at 64a7701.** V1, V2, V3 and H1 were written after the first results, so they are not blind. Holdouts 6 and 7 were written with the first set, before any result, and each ran once. Holdout 6 is the informative one: holdout 7 was a placebo on a task no run could pass, so it couldn't have failed.
 
 | Suite | Predicted | Actual | |
 |---|---|---|---|
@@ -43,7 +43,7 @@ What these show:
 - **Hurts was detected once, and it depends on the skill being opened.** The only Hurts on a harmful skill was H1, a suite designed after seeing results so that its skill would fire in every run. When a harmful skill fired in 6 of 27 runs (suite 3, blind) or 1 of 27 (V1), the rules didn't call Hurts. Those cards said Already handled and Inconclusive. This doesn't show that Hurts detection is reliable.
 - **Real runs were much less noisy than the simulation assumed.** In the first set, all 3 runs of a side agreed in 94% of case-and-side cells.
 
-Total cost of the planted runs: $25.29 at list price, across 18 runs, two of them pilots ($0.25 and $1.21).
+Total cost of the planted runs: $25.28 at list price, across 18 runs, two of them pilots ($0.25 and $1.21).
 
 ## Model comparisons
 

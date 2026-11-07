@@ -7,7 +7,7 @@ before this module parses anything, so the engine never imports the library.
 
 Exit codes: 0 for a clean result, 1 for what the command checks for (a --fail-on verdict, a
 stale card, lint warnings), 2 for input Mordecai can't read or won't use, and 3 when measure's
-eval didn't finish, so there is no result to read.
+eval didn't finish or was interrupted, so there is no result to read.
 """
 
 import argparse
@@ -60,6 +60,12 @@ def _parser() -> argparse.ArgumentParser:
         "--max-cost-usd",
         metavar="USD",
         help="the cost cap passed to claude plugin eval; required, for the same reason",
+    )
+    m.add_argument(
+        "--trust-plugin",
+        action="store_true",
+        help="required: the eval runs the plugin's code as you, so pass it for a plugin you've "
+        "reviewed",
     )
     m.add_argument(
         "--result",
@@ -146,9 +152,29 @@ def _open_box(stream, sleep=time.sleep) -> None:
     stream.write("\r" + " " * 40 + "\r")
 
 
+def _same_file(a: Path, b: Path) -> bool:
+    return os.path.normcase(a.resolve()) == os.path.normcase(b.resolve())
+
+
+def _outputs_problem(args) -> str | None:
+    """Why the card, Markdown and result paths can't be used together, or None. A card written
+    over the result would replace the evidence it hashes."""
+    named = [("--card", args.card), ("--markdown", args.markdown)]
+    for flag, path in named:
+        if path is not None and _same_file(path, args.result):
+            return f"{flag} {clean(str(path))} is the result file; name another file."
+    if args.card is not None and args.markdown is not None and _same_file(args.card, args.markdown):
+        return f"--card and --markdown name the same file, {clean(str(args.card))}."
+    return None
+
+
 def identify(args, out) -> int:
     fail_on = _fail_on(args)
     if fail_on is None:
+        return 2
+    problem = _outputs_problem(args)
+    if problem:
+        print(f"mordecai: {problem}", file=sys.stderr)
         return 2
     try:
         suite, data = load(args.result)
@@ -170,16 +196,38 @@ def identify(args, out) -> int:
     return 1 if card.reading.verdict in fail_on else 0
 
 
-# What measure runs, with the plugin, model, result path and cap filled in: the command the
-# README shows, so a measured card comes from the same run a person would make by hand.
-EVAL = ("plugin", "eval", "--trust-plugin", "--no-publish")
+# What measure runs, with the plugin, model, result path and cap filled in: the flags the README
+# shows, so a measured card comes from the same run a person would make by hand. The cap and the
+# model come before every path, so nothing a path holds can cut them off the command line.
+EVAL = ("plugin", "eval")
+
+# What cmd.exe acts on in a command line, even inside quotes: a .cmd or .bat claude (npm installs
+# claude.cmd) gets its arguments through cmd.exe, and Python doesn't escape them for it.
+CMD_METACHARACTERS = frozenset('&|<>^%!"()\n\r')
 
 
 def eval_argv(claude: str, plugin: Path, model: str, result: Path, cap: str) -> list[str]:
-    return [claude, *EVAL, str(plugin), "--model", model, "--json", str(result)] + [
+    return [
+        claude,
+        *EVAL,
         "--max-cost-usd",
         cap,
+        "--model",
+        model,
+        "--trust-plugin",
+        "--no-publish",
+        "--json",
+        str(result),
+        str(plugin),
     ]
+
+
+def shim_unsafe(argv: list[str], windows: bool = sys.platform == "win32") -> str | None:
+    """The first argument cmd.exe would act on, when argv[0] is a .cmd or .bat file on Windows;
+    None when the command line reaches claude as written."""
+    if not windows or Path(argv[0]).suffix.lower() not in (".cmd", ".bat"):
+        return None
+    return next((a for a in argv if CMD_METACHARACTERS & set(a)), None)
 
 
 def _cost_cap(text: str) -> str | None:
@@ -191,34 +239,46 @@ def _cost_cap(text: str) -> str | None:
     return text if 0 < value < float("inf") else None
 
 
+def _measure_problem(args) -> str | None:
+    """Why measure won't start the eval, or None. Everything here would otherwise fail, or write
+    a card without its skill hash, after the eval had spent money."""
+    if not args.model or args.max_cost_usd is None:
+        return "measure needs --model and --max-cost-usd, since a live run spends money."
+    if _cost_cap(args.max_cost_usd) is None:
+        return f"--max-cost-usd must be a number above zero, not {clean(args.max_cost_usd)}."
+    if not args.trust_plugin:
+        return (
+            "measure runs claude plugin eval, which runs the plugin's code as you; pass "
+            "--trust-plugin for a plugin you've reviewed."
+        )
+    for path in (args.plugin, args.skill):
+        if path is not None and not path.is_dir():
+            return f"{clean(str(path))} is not a directory."
+    if args.result.exists():
+        return (
+            f"{clean(str(args.result))} already exists; move it, or name another file with "
+            "--result."
+        )
+    for flag, path in (
+        ("--result", args.result),
+        ("--card", args.card),
+        ("--markdown", args.markdown),
+    ):
+        if path is not None and not path.parent.is_dir():
+            return (
+                f"{flag} {clean(str(path))} is in no folder that exists: {clean(str(path.parent))}."
+            )
+    return _outputs_problem(args)
+
+
 def measure(args, out) -> int:
     """claude plugin eval with a pinned model and a cost cap, then identify on what it wrote.
     Everything that can refuse does so before the eval starts, since the eval spends money."""
-    if not args.model or args.max_cost_usd is None:
-        print(
-            "mordecai: measure needs --model and --max-cost-usd, since a live run spends money.",
-            file=sys.stderr,
-        )
-        return 2
-    cap = _cost_cap(args.max_cost_usd)
-    if cap is None:
-        print(
-            "mordecai: --max-cost-usd must be a number above zero, "
-            f"not {clean(args.max_cost_usd)}.",
-            file=sys.stderr,
-        )
-        return 2
     if _fail_on(args) is None:
         return 2
-    if not args.plugin.is_dir():
-        print(f"mordecai: {clean(str(args.plugin))} is not a directory.", file=sys.stderr)
-        return 2
-    if args.result.exists():
-        print(
-            f"mordecai: {clean(str(args.result))} already exists; move it, or name another "
-            "file with --result.",
-            file=sys.stderr,
-        )
+    problem = _measure_problem(args)
+    if problem:
+        print(f"mordecai: {problem}", file=sys.stderr)
         return 2
     claude = shutil.which("claude")
     if claude is None:
@@ -227,7 +287,27 @@ def measure(args, out) -> int:
             file=sys.stderr,
         )
         return 3
-    done = subprocess.run(eval_argv(claude, args.plugin, args.model, args.result, cap))
+    argv = eval_argv(
+        os.path.abspath(claude),
+        args.plugin.resolve(),
+        args.model,
+        args.result.resolve(),
+        args.max_cost_usd,
+    )
+    unsafe = shim_unsafe(argv)
+    if unsafe is not None:
+        print(
+            f"mordecai: {clean(unsafe)} holds a character cmd.exe acts on "
+            '(& | < > ^ % ! " ( ) or a line break), and claude here is a .cmd or .bat file '
+            "that runs through cmd.exe; use paths and a model without them.",
+            file=sys.stderr,
+        )
+        return 2
+    try:
+        done = subprocess.run(argv)
+    except KeyboardInterrupt:
+        print("mordecai: claude plugin eval was interrupted; no card was written.", file=sys.stderr)
+        return 3
     if done.returncode != 0:
         print(
             f"mordecai: claude plugin eval exited {done.returncode}; no card was written.",

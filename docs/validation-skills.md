@@ -145,7 +145,7 @@ Written on 2026-11-05, after R1 missed, to do what [open question 1](open-questi
 
 ### R2 result: the pilot fired in none of 45 runs, so no suite was frozen
 
-The pilot ran once on 2026-11-07, on `claude-haiku-4-5-20251001`, Claude Code 2.1.310, skill arm only, 3 runs per case, for $1.21 under its $1.50 cap. **The skill fired in 0 of the 45 runs that needed it, on every one of the 15 candidates, and in 0 of the 9 quiet runs.** The 9 cases with the fewest fires total 0 and no case fired once, so step 5 of the selection rule applies: the pool can't land in the band, and R2 stops here without a frozen run. The $3 set aside for that run was not spent.
+The pilot ran once on 2026-11-07 (UTC), on `claude-haiku-4-5-20251001`, Claude Code 2.1.310, skill arm only, 3 runs per case, for $1.21 under its $1.50 cap. **The skill fired in 0 of the 45 runs that needed it, on every one of the 15 candidates, and in 0 of the 9 quiet runs.** The 9 cases with the fewest fires total 0 and no case fired once, so step 5 of the selection rule applies: the pool can't land in the band, and R2 stops here without a frozen run. The $3 set aside for that run was not spent.
 
 **The description set the fire rate, not the questions.** On the same uv project and mostly the same questions, R1's description, which named every task, fired in 15 of 27 runs. This one, which names the project and no task, fired in none of 45, as suite 4's "General notes." did. Neither wording landed in the 1 to 2 of 27 that Rarely fired needs, and one pilot can't find a wording between them that does. The answers came from the repo whatever the skill did: the outcome graders passed in 42 of 45 runs, and the three misses (proj-format-check twice, which answered with the lint command, and proj-one-file once, with a bare `pytest`) never opened the skill. **Rarely fired is still untested on runs it wasn't designed from.**
 
@@ -179,7 +179,7 @@ Written on 2026-11-05, to check [open question 2](open-questions.md): in simulat
 
 ### M1 result: No effect, a miss
 
-M1 ran once on 2026-11-07, on `claude-haiku-4-5-20251001` with the same model as judge, Claude Code 2.1.310, for $1.97 under its $3 cap. [Card](planted-results/m1-moderate.card.json).
+M1 ran once on 2026-11-07 (UTC), on `claude-haiku-4-5-20251001` with the same model as judge, Claude Code 2.1.310, for $1.97 under its $3 cap. [Card](planted-results/m1-moderate.card.json).
 
 | Predicted | Card | Score | Better / same / worse | With / without | Fired | Run agreement |
 |---|---|---|---|---|---|---|
