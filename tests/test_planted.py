@@ -1,6 +1,6 @@
 """The planted skills check: its files are what scripts/planted.py writes, every suite has 12
-cases with 3 quiet ones (M1 has 18, as LARGE_SUITES says), and mordecai lint finds nothing to
-warn about."""
+cases with 3 quiet ones (M1 and M2 have 18, as LARGE_SUITES says), and mordecai lint finds
+nothing to warn about."""
 
 import importlib.util
 

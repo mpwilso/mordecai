@@ -845,6 +845,40 @@ def r2_pool_cases() -> list[dict]:
 # the pilot fired in 0 of its 45 runs (docs/planted-skills-results.md).
 
 
+# R3: the third test of Rarely fired (open question 1), measured first as R2 was. R1's
+# description ("Use when answering how to install, test, lint or format ...") fired in 15 of 27
+# runs and R2's ("Background on how the tally project in this workspace is set up.") in 0 of 45
+# on the same project and mostly the same questions. R3 keeps everything of R2's pilot (the
+# skill's name and body, the 15 candidates, the quiet cases) and changes only the description:
+# R2's sentence with R1's four task names added, and without R1's "Use when answering how to".
+# Seven candidates ask about something the description doesn't name (the Python version, the
+# project's name, the line length, the test directory, the dependencies, the lock tool), so the
+# pool has a gradient for the selection rule to pick from.
+R3_DESCRIPTION = (
+    "Background on how the tally project in this workspace is set up, including its install, "
+    "test, lint and format commands."
+)
+R3_BODY = R2_BODY
+R3_POOL = R2_POOL
+R3_QUIET = R2_QUIET
+
+
+def r3_pool_cases() -> list[dict]:
+    """The R3 pilot: every candidate, plus the quiet cases, with the skill arm only."""
+    cases = [r2_case(n, w, *pat) for n, w, pat in R3_POOL]
+    return cases + [{"name": n, "prompt": p, "quiet": True} for n, p in R3_QUIET]
+
+
+# Chosen by the rule fixed in docs/validation-skills.md before the pilot ran. Empty until the
+# pilot has run; the frozen suite joins SUITES only once it holds 9 names.
+R3_CHOSEN: list[str] = []
+
+
+def r3_cases() -> list[dict]:
+    chosen = [c for c in r3_pool_cases() if not c.get("quiet") and c["name"] in R3_CHOSEN]
+    return chosen + [{"name": n, "prompt": p, "quiet": True} for n, p in R3_QUIET]
+
+
 # M1: a moderate effect by design (open question 2). The skill teaches the Conventional
 # Commits type prefix and never mentions a scope; the grader requires a scope in parentheses
 # as well as the type. Without a skill Haiku almost never writes one (0 of 27 runs in suite 2,
@@ -901,8 +935,34 @@ def m1_cases() -> list[dict]:
     return cases + [{"name": n, "prompt": p, "quiet": True} for n, p in quiet]
 
 
+# M2: a moderate effect by design, the second try at open question 2, with M1's lesson
+# applied: Haiku copies a skill's template word for word, so the template here has the scope
+# slot, and the body gives the convention only partly. It names a scope for two areas, the
+# dependencies and the tests, and says to leave the scope out for anything else. The cases,
+# graders and description are M1's, so only the skill differs. Four of the 15 compared changes
+# are to dependencies or tests (commit-5, commit-6, bump-pytest, csv-tests), and one more
+# (ci-workflow, a workflow that runs the tests) is borderline, so the planted effect is about
+# 4 of 15 cases: near +27 points, between the simulation's +20 and +40 rows.
+M2_DESCRIPTION = M1_DESCRIPTION
+M2_BODY = """# Commit messages
+
+Write every commit message as:
+
+    <type>(<scope>): <summary>
+
+- The type is one of feat, fix, docs, style, refactor, perf, test, build, ci or chore.
+- The scope names the area that changed. Use `deps` for a change to the dependencies and
+  `tests` for a change to the tests. For any other change, leave out the scope and its
+  parentheses.
+- The summary is in the imperative mood, starts in lowercase, has no trailing period and
+  keeps the whole first line under 72 characters.
+- If the change needs explaining, add a blank line and a short body that says why.
+"""
+m2_cases = m1_cases
+
+
 # Suites with more than the usual 12 cases, and how many they have.
-LARGE_SUITES = {"validation/m1-moderate": 18}
+LARGE_SUITES = {"validation/m1-moderate": 18, "validation/m2-moderate": 18}
 
 
 # Suites ----------------------------------------------------------------------------------------
@@ -1028,6 +1088,15 @@ SUITES = [
         m1_cases,
         None,
     ),
+    (
+        "validation/m2-moderate",
+        "validation-moderate-scope",
+        "commit-scopes",
+        M2_DESCRIPTION,
+        M2_BODY,
+        m2_cases,
+        None,
+    ),
 ]
 
 
@@ -1099,12 +1168,28 @@ def r2_pilot_files() -> dict[Path, str]:
     return {path.resolve(): text for path, text in files.items()}
 
 
+def r3_pilot_files() -> dict[Path, str]:
+    """The R3 fire-rate pilot, as R2's: R2's pool and skill with R3's description, run with the
+    skill arm only (--ablation none)."""
+    files = suite_files(
+        "../pilot/r3-candidates",
+        "r3-pilot",
+        "project-background",
+        R3_DESCRIPTION,
+        R3_BODY,
+        r3_pool_cases,
+        None,
+    )
+    return {path.resolve(): text for path, text in files.items()}
+
+
 def outputs() -> dict[Path, str]:
     files = {}
     for suite in SUITES:
         files.update(suite_files(*suite))
     files.update(pilot_files())
     files.update(r2_pilot_files())
+    files.update(r3_pilot_files())
     return files
 
 
