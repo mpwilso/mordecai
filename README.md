@@ -9,7 +9,7 @@
 
 <p align="center"><b>Mordecai reads a Claude skill's test results and says whether the skill helps, hurts or does nothing, with the numbers behind it.</b></p>
 
-Status: a portfolio project, built to show how I design, test and judge an AI tool. The verdict rules were checked on 13 planted skill suites run for real, almost all on Claude Haiku 4.5; of the blind suites, 3 of the original 5 and both sealed holdouts got their predicted verdict ([docs/testing.md](docs/testing.md), misses included). The latest release is [v0.6.0](https://github.com/mpwilso/mordecai/releases/tag/v0.6.0).
+Status: a portfolio project, built to show how I design, test and judge an AI tool. The verdict rules were checked on 14 planted skill suites run for real, almost all on Claude Haiku 4.5; of the blind suites, 3 of the original 5 and both sealed holdouts got their predicted verdict ([docs/testing.md](docs/testing.md), misses included). The latest release is [v0.6.0](https://github.com/mpwilso/mordecai/releases/tag/v0.6.0).
 
 ## What a card looks like
 
@@ -63,15 +63,15 @@ uv run mordecai check card.json --model claude-sonnet-5-5
 
 ## What was measured
 
-- 13 planted skill suites with predictions committed before they ran: 16 runs, $22.11 at list price, almost all on Claude Haiku 4.5. Two suites reran on Claude Sonnet 5.5 and neither verdict moved ([docs/testing.md](docs/testing.md#planted-skills-run-for-real)).
+- 14 planted skill suites with predictions committed before they ran: 18 runs, $25.29 at list price, almost all on Claude Haiku 4.5. Two suites reran on Claude Sonnet 5.5 and neither verdict moved ([docs/testing.md](docs/testing.md#planted-skills-run-for-real)).
 - Of the blind suites, 3 of the original 5 and both sealed holdouts got their predicted verdict. The rest were designed after seeing results. No placebo was called Helps or Hurts, but one placebo ran on noisy runs.
-- In simulation at the agreement rate real runs showed, a +20 point skill was called Helps in 13%, 36% and 56% of suites at 5, 10 and 15 cases ([docs/simulation.md](docs/simulation.md)).
+- In simulation at the agreement rate real runs showed, a +20 point skill was called Helps in 13%, 36% and 56% of suites at 5, 10 and 15 cases ([docs/simulation.md](docs/simulation.md)). The suite built to check that on real runs, M1, had no effect on what it graded, so it is still unchecked ([results](docs/validation-skills.md#m1-result-no-effect-a-miss)).
 - Every verdict and warning has a unit test on a constructed result, and none calls a model. The library was tested offline, never on a live eval ([docs/testing.md](docs/testing.md#unit-tests)).
 
 ## Limits
 
 - **Hurts needs the skill to open.** Under 10% of the runs that need it is Rarely fired, not Hurts; between 10% and 50% the card warns. Suite 3's skill fired in 6 of 27 runs, and its card never said Hurts.
-- **Rules chosen after seeing results.** The 0.2.0, 0.4.0 and 0.5.0 rule changes were each designed after seeing the cards they fixed, so those cards aren't evidence for them. Rarely fired's one test run, R1, missed.
+- **Rules chosen after seeing results.** The 0.2.0, 0.4.0 and 0.5.0 rule changes were each designed after seeing the cards they fixed, so those cards aren't evidence for them. Rarely fired's test run, R1, missed, and the pilot for a second one never fired.
 - **One small model,** regex and tool-use graders, and two domains.
 
 The full list, with what wasn't checked: [docs/testing.md](docs/testing.md#known-limits).

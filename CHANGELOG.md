@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Two more planted runs on Claude Haiku 4.5, each with its prediction committed before it ran, for $3.18 of the $8 the owner approved. **R2**, the second test of Rarely fired, measured its fire rate first: a correct skill whose description names the project and no task fired in 0 of 45 pilot runs over 15 candidate questions, so the selection rule stopped it before a frozen run. **M1**, a planted moderate effect (the type prefix taught, a scope graded, 15 cases), read No effect, -2 points: the skill fired in 45 of 45 runs and every reply copied its template, which has no scope. Both are misses of their predictions, and neither is a rule miss, so Rarely fired and the simulation's +20 point finding are still untested on real runs. No verdict rule changed. The M1 card is in docs/planted-results; the planted test allows M1's 18 cases.
+
 ## 0.6.0 (2026-11-05)
 
 The verdict rules are unchanged; the version is for the new command.

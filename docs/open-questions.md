@@ -1,25 +1,26 @@
 # Open questions
 
-What the planted skills check ran, what it found, and the questions it leaves open. Details for every run are in [planted-skills-results.md](planted-skills-results.md). The predictions are in [planted-skills.md](planted-skills.md) for the first set and the sealed holdouts, and in [validation-skills.md](validation-skills.md) for V1 to V3 and H1.
+What the planted skills check ran, what it found, and the questions it leaves open. Details for every run are in [planted-skills-results.md](planted-skills-results.md). The predictions are in [planted-skills.md](planted-skills.md) for the first set and the sealed holdouts, and in [validation-skills.md](validation-skills.md) for V1 to V3, H1, R1, R2 and M1.
 
 ## What's next
 
-Moved from the README.
+Moved from the README. Its two items were run on 2026-11-07, and neither closed its question:
 
-1. Test Rarely fired again: measure a candidate skill's fire rate first, then freeze the suite and predict (R1, the first try, missed; see open question 1 below).
-2. A planted skill with a moderate effect, to check the simulation's +20 point finding on real runs.
+- **Rarely fired, measured first (R2).** The fire-rate pilot fired in 0 of 45 runs, so no suite could be frozen in the band. See open question 1.
+- **A moderate effect (M1).** The card read No effect, -2 points: the model followed the skill's template exactly. See open question 2.
 
 Built since this list was written: `mordecai measure`, which runs the eval with a pinned model and a cost cap, then writes the card, in one step ([usage](usage.md#commands-and-exit-codes), [D23](decisions.md#d23-measure-requires-the-model-and-the-cap-and-keeps-an-existing-result)). It has run on the fake `claude` its tests use and on no live eval yet.
 
 ## What was run
 
-The check ran 13 planted suites, 16 runs in all, almost all on Claude Haiku 4.5, at a total of $22.11 at list price. Each suite compares 9 cases, with 3 runs per side. Every prediction was committed before its suite ran.
+The check ran 14 planted suites and two pilots, 18 runs in all, almost all on Claude Haiku 4.5, at a total of $25.29 at list price. Each suite compares 9 cases, except M1, which compares 15, with 3 runs per side. Every prediction was committed before its suite ran.
 
-**Only some suites were blind.** The first set (suites 1 to 5b) and holdouts 6 and 7 were written before any result existed. V1, V2, V3, H1 and both Sonnet reruns were designed or predicted after seeing earlier results.
+**Only some suites were blind.** The first set (suites 1 to 5b) and holdouts 6 and 7 were written before any result existed. V1, V2, V3, H1, R1, M1, the R2 pilot and both Sonnet reruns were designed or predicted after seeing earlier results.
 
 - **Rules 0.1.0** applied to the first set.
 - **Rules 0.2.0**, frozen at commit 64a7701, applied to everything after it. That release changed Already handled so it must also rule out a 10-point loss.
-- **No run** hit a cost cap, went partial or came out Invalid.
+- **Rules 0.4.0** applied to R1, and **0.6.0**, 0.5.0's rules unchanged, to M1.
+- **No counted run** hit a cost cap, went partial or came out Invalid. One uncounted attempt on 2026-11-06 stopped before any case ran, on an expired login.
 
 ## Scorecard
 
@@ -41,6 +42,8 @@ All on Claude Haiku 4.5 unless marked.
 | H1 Conflicting convention | No | 0.2.0 | Hurts | Hurts (-100) | Match | 0 / 0 / 9 | 27 of 27 |
 | 1 on Sonnet 5.5 | No | 0.1.0 | (no written prediction) | Helps (+100) | Unchanged | 9 / 0 / 0 | 27 of 27 |
 | 2 on Sonnet 5.5 | No | 0.2.0 | Helps | Helps (+100) | Match; baseline moved the other way | 9 / 0 / 0 | 27 of 27 |
+| R1 Correct skill meant to fire rarely | No | 0.4.0 | Rarely fired | Inconclusive (+11) | Miss (fired too often) | 3 / 6 / 0 | 15 of 27 |
+| M1 Type prefix taught, scope graded | No | 0.6.0 | +10 to +30, Helps or Inconclusive | No effect (-2) | Miss (template copied) | 0 / 14 / 1 | 45 of 45 |
 
 What the scorecard shows:
 
@@ -48,11 +51,14 @@ What the scorecard shows:
 - **Holdout 7 is weak evidence.** Its baseline was 0%, so it could only have shown a false gain, and its text isn't inert.
 - **Placebos.** No placebo was called Helps or Hurts. Only one, V3, ran on noisy runs: it fired in all 27 runs, all 3 runs agreed in only 16 of 24 case-and-side cells, and its card said Inconclusive (-11, interval -33 to +11). V2's Hurts was a real effect of an instruction in its text, not a false call.
 - **Hurts.** It was detected once, in H1, which was designed so its skill would fire in every run. Harmful skills that fired in 6 of 27 runs (suite 3) or 1 of 27 (V1) were not called Hurts.
+- **Rarely fired and a moderate effect are still untested.** R1's skill fired too often, the R2 pilot's never fired, and M1's partial effect didn't appear on what was graded.
 - **Haiku vs Sonnet.** Neither rerun moved a verdict. On suite 2, Sonnet used a Conventional Commits prefix unprompted in 0 of 27 runs, against Haiku's 5, so the change grew from +78 to +100.
 
-## Open question 1: report skills that rarely fire distinctly (applied in 0.4.0 as A and C, D21; its first test missed)
+## Open question 1: report skills that rarely fire distinctly (applied in 0.4.0 as A and C, D21; still untested)
 
-**Applied in 0.4.0** ([D21](decisions.md)): proposals A and C below. V1's card was rebuilt and reads Rarely fired; no other recorded card's verdict moves. What stays open is the test. The first one, R1, missed: its skill was predicted to fire in 1 or 2 of 27 runs and fired in 15, so the rule wasn't exercised ([results](planted-skills-results.md)). A fire rate measured for one skill didn't carry over to another skill on the same questions. A second test would measure a candidate skill's fire rate first, then freeze the suite and predict. The proposal as it was written follows.
+**Applied in 0.4.0** ([D21](decisions.md)): proposals A and C below. V1's card was rebuilt and reads Rarely fired; no other recorded card's verdict moves. What stays open is the test. The first one, R1, missed: its skill was predicted to fire in 1 or 2 of 27 runs and fired in 15, so the rule wasn't exercised ([results](planted-skills-results.md)). A fire rate measured for one skill didn't carry over to another skill on the same questions. A second test would measure a candidate skill's fire rate first, then freeze the suite and predict.
+
+**That second test, R2, ran its pilot on 2026-11-07 and found no suite to freeze.** A correct skill whose description names the project and no task fired in 0 of 45 runs over 15 candidate questions, so the selection rule committed in b4012d7 stopped R2 before a frozen run ([results](planted-skills-results.md#r2-pilot-and-m1-060-rules-predictions-committed-in-b4012d7)). With R1's 15 of 27, it shows the fire rate swings from about half to none on the description's wording alone, and neither wording landed in the band. Rarely fired is still untested on runs it wasn't designed from. The proposal as it was written follows.
 
 V1's skill fired in 1 of 27 runs, and its card said Inconclusive, the same word used for a wide interval. The practical message is different: the skill is almost never used, so its description needs fixing before anything else can be measured.
 
@@ -67,6 +73,8 @@ Fire rates on the 14 recorded cards: 100% on 10 cards, 56% (5a), 22% (suite 3), 
 **The tradeoff.** A distinct verdict under 10% says the right thing when there is almost no skill use to measure. A higher threshold (B) would hide suite 3's real harm: its skill gave the wrong answer in 5 of the 6 runs where it fired. The combination considered most useful is A and C together, plus a card line comparing runs where the skill fired with runs where it didn't. In suite 3: when it fired, 1 of 6 runs passed; when it didn't, 20 of 21. That line is diagnostic only, because a skill fires on particular cases. The proposal was designed after seeing V1, so it would need a new suite where a skill fires rarely before it could count as tested. That costs about $1.30 on Haiku.
 
 ## Open question 2: test the +20 point finding on real runs
+
+**Tried in M1 on 2026-11-07, and still open.** M1 taught the Conventional Commits type prefix and graded a scope it never mentions, over 15 cases. The skill fired in 45 of 45 runs and every reply copied its `<type>: <summary>` template, so no with-skill run wrote a scope and the card read No effect, -2 points ([results](validation-skills.md#m1-result-no-effect-a-miss)). The rules read those numbers correctly. The planted effect was zero, not moderate, so the +20 point finding is still untested on real runs. What follows was written before M1.
 
 In simulation at the observed 94% run agreement, a skill worth +20 points is called Helps in 13%, 36% and 56% of suites at 5, 10 and 15 cases ([simulation.md](simulation.md)). No planted skill had a true effect between +10 and +30. The measured changes were -100, -37, -15, -11, 0, +78 and +100. So the finding hasn't been tested on real runs.
 

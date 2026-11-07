@@ -143,6 +143,12 @@ Written on 2026-11-05, after R1 missed, to do what [open question 1](open-questi
 - The frozen suite runs once, on `claude-haiku-4-5-20251001` with the same model as judge, 3 runs per side, with a $3 cap, the ceiling the owner set for it on 2026-11-05. No rerun to get a better answer.
 - Since the cases were chosen on the pilot's counts, a match shows that a fire rate measured for the same skill on the same questions carries over to a second run, which R1 could not show. It does not show that the 10% threshold is right.
 
+### R2 result: the pilot fired in none of 45 runs, so no suite was frozen
+
+The pilot ran once on 2026-11-07, on `claude-haiku-4-5-20251001`, Claude Code 2.1.310, skill arm only, 3 runs per case, for $1.21 under its $1.50 cap. **The skill fired in 0 of the 45 runs that needed it, on every one of the 15 candidates, and in 0 of the 9 quiet runs.** The 9 cases with the fewest fires total 0 and no case fired once, so step 5 of the selection rule applies: the pool can't land in the band, and R2 stops here without a frozen run. The $3 set aside for that run was not spent.
+
+**The description set the fire rate, not the questions.** On the same uv project and mostly the same questions, R1's description, which named every task, fired in 15 of 27 runs. This one, which names the project and no task, fired in none of 45, as suite 4's "General notes." did. Neither wording landed in the 1 to 2 of 27 that Rarely fired needs, and one pilot can't find a wording between them that does. The answers came from the repo whatever the skill did: the outcome graders passed in 42 of 45 runs, and the three misses (proj-format-check twice, which answered with the lint command, and proj-one-file once, with a bare `pytest`) never opened the skill. **Rarely fired is still untested on runs it wasn't designed from.**
+
 ## M1: a moderate effect by design (`m1-moderate`, skill `commit-types`)
 
 Written on 2026-11-05, to check [open question 2](open-questions.md): in simulation, a skill worth +20 points is called Helps in 36% of suites at 10 cases and 56% at 15, and no planted skill so far had a true effect between +10 and +30. **Not blind:** the design uses the commit-message results from suite 2, V2 and V3. The rules are the 0.6.0 rules, unchanged since 0.5.0. Claude Code is 2.1.310.
@@ -170,3 +176,22 @@ Written on 2026-11-05, to check [open question 2](open-questions.md): in simulat
 - M1 passes if the change is between +10 and +30 and the verdict is Helps or Inconclusive. Each is scored on its own: a +25 change called Helps is a full match; a +25 change called Inconclusive is a full match; a +35 change called Helps is a miss on the change.
 - M1 runs once, on `claude-haiku-4-5-20251001` with the same model as judge, 3 runs per side, 18 cases, with a $3 cap, the ceiling the owner set for it on 2026-11-05. No rerun to get a better answer. If a case file has a real defect, the original result is recorded, the fix goes in a separate commit, and one labeled second attempt is allowed if it fits under the same cap.
 - One run cannot check the simulation's rate (Helps about half the time). What it can check is whether a real partial effect lands where the simulation puts it: inside the band, with the verdict one of the two the rate allows.
+
+### M1 result: No effect, a miss
+
+M1 ran once on 2026-11-07, on `claude-haiku-4-5-20251001` with the same model as judge, Claude Code 2.1.310, for $1.97 under its $3 cap. [Card](planted-results/m1-moderate.card.json).
+
+| Predicted | Card | Score | Better / same / worse | With / without | Fired | Run agreement |
+|---|---|---|---|---|---|---|
+| +10 to +30, Helps or Inconclusive | No effect (-2, interval -9 to +0) | Miss on both | 0 / 14 / 1 | 0% / 2% | 45 of 45; 0 of 9 quiet | 29 of 30 cells |
+
+**The change was -2, under +10, and No effect is neither predicted verdict.** With the skill, no run wrote a scope: 0 of 45. Without it, 1 of 45 did (bump-pytest run 2, `chore(deps): upgrade pytest from 7.4 to 8.2`), which is the one worse case.
+
+**Diagnosis: a prediction miss about the model. The rules read the numbers correctly.**
+
+- **The skill worked on what it taught.** With it, all 45 replies started with a type prefix, such as `fix: prevent crash when config file is empty` and `build: upgrade pytest dev dependency from 7.4 to 8.2`. Without it, 11 of the 44 replies that could be read did. The grader didn't score that part.
+- **The model copied the template.** The body shows `<type>: <summary>`, and every reply followed it to the letter. Suite 2's body shows `<type>(<optional scope>): <summary>`, and its runs had a scope in 14 of 27. The prediction assumed a model writing in the format would add a scope on its own some of the time. Haiku 4.5 didn't: what the template leaves out, it leaves out.
+- **No effect is what these numbers support.** With 15 cases, a change of -2 and an interval of -9 to +0, the interval rules out a 10-point change either way, and 15 cases is past the 10 a null needs (D22). A rule miss would need numbers that support another verdict, and these don't.
+- One baseline run (commit-9 run 2) hit the 4-turn cap. It scored 0, as every run of that case did, and the card warns.
+
+**What this leaves.** The simulation's +20 point finding is still untested on real runs: M1 was built to have a partial effect and had none on what was graded. A moderate effect is harder to plant than a large one, because Haiku followed this skill's template completely. A next try would need the partial effect to come from the model's own variation, not from a template the model follows or ignores as a whole.

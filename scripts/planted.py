@@ -840,14 +840,9 @@ def r2_pool_cases() -> list[dict]:
     return cases + [{"name": n, "prompt": p, "quiet": True} for n, p in R2_QUIET]
 
 
-# Chosen by the rule fixed in docs/validation-skills.md before the pilot ran: the 9 pool cases
-# with the fewest fires in the pilot, ties broken by pool order. Empty until the pilot has run.
-R2_CHOSEN: list[str] = []
-
-
-def r2_cases() -> list[dict]:
-    chosen = [c for c in r2_pool_cases() if not c.get("quiet") and c["name"] in R2_CHOSEN]
-    return chosen + [{"name": n, "prompt": p, "quiet": True} for n, p in R2_QUIET]
+# No R2 suite was frozen. The selection rule in docs/validation-skills.md takes the 9 pool
+# cases with the fewest fires and stops when they total none with no single fire to swap in:
+# the pilot fired in 0 of its 45 runs (docs/planted-skills-results.md).
 
 
 # M1: a moderate effect by design (open question 2). The skill teaches the Conventional

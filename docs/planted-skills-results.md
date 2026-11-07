@@ -47,10 +47,14 @@ The ceiling for this check is $35. Before each run, the spend so far plus that r
 | 14 | H1 h1-must-fire | claude-haiku-4-5-20251001 | $3 | $1.24 | $18.91 |
 | 15 | 2-commits (drift demo 2) | claude-sonnet-5-5 | $3 | $1.69 | $20.60 |
 | 16 | R1 r1-rarely-fires | claude-haiku-4-5-20251001 | $3 | $1.51 | $22.11 |
+| 17 | R2 fire-rate pilot (15 candidates, skill arm only, `--ablation none`) | claude-haiku-4-5-20251001 | $1.50 | $1.21 | $23.32 |
+| 18 | M1 m1-moderate | claude-haiku-4-5-20251001 | $3 | $1.97 | $25.29 |
 
 Run 16 is outside the second stage: the owner approved it on 2026-10-11 with its own $3 ceiling, as the test of the Rarely fired rule (D21). The total stays under the $35 ceiling.
 
-Not counted above: the one-case run on 2026-10-05 that captured the result format ($0.07, before this check).
+Runs 17 and 18 are a third stage, which the owner approved on 2026-11-05 with an $8 ceiling: $1.50 for the R2 pilot, $3 for the frozen R2 suite and $3 for M1. The frozen R2 run, which would have been run 19, was not made, because the pilot found no case set in the band. $3.18 of the $8 was spent, and the total stays under the $35 ceiling.
+
+Not counted above: the one-case run on 2026-10-05 that captured the result format ($0.07, before this check), and a first attempt at runs 17 and 18 on 2026-11-06, which stopped before any case ran because Claude Code's login had expired ($0; the Invalid card it gave was not kept).
 
 ## Results
 
@@ -254,3 +258,16 @@ Fires per case, out of 3 with-skill runs: proj-autofix 3, proj-install 3, proj-f
 **The +11 points are noise, not the skill.** The skill agrees with the repo, so following it can't change an answer. The three better cases came from baseline runs that missed (proj-format-check and proj-install, 2 of 3 without), and proj-one-file improved with the skill never firing. Inconclusive is the right reading.
 
 **What this leaves.** Rarely fired is still untested on runs it wasn't designed from. It is not rerun: R1's rules say it runs once, and its case files have no defect. A second test would need a skill whose fire rate is first measured on its own, which is what [open question 1](open-questions.md) now says.
+
+## R2 pilot and M1 (0.6.0 rules, predictions committed in b4012d7)
+
+Both predictions are in [validation-skills.md](validation-skills.md), committed and pushed in b4012d7 before either ran, with the R2 selection rule. Both ran on 2026-11-07 on `claude-haiku-4-5-20251001`, Claude Code 2.1.310. The 0.6.0 rules are 0.5.0's, unchanged.
+
+| Run | Predicted | Result | Score | Fired | Cost |
+|---|---|---|---|---|---|
+| R2 pilot | A 9-case set firing 1 or 2 of 27 times | 0 of 45 runs fired | No suite to freeze (selection rule, step 5) | 0 of 45; 0 of 9 quiet | $1.21 |
+| M1 m1-moderate | +10 to +30, Helps or Inconclusive | No effect (-2, interval -9 to +0) | Miss | 45 of 45; 0 of 9 quiet | $1.97 |
+
+**R2 pilot.** Fires per candidate, out of 3: 0 on every one of the 15 (tests, lint, format, install, one-file, autofix, python, first-failure, format-check, name, line-length, test-dir, runtime-dep, dev-deps, lock-tool). The quiet cases never fired. The pilot ran the skill arm only, so it has no card. Diagnosis in [validation-skills.md](validation-skills.md#r2-result-the-pilot-fired-in-none-of-45-runs-so-no-suite-was-frozen).
+
+**M1: No effect, a miss.** [Card](planted-results/m1-moderate.card.json). The skill fired in all 45 runs that needed it, and every with-skill run wrote a type prefix and no scope, so every with-skill run failed the grader. Without the skill, bump-pytest passed once in 3 and every other case failed every run. Run agreement was 29 of 30 case-and-side cells. Diagnosis in [validation-skills.md](validation-skills.md#m1-result-no-effect-a-miss): a prediction miss about the model, not a rule miss.

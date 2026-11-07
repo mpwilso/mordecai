@@ -4,7 +4,7 @@ The verdict rules were checked on planted skills run for real, on two model comp
 
 ## Planted skills, run for real
 
-Each planted skill has a known intended effect, and every prediction was committed before its suite ran. **Only some of the suites were blind.** The first set of five skills and the two sealed holdouts were written and predicted before any result existed: their predictions are in commit bd92b23 ([planted-skills.md](planted-skills.md)), and the first results start at commit 15da64f. Everything after that (V1, V2, V3, H1 and both Sonnet reruns) was designed or predicted after seeing earlier results. Each suite has 12 cases: 9 compared, and 3 where the skill should stay quiet. Every suite ran with 3 runs per side and regex or tool-use graders only. Details, cards and costs are in [planted-skills-results.md](planted-skills-results.md).
+Each planted skill has a known intended effect, and every prediction was committed before its suite ran. **Only some of the suites were blind.** The first set of five skills and the two sealed holdouts were written and predicted before any result existed: their predictions are in commit bd92b23 ([planted-skills.md](planted-skills.md)), and the first results start at commit 15da64f. Everything after that (V1, V2, V3, H1, R1, M1, the R2 pilot and both Sonnet reruns) was designed or predicted after seeing earlier results. Each suite has 12 cases: 9 compared, and 3 where the skill should stay quiet. M1 has 18, with 15 compared. Every suite ran with 3 runs per side and regex or tool-use graders only. Details, cards and costs are in [planted-skills-results.md](planted-skills-results.md).
 
 **First set, 0.1.0 rules, Claude Haiku 4.5: 3 of 5 skills got their predicted verdict.** The criterion written in advance was that every suite gets its predicted outcome, so the check as a whole failed.
 
@@ -28,6 +28,13 @@ Each planted skill has a known intended effect, and every prediction was committ
 | Holdout 7. A filler placebo | Not Helps or Hurts | No effect | Match, but weak evidence: its baseline was 0%, so it could only have shown a false gain, and its text isn't inert |
 | H1. A made-up convention that conflicts with the graders | Hurts | Hurts (-100) | Match. It fired in 27 of 27 runs. Designed after seeing results, so that the skill would fire |
 
+**Since then, not blind.** R1 ran under the 0.4.0 rules and M1 under the 0.6.0 rules, which are 0.5.0's. R2's fire-rate pilot found no suite to freeze, so it has no row.
+
+| Suite | Predicted | Actual | |
+|---|---|---|---|
+| R1. A correct skill meant to fire rarely | Rarely fired | Inconclusive (+11) | Miss. It fired in 15 of 27 runs, not 1 or 2 |
+| M1. A type prefix taught, a scope graded | +10 to +30, Helps or Inconclusive | No effect (-2, interval -9 to +0) | Miss. It fired in 45 of 45 runs, and every reply copied the skill's template, which has no scope |
+
 The tables report what each card said when its suite ran. Under the 0.5.0 rules (D22), 5a, 5b and holdout 7 read Inconclusive, since a null now needs 10 cases; [planted-skills-results.md](planted-skills-results.md) lists every card that moved.
 
 What these show:
@@ -36,7 +43,7 @@ What these show:
 - **Hurts was detected once, and it depends on the skill being opened.** The only Hurts on a harmful skill was H1, a suite designed after seeing results so that its skill would fire in every run. When a harmful skill fired in 6 of 27 runs (suite 3, blind) or 1 of 27 (V1), the rules didn't call Hurts. Those cards said Already handled and Inconclusive. This doesn't show that Hurts detection is reliable.
 - **Real runs were much less noisy than the simulation assumed.** In the first set, all 3 runs of a side agreed in 94% of case-and-side cells.
 
-Total cost of the planted runs: $22.11 at list price, across 16 runs, one of them a $0.25 pilot.
+Total cost of the planted runs: $25.29 at list price, across 18 runs, two of them pilots ($0.25 and $1.21).
 
 ## Model comparisons
 
@@ -59,7 +66,7 @@ Each verdict and warning has a test on a constructed result, along with hashing,
 The README keeps three of these. The full list, moved here from it:
 
 - **Hurts needs the skill to be opened.** Under 10% of the runs that need it is Rarely fired, not Hurts; between 10% and 50% the card warns. Suite 3 fired in 6 of 27 runs and reads Inconclusive. Check the "Fired in" line.
-- **Rules chosen after seeing results.** The 0.2.0, 0.4.0 and 0.5.0 rule changes were each designed after seeing the cards they fixed, so those cards aren't evidence for them. Rarely fired's one test run, R1, missed.
+- **Rules chosen after seeing results.** The 0.2.0, 0.4.0 and 0.5.0 rule changes were each designed after seeing the cards they fixed, so those cards aren't evidence for them. Rarely fired's test run, R1, missed, and the pilot for a second one, R2, never fired.
 - **9 of 9 cases is still 9 cases.** Helps and Hurts need 5; a 5 of 5 card's bound is 37%.
 - **One small model,** regex and tool-use graders, and two domains (git workflow and Python project setup); see [what wasn't checked](#what-wasnt-checked).
 - **One plugin per result.** Cards name the plugin listed first in the suite.
